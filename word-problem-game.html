@@ -1,0 +1,589 @@
+<!DOCTYPE html><script type="application/json" id="cowork-artifact-meta">
+{
+  "name": "Word Problem Game",
+  "schemaVersion": 1,
+  "description": "Interactive math word problem game calibrated to 2nd-3rd grade curriculum. Addition/subtraction with 3-digit numbers, multi-step problems, and conceptual fraction work (equal parts, partitioning, sharing, shading models). Mostly multiple choice with SVG diagram visuals. Progressive difficulty with score/streak/level-up system."
+}
+</script>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Math Word Problems</title>
+<style>
+:root { color-scheme: light; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #1a1a1a; background: #fff; padding: 16px; }
+.game-area { max-width: 620px; margin: 0 auto; }
+h1 { font-size: 22px; font-weight: 600; text-align: center; margin-bottom: 4px; }
+.subtitle { font-size: 14px; color: #666; text-align: center; margin-bottom: 16px; }
+.score-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; gap: 6px; }
+.badge { font-size: 13px; font-weight: 600; padding: 5px 12px; border-radius: 8px; }
+.badge-score { background: #E6F1FB; color: #0C447C; }
+.badge-level { background: #FAEEDA; color: #633806; }
+.badge-streak { background: #EAF3DE; color: #27500A; }
+.diff-bar { display: flex; gap: 5px; justify-content: center; margin-bottom: 12px; flex-wrap: wrap; }
+.diff-btn { padding: 5px 11px; border-radius: 8px; font-size: 12px; cursor: pointer; border: 1.5px solid #ddd; background: #fff; color: #666; transition: all 0.15s; }
+.diff-btn.active { border-color: #1D9E75; background: #EAF3DE; color: #27500A; font-weight: 600; }
+.diff-btn:disabled { opacity: 0.45; cursor: default; }
+.diff-btn:not(:disabled):hover { border-color: #aaa; }
+.mode-selector { display: flex; gap: 6px; justify-content: center; margin-bottom: 14px; flex-wrap: wrap; }
+.mode-btn { padding: 7px 14px; border-radius: 8px; font-size: 13px; cursor: pointer; border: 1.5px solid #ddd; background: #fff; color: #666; transition: all 0.15s; }
+.mode-btn.active { border-color: #378ADD; background: #E6F1FB; color: #0C447C; font-weight: 600; }
+.mode-btn:hover { border-color: #aaa; }
+.problem-card { background: #f9f9f7; border: 1.5px solid #e8e8e4; border-radius: 14px; padding: 20px; margin-bottom: 16px; }
+.problem-story { font-size: 16px; line-height: 1.6; margin-bottom: 8px; color: #1a1a1a; }
+.problem-question { font-size: 16px; font-weight: 600; line-height: 1.5; color: #1a1a1a; }
+.visual-area { display: flex; justify-content: center; align-items: center; margin: 14px 0; flex-wrap: wrap; gap: 12px; }
+.answer-section { text-align: center; }
+.mc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; max-width: 400px; margin-left: auto; margin-right: auto; }
+.mc-btn { padding: 12px 8px; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; border: 2px solid #ddd; background: #fff; color: #1a1a1a; transition: all 0.15s; text-align: center; line-height: 1.4; }
+.mc-btn:hover { border-color: #378ADD; background: #f0f7ff; }
+.mc-btn.mc-correct { border-color: #1D9E75; background: #EAF3DE; color: #27500A; pointer-events: none; }
+.mc-btn.mc-wrong { border-color: #E24B4A; background: #FFF0F0; color: #E24B4A; pointer-events: none; }
+.mc-btn.mc-disabled { pointer-events: none; opacity: 0.6; }
+.btn-row { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 4px; }
+.btn { padding: 10px 22px; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; border: none; transition: transform 0.1s, background 0.15s; }
+.btn:active { transform: scale(0.96); }
+.btn-check { background: #378ADD; color: #fff; }
+.btn-check:hover { background: #185FA5; }
+.btn-next { background: #1D9E75; color: #fff; }
+.btn-next:hover { background: #0F6E56; }
+.btn-hint { background: #f5f5f3; color: #666; border: 1px solid #ddd; }
+.btn-hint:hover { background: #eee; }
+.btn-teach { background: #FAEEDA; color: #633806; border: 1.5px solid #E8C87A; }
+.btn-teach:hover { background: #F5DFC0; }
+.btn-easier { background: #F0E6FB; color: #5B21A6; border: 1.5px solid #C9A6F0; }
+.btn-easier:hover { background: #E4D4F7; }
+.feedback { font-size: 15px; font-weight: 600; min-height: 24px; margin-top: 12px; text-align: center; line-height: 1.5; }
+.feedback-correct { color: #1D9E75; }
+.feedback-wrong { color: #E24B4A; }
+.levelup-msg { background: #EAF3DE; color: #27500A; padding: 10px 14px; border-radius: 10px; text-align: center; margin-bottom: 12px; font-size: 14px; font-weight: 600; animation: pop 0.4s ease-out; }
+
+/* Teaching area */
+.teach-area { margin-top: 14px; background: #FFFBF0; border: 1.5px solid #E8C87A; border-radius: 12px; padding: 16px; text-align: left; }
+.teach-step { margin-bottom: 14px; animation: fadeIn 0.3s ease; }
+.teach-step:last-child { margin-bottom: 0; }
+.teach-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #996B1D; margin-bottom: 6px; }
+.teach-text { font-size: 15px; line-height: 1.6; color: #1a1a1a; }
+.teach-next-btn { display: inline-block; margin-top: 10px; padding: 7px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; background: #FAEEDA; color: #633806; border: 1.5px solid #E8C87A; }
+.teach-next-btn:hover { background: #F5DFC0; }
+
+/* Stacked math */
+.stacked-math { display: inline-block; font-family: 'Courier New', monospace; font-size: 22px; font-weight: 600; text-align: right; margin: 10px 0; line-height: 1.5; background: #fff; padding: 12px 18px; border-radius: 10px; border: 1.5px solid #e0ddd5; }
+.stacked-op { display: inline-block; width: 24px; text-align: left; }
+.stacked-line { border-top: 3px solid #1a1a1a; margin: 2px 0; }
+.stacked-carry { font-size: 13px; color: #E24B4A; font-weight: 700; }
+.stacked-result { color: #1D9E75; }
+
+/* Fraction teach visuals */
+.frac-teach-visual { margin: 10px 0; display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; align-items: center; }
+.frac-group { display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 6px 10px; border: 2px dashed #aaa; border-radius: 8px; }
+.frac-group.highlight { border-color: #378ADD; background: #f0f7ff; }
+.frac-dot { width: 20px; height: 20px; border-radius: 50%; }
+.frac-dot-filled { background: #86C7F3; border: 1.5px solid #378ADD; }
+.frac-dot-empty { background: #f0f0ee; border: 1.5px solid #ccc; }
+
+@keyframes pop { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+@keyframes fadeIn { 0% { opacity: 0; transform: translateY(6px); } 100% { opacity: 1; transform: translateY(0); } }
+.celebration { font-size: 22px; animation: pop 0.4s ease-out; display: block; margin-top: 4px; }
+</style>
+</head>
+<body>
+<div class="game-area">
+  <h1>Math Word Problems</h1>
+  <p class="subtitle">Read, think, and solve!</p>
+  <div class="score-bar">
+    <span class="badge badge-score" id="score">Score: 0</span>
+    <span class="badge badge-level" id="level">Lv 1</span>
+    <span class="badge badge-streak" id="streak">Streak: 0</span>
+  </div>
+  <div class="diff-bar" id="diffBar"></div>
+  <div class="mode-selector">
+    <button class="mode-btn active" onclick="setMode('add_sub')">Add & Subtract</button>
+    <button class="mode-btn" onclick="setMode('fractions')">Fractions</button>
+  </div>
+  <div id="levelup"></div>
+  <div id="problem-area"></div>
+  <div id="teach-container"></div>
+  <div class="feedback" id="feedback"></div>
+</div>
+
+<script>
+// ── Utilities ──
+function rand(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
+function pick(arr){return arr[rand(0,arr.length-1)];}
+function shuffle(arr){var a=arr.slice();for(var i=a.length-1;i>0;i--){var j=rand(0,i);var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+
+// ── Number words ──
+var onesW=['','one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve','thirteen','fourteen','fifteen','sixteen','seventeen','eighteen','nineteen'];
+var tensW=['','','twenty','thirty','forty','fifty','sixty','seventy','eighty','ninety'];
+function numWord(n){
+  if(n===0)return'zero';if(n<20)return onesW[n];
+  if(n<100)return tensW[Math.floor(n/10)]+(n%10?' '+onesW[n%10]:'');
+  if(n<1000){var h=Math.floor(n/100);var r=n%100;return onesW[h]+' hundred'+(r?' '+numWord(r):'');}
+  return String(n);
+}
+
+// ── SVG helpers ──
+function svgCircle(parts,filled,size){
+  size=size||100;var r=size/2-4;var cx=size/2,cy=size/2;
+  var svg='<svg width="'+size+'" height="'+size+'" viewBox="0 0 '+size+' '+size+'">';
+  svg+='<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="#f0f0ee" stroke="#999" stroke-width="2"/>';
+  if(parts===1){if(filled>0)svg+='<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="#86C7F3" stroke="#999" stroke-width="2"/>';return svg+'</svg>';}
+  for(var i=0;i<parts;i++){
+    var a1=(i/parts)*2*Math.PI-Math.PI/2,a2=((i+1)/parts)*2*Math.PI-Math.PI/2;
+    var x1=cx+r*Math.cos(a1),y1=cy+r*Math.sin(a1),x2=cx+r*Math.cos(a2),y2=cy+r*Math.sin(a2);
+    var large=(1/parts>0.5)?1:0;var color=i<filled?'#86C7F3':'#f0f0ee';
+    svg+='<path d="M'+cx+','+cy+' L'+x1.toFixed(1)+','+y1.toFixed(1)+' A'+r+','+r+' 0 '+large+',1 '+x2.toFixed(1)+','+y2.toFixed(1)+' Z" fill="'+color+'" stroke="#999" stroke-width="1.5"/>';
+  }
+  return svg+'</svg>';
+}
+function svgRect(parts,filled,w,h){
+  w=w||200;h=h||50;var svg='<svg width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'">';var pw=(w-4)/parts;
+  for(var i=0;i<parts;i++){var color=i<filled?'#86C7F3':'#f0f0ee';svg+='<rect x="'+(2+i*pw)+'" y="2" width="'+pw+'" height="'+(h-4)+'" fill="'+color+'" stroke="#999" stroke-width="1.5"/>';}
+  return svg+'</svg>';
+}
+function svgUnequalRect(totalParts,w,h){
+  w=w||200;h=h||50;var svg='<svg width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'">';
+  var widths=[],remaining=w-4;
+  for(var i=0;i<totalParts;i++){
+    if(i===totalParts-1){widths.push(remaining);}
+    else{var pw=rand(Math.floor(remaining/(totalParts-i)*0.4),Math.floor(remaining/(totalParts-i)*1.6));pw=Math.max(10,Math.min(pw,remaining-10*(totalParts-i-1)));widths.push(pw);remaining-=pw;}
+  }
+  var x=2;for(var i=0;i<totalParts;i++){svg+='<rect x="'+x+'" y="2" width="'+widths[i]+'" height="'+(h-4)+'" fill="#f0f0ee" stroke="#999" stroke-width="1.5"/>';x+=widths[i];}
+  return svg+'</svg>';
+}
+
+// ── Distractors ──
+function distractors(answer,count,min,max){
+  min=min||1;max=max||9999;var opts=[];var used={};used[answer]=true;
+  function add(val){val=Math.round(val);if(val>=min&&val<=max&&!used[val]){used[val]=true;opts.push(val);}}
+  if(answer>=100){
+    add(answer+pick([20,30,40,50]));add(answer-pick([20,30,40,50]));
+    add(answer+pick([100,110,120]));add(answer-pick([100,90,80]));
+    var od=answer%10,td=Math.floor(answer/10)%10;add(answer-td*10-od+od*10+td);
+    add(answer+pick([25,35,45,55,65]));add(answer-pick([25,35,45,55,65]));
+  }else if(answer>=10){
+    add(answer+pick([5,8,10,12,15]));add(answer-pick([5,7,10,12]));
+    add(answer+pick([18,20,22,25]));add(answer-pick([15,18,20]));
+  }else{
+    add(answer+pick([2,3,4,5]));add(answer-pick([2,3]));
+    add(answer+pick([6,7,8]));add(answer*2);
+  }
+  var attempts=0;while(opts.length<count-1&&attempts<50){var spread=Math.max(5,Math.floor(answer*0.15));add(answer+pick([-1,1])*rand(spread,spread*3));attempts++;}
+  while(opts.length<count-1){add(answer+(opts.length+2)*pick([7,-8,13,-15,22,-19]));}
+  opts=opts.slice(0,count-1);opts.push(answer);return shuffle(opts);
+}
+
+// ═══════════════════════════════════════
+// STACKED MATH VISUAL BUILDER
+// ═══════════════════════════════════════
+function buildStackedAdd(a,b){
+  var sum=a+b;
+  var aStr=String(a),bStr=String(b),sStr=String(sum);
+  var maxLen=Math.max(aStr.length,bStr.length,sStr.length);
+  while(aStr.length<maxLen)aStr=' '+aStr;
+  while(bStr.length<maxLen)bStr=' '+bStr;
+  while(sStr.length<maxLen)sStr=' '+sStr;
+
+  // Carry calculation
+  var carries=[];var carry=0;
+  for(var i=maxLen-1;i>=0;i--){
+    var da=aStr[i]===' '?0:parseInt(aStr[i]);
+    var db=bStr[i]===' '?0:parseInt(bStr[i]);
+    var s=da+db+carry;
+    carry=s>=10?1:0;
+    carries[i]=carry;
+  }
+
+  var html='<div class="stacked-math">';
+  // Carry row
+  var hasCarry=carries.some(function(c){return c>0;});
+  if(hasCarry){
+    html+='<div style="font-size:13px;height:18px">&nbsp;';
+    for(var i=0;i<maxLen;i++){
+      if(i<maxLen-1&&carries[i+1]>0)html+='<span class="stacked-carry">'+carries[i+1]+'</span>';
+      else if(i===0&&carry>0)html+='<span class="stacked-carry">'+carry+'</span>';
+      else html+='&nbsp;';
+    }
+    html+='</div>';
+  }
+  html+='<div>&nbsp;&nbsp;'+aStr.replace(/ /g,'&nbsp;')+'</div>';
+  html+='<div><span class="stacked-op">+</span>'+bStr.replace(/ /g,'&nbsp;')+'</div>';
+  html+='<div class="stacked-line"></div>';
+  html+='<div class="stacked-result">&nbsp;'+sStr.replace(/ /g,'&nbsp;')+'</div>';
+  html+='</div>';
+  return html;
+}
+
+function buildStackedSub(a,b){
+  var diff=a-b;
+  var aStr=String(a),bStr=String(b),dStr=String(diff);
+  var maxLen=Math.max(aStr.length,bStr.length,dStr.length);
+  while(aStr.length<maxLen)aStr=' '+aStr;
+  while(bStr.length<maxLen)bStr=' '+bStr;
+  while(dStr.length<maxLen)dStr=' '+dStr;
+
+  var html='<div class="stacked-math">';
+  html+='<div>&nbsp;&nbsp;'+aStr.replace(/ /g,'&nbsp;')+'</div>';
+  html+='<div><span class="stacked-op">&minus;</span>'+bStr.replace(/ /g,'&nbsp;')+'</div>';
+  html+='<div class="stacked-line"></div>';
+  html+='<div class="stacked-result">&nbsp;'+dStr.replace(/ /g,'&nbsp;')+'</div>';
+  html+='</div>';
+  return html;
+}
+
+function buildFracGroupVisual(total,denom,numer){
+  var perGroup=total/denom;
+  var html='<div class="frac-teach-visual">';
+  for(var g=0;g<denom;g++){
+    var isHighlight=g<numer;
+    html+='<div class="frac-group'+(isHighlight?' highlight':'')+'">';
+    for(var d=0;d<perGroup;d++){
+      html+='<div class="frac-dot '+(isHighlight?'frac-dot-filled':'frac-dot-empty')+'"></div>';
+    }
+    html+='</div>';
+  }
+  html+='</div>';
+  return html;
+}
+
+// ═══════════════════════════════════════
+// TEACHING ENGINE
+// ═══════════════════════════════════════
+var teachLevel = 0; // 0=not started, 1=nudge, 2=strategy, 3=full walkthrough
+
+function buildTeachContent(){
+  var p = state._problem;
+  if(!p) return '';
+  var steps = [];
+
+  if(teachLevel >= 1){
+    // Level 1: Nudge — identify what to do
+    steps.push({label:'Think about it', text: p.nudge || 'Read the problem again carefully. What is it asking you to find?'});
+  }
+  if(teachLevel >= 2){
+    // Level 2: Strategy — how to approach it
+    steps.push({label:'Strategy', text: p.strategy || 'Think about what numbers are given and what operation to use.'});
+  }
+  if(teachLevel >= 3){
+    // Level 3: Full walkthrough with visuals
+    steps.push({label:'Let’s solve it together', text: p.walkthrough || 'Work through it step by step.'});
+  }
+
+  if(steps.length === 0) return '';
+
+  var html = '<div class="teach-area">';
+  steps.forEach(function(s){
+    html += '<div class="teach-step"><div class="teach-label">'+s.label+'</div><div class="teach-text">'+s.text+'</div></div>';
+  });
+
+  if(teachLevel < 3 && !state.answered){
+    html += '<button class="teach-next-btn" onclick="nextTeachLevel()">I still need more help</button>';
+  }
+  html += '</div>';
+  return html;
+}
+
+function showTeach(){
+  if(teachLevel === 0) teachLevel = 1;
+  state.hintUsed = true;
+  document.getElementById('teach-container').innerHTML = buildTeachContent();
+}
+
+function nextTeachLevel(){
+  if(teachLevel < 3) teachLevel++;
+  document.getElementById('teach-container').innerHTML = buildTeachContent();
+}
+
+// ── Save / state ──
+var SAVE_KEY='word-problem-save-v3';
+function defaultState(){return{score:0,streak:0,mode:'add_sub',diff:0,highestUnlocked:0,answered:false,hintUsed:false,answer:null,_hint:'',_problem:null,_problemType:''};}
+var state=loadState();
+function loadState(){try{var s=localStorage.getItem(SAVE_KEY);if(s)return Object.assign(defaultState(),JSON.parse(s));}catch(e){}return defaultState();}
+function saveState(){try{localStorage.setItem(SAVE_KEY,JSON.stringify({score:state.score,streak:state.streak,mode:state.mode,diff:state.diff,highestUnlocked:state.highestUnlocked}));}catch(e){}}
+
+// ── Levels ──
+var LEVELS=[
+  {name:'Easy',unlockScore:0,addMin:100,addMax:500,subMin:50,subMax:400,fracDenom:[2,4],multiStep:false},
+  {name:'Medium',unlockScore:40,addMin:100,addMax:700,subMin:80,subMax:500,fracDenom:[2,3,4,6],multiStep:true},
+  {name:'Hard',unlockScore:100,addMin:150,addMax:999,subMin:100,subMax:800,fracDenom:[2,3,4,6,8],multiStep:true},
+  {name:'Challenge',unlockScore:180,addMin:200,addMax:999,subMin:150,subMax:999,fracDenom:[2,3,4,5,6,8],multiStep:true},
+];
+
+function renderDiffBar(){var h='';LEVELS.forEach(function(lv,i){var unlocked=i<=state.highestUnlocked;var cls='diff-btn'+(i===state.diff?' active':'');var lock=unlocked?'':' ('+lv.unlockScore+' pts)';h+='<button class="'+cls+'" onclick="setDiff('+i+')" '+(unlocked?'':'disabled')+'>Lv '+(i+1)+lock+'</button>';});document.getElementById('diffBar').innerHTML=h;}
+function updateUI(){document.getElementById('score').textContent='Score: '+state.score;document.getElementById('streak').textContent='Streak: '+state.streak;document.getElementById('level').textContent='Lv '+(state.diff+1)+': '+LEVELS[state.diff].name;}
+function checkUnlocks(){var prev=state.highestUnlocked;for(var i=0;i<LEVELS.length;i++){if(state.score>=LEVELS[i].unlockScore)state.highestUnlocked=i;}if(state.highestUnlocked>prev){document.getElementById('levelup').innerHTML='<div class="levelup-msg">New level unlocked: '+LEVELS[state.highestUnlocked].name+'!</div>';setTimeout(function(){document.getElementById('levelup').innerHTML='';},3500);state.diff=state.highestUnlocked;}renderDiffBar();saveState();}
+function setMode(m){state.mode=m;document.querySelectorAll('.mode-btn').forEach(function(b,i){b.classList.toggle('active',(i===0&&m==='add_sub')||(i===1&&m==='fractions'));});newRound();saveState();}
+function setDiff(d){if(d>state.highestUnlocked)return;state.diff=d;renderDiffBar();updateUI();newRound();saveState();}
+
+// ── Characters & things ──
+var NAMES=['Emma','Liam','Mia','Noah','Ava','Kai','Zoe','Leo','Lily','Max','Sophie','Jack','Ella','Ben','Aria','Sammy','Isaac','Mary','Carlos','Priya'];
+var ITEMS=[{s:'ice cream cone',p:'ice cream cones'},{s:'book',p:'books'},{s:'apple',p:'apples'},{s:'cookie',p:'cookies'},{s:'sticker',p:'stickers'},{s:'marble',p:'marbles'},{s:'crayon',p:'crayons'},{s:'balloon',p:'balloons'},{s:'shell',p:'shells'},{s:'ticket',p:'tickets'},{s:'toy car',p:'toy cars'},{s:'pencil',p:'pencils'},{s:'flower',p:'flowers'},{s:'card',p:'cards'}];
+var PLACES=[{name:'a store',verb:'sold'},{name:'a bakery',verb:'baked'},{name:'a shop',verb:'made'},{name:'a farm',verb:'picked'},{name:'a school',verb:'collected'}];
+function iname(item,n){return n===1?item.s:item.p;}
+
+// ═══════════════════════════════════════
+// PROBLEM GENERATORS (with teaching data)
+// ═══════════════════════════════════════
+
+function genAddition(lv){
+  var a=rand(lv.addMin,Math.floor(lv.addMax*0.65));
+  var b=rand(lv.addMin,lv.addMax-a);if(a+b>lv.addMax)b=lv.addMax-a;
+  var answer=a+b;var n1=pick(NAMES);var item=pick(ITEMS);var place=pick(PLACES);
+  var useWords=rand(0,2)===0;
+  var templates=[
+    function(){var aStr=useWords?numWord(a):String(a);var bStr=useWords?numWord(b):String(b);return{story:place.name.charAt(0).toUpperCase()+place.name.slice(1)+' '+place.verb+' '+aStr+' '+iname(item,a)+' on Saturday and '+bStr+' '+iname(item,b)+' on Sunday.',q:'How many '+item.p+' did they make in two days?'};},
+    function(){return{story:n1+' has '+a+' '+iname(item,a)+'. '+pick(NAMES.filter(function(n){return n!==n1;}))+' gives '+n1+' '+b+' more '+iname(item,b)+'.',q:'How many '+item.p+' does '+n1+' have now?'};},
+    function(){return{story:'In the morning, '+n1+' counted '+a+' '+iname(item,a)+'. In the afternoon, '+n1+' counted '+b+' more.',q:'How many '+item.p+' were there in all?'};}
+  ];
+  var t=pick(templates)();
+  var nudge='This problem is asking you to put two groups together. What operation combines two amounts?';
+  var strategy='When a problem says words like "in all," "total," or "how many now," it usually means <strong>addition</strong>. The two numbers to add are <strong>'+a+'</strong> and <strong>'+b+'</strong>.';
+  var walkthrough='Let’s stack them up and add!<br><br>'+buildStackedAdd(a,b)+'<br>Start with the ones column on the right, then move left. If a column adds up to 10 or more, carry the 1 to the next column.<br><br>The answer is <strong>'+answer+'</strong>.';
+  var choices=distractors(answer,4);
+  return{story:t.story,question:t.q,answer:answer,choices:choices,nudge:nudge,strategy:strategy,walkthrough:walkthrough,type:'addition',nums:[a,b]};
+}
+
+function genSubtraction(lv){
+  var a=rand(lv.subMin,lv.subMax);var b=rand(Math.floor(a*0.2),Math.floor(a*0.7));
+  var answer=a-b;var n1=pick(NAMES);var item=pick(ITEMS);
+  var useWords=rand(0,3)===0;
+  var templates=[
+    function(){var aStr=useWords?numWord(a):String(a);var bStr=useWords?numWord(b):String(b);return{story:n1+' had '+aStr+' '+iname(item,a)+'. '+n1+' gave '+bStr+' '+iname(item,b)+' to a friend.',q:'How many '+item.p+' does '+n1+' have left?'};},
+    function(){return{story:'A store had '+a+' '+iname(item,a)+'. They sold '+b+' '+iname(item,b)+' today.',q:'How many '+item.p+' are left in the store?'};},
+    function(){return{story:'There were '+a+' '+iname(item,a)+' at the park. '+b+' '+iname(item,b)+' were taken home.',q:'How many '+item.p+' are still at the park?'};}
+  ];
+  var t=pick(templates)();
+  var nudge='This problem starts with a group and then some are <em>taken away</em>. What operation do you use when something is removed?';
+  var strategy='Words like "left," "remaining," "gave away," or "taken" tell you to <strong>subtract</strong>. Start with <strong>'+a+'</strong> and take away <strong>'+b+'</strong>.';
+  var walkthrough='Let’s stack them up and subtract!<br><br>'+buildStackedSub(a,b)+'<br>Start with the ones column. If the top digit is smaller than the bottom digit, you need to <strong>borrow</strong> from the next column.<br><br>The answer is <strong>'+answer+'</strong>.';
+  var choices=distractors(answer,4);
+  return{story:t.story,question:t.q,answer:answer,choices:choices,nudge:nudge,strategy:strategy,walkthrough:walkthrough,type:'subtraction',nums:[a,b]};
+}
+
+function genMultiStep(lv){
+  var a=rand(Math.floor(lv.subMin*1.2),lv.subMax);var b=rand(10,Math.floor(a*0.35));var c=rand(10,Math.floor((a-b)*0.5));
+  var answer=a-b-c;var n1=pick(NAMES);var item=pick(ITEMS);
+  var story=n1+' had '+a+' '+iname(item,a)+'. '+n1+' gave '+b+' to one friend and '+c+' to another friend.';
+  var q='How many '+item.p+' does '+n1+' have left?';
+  var nudge='This problem has <em>two</em> things being taken away. You’ll need to subtract more than once!';
+  var strategy='First subtract the first amount: <strong>'+a+' − '+b+' = '+(a-b)+'</strong>. Then subtract the second amount from that result.';
+  var step1=buildStackedSub(a,b);
+  var step2=buildStackedSub(a-b,c);
+  var walkthrough='This takes two steps:<br><br><strong>Step 1:</strong> '+a+' − '+b+'<br>'+step1+'<br><strong>Step 2:</strong> '+(a-b)+' − '+c+'<br>'+step2+'<br>The answer is <strong>'+answer+'</strong>.';
+  var choices=distractors(answer,4);
+  return{story:story,question:q,answer:answer,choices:choices,nudge:nudge,strategy:strategy,walkthrough:walkthrough,type:'multiStep',nums:[a,b,c]};
+}
+
+function genComparison(lv){
+  var a=rand(lv.addMin,Math.floor(lv.addMax*0.7));var b=rand(lv.addMin,Math.floor(lv.addMax*0.7));
+  while(Math.abs(a-b)<10)b=rand(lv.addMin,Math.floor(lv.addMax*0.7));
+  var answer=Math.abs(a-b);var n1=pick(NAMES),n2=pick(NAMES.filter(function(n){return n!==n1;}));var item=pick(ITEMS);
+  var bigger=a>b?n1:n2,smaller=a>b?n2:n1;var big=Math.max(a,b),small=Math.min(a,b);
+  var story=n1+' has '+a+' '+iname(item,a)+'. '+n2+' has '+b+' '+iname(item,b)+'.';
+  var q='How many more '+item.p+' does '+bigger+' have than '+smaller+'?';
+  var nudge='"How many more" means finding the <em>difference</em> between two amounts. What operation finds the difference?';
+  var strategy='To find how many more, <strong>subtract the smaller number from the bigger number</strong>: '+big+' − '+small+'.';
+  var walkthrough='Find the difference:<br><br>'+buildStackedSub(big,small)+'<br>'+bigger+' has <strong>'+answer+'</strong> more '+item.p+' than '+smaller+'.';
+  var choices=distractors(answer,4);
+  return{story:story,question:q,answer:answer,choices:choices,nudge:nudge,strategy:strategy,walkthrough:walkthrough,type:'comparison',nums:[big,small]};
+}
+
+// ── Fraction generators ──
+function genFracShading(lv){
+  var denom=pick(lv.fracDenom);var numCircles=rand(2,4);var shaded=[];var total=0;var vis='';
+  for(var i=0;i<numCircles;i++){var s=rand(1,denom);shaded.push(s);total+=s;vis+=svgCircle(denom,s,90);}
+  var denomName={2:'halves',3:'thirds',4:'fourths',5:'fifths',6:'sixths',8:'eighths'}[denom]||denom+'ths';
+  var n1=pick(NAMES);
+  var nudge='Look at each circle. Count how many pieces are <em>shaded</em> (colored in) in each one.';
+  var strategy='Count the shaded pieces in each circle separately, then <strong>add them all together</strong>. Circle by circle: '+shaded.join(', ')+'.';
+  var walkthrough='Let’s count each circle:<br><br>';
+  var runTotal=0;
+  for(var i=0;i<numCircles;i++){runTotal+=shaded[i];walkthrough+='Circle '+(i+1)+': <strong>'+shaded[i]+'</strong> shaded pieces'+(i<numCircles-1?'<br>':'');}
+  walkthrough+='<br><br>Now add: '+shaded.join(' + ')+' = <strong>'+total+'</strong>';
+  var choices=distractors(total,4,1,numCircles*denom);
+  return{story:n1+' divided each of her circles into '+denomName+'.',question:'How many total '+denomName+' did she shade in her models?',answer:total,choices:choices,nudge:nudge,strategy:strategy,walkthrough:walkthrough,visual:vis,type:'fracShading'};
+}
+
+function genFracEqualParts(lv){
+  var denom=pick(lv.fracDenom);var isEqual=rand(0,1)===0;var n1=pick(NAMES);
+  var denomName={2:'halves',3:'thirds',4:'fourths',5:'fifths',6:'sixths',8:'eighths'}[denom]||denom+'ths';
+  var vis=isEqual?svgRect(denom,0,240,50):svgUnequalRect(denom,240,50);
+  var answer=isEqual?0:1;
+  var nudge='Look at the pieces carefully. Are they all the <em>same size</em>?';
+  var strategy='For a shape to be divided into <strong>'+denomName+'</strong>, it must have '+denom+' pieces that are all <strong>exactly the same size</strong>. It’s not enough to just have '+denom+' pieces!';
+  var walkthrough=isEqual?'Look at the figure — all '+denom+' pieces are the same width. Since they are <strong>equal</strong>, yes, this is correctly divided into '+denomName+'!':'Look carefully — the pieces are <strong>different sizes</strong>. Even though there are '+denom+' pieces, they are not equal. So no, this is <strong>not</strong> divided into '+denomName+'.';
+  var choiceLabels;
+  if(isEqual)choiceLabels=[{label:'Yes, because there are '+denom+' equal pieces',val:0},{label:'No, because the pieces are not equal',val:1}];
+  else choiceLabels=[{label:'No, because the pieces are not all equal',val:1},{label:'Yes, because there are '+denom+' pieces',val:0}];
+  return{story:n1+' divided a figure into '+denom+' pieces as shown below.',question:n1+' said the figure is divided into '+denomName+'. Is that correct?',answer:answer,choices:choiceLabels,mcLabeled:true,nudge:nudge,strategy:strategy,walkthrough:walkthrough,visual:vis,type:'fracEqual'};
+}
+
+function genFracPartition(lv){
+  var people=pick([2,3,4]);var denomName={2:'halves',3:'thirds',4:'fourths'}[people];
+  var n1=pick(NAMES),n2=pick(NAMES.filter(function(n){return n!==n1;}));
+  var friends=people===2?n1+' and '+n2:people+' friends';
+  var item=pick([{s:'pizza'},{s:'pie'},{s:'cake'},{s:'sandwich'}]);
+  var vis=svgCircle(people,people,110);
+  var answer='1/'+people;
+  var wrongOptions;
+  if(people===2)wrongOptions=['1/3','1/4','2/1'];else if(people===3)wrongOptions=['1/2','1/4','3/1'];else wrongOptions=['1/2','1/3','4/1'];
+  var allChoices=shuffle([answer].concat(wrongOptions.slice(0,3)));
+  var nudge='How many people are sharing? If you cut something into that many <em>equal</em> pieces, each person gets one piece.';
+  var strategy='There are <strong>'+people+' people</strong> sharing equally. That means the '+item.s+' is cut into <strong>'+people+' equal pieces</strong>, and each person gets <strong>1</strong> of those pieces.';
+  var walkthrough=svgCircle(people,1,90)+'<br><br>The '+item.s+' is cut into <strong>'+people+' equal pieces</strong>. Each person gets 1 piece out of '+people+'. We write that as the fraction <strong>1/'+people+'</strong>.';
+  return{story:friends+' want to share a '+item.s+' equally.',question:'Which describes the part of '+item.s+' each person will get?',answer:answer,choices:allChoices,mcString:true,nudge:nudge,strategy:strategy,walkthrough:walkthrough,visual:vis,type:'fracPartition'};
+}
+
+function genFracCompareVisual(lv){
+  var d1=pick(lv.fracDenom);var n1=rand(1,d1-1);var d2=pick(lv.fracDenom.filter(function(d){return d!==d1;}));
+  if(!d2)d2=d1;var n2=rand(1,d2-1);var tries=0;
+  while(n1/d1===n2/d2&&tries<20){n2=rand(1,d2-1);tries++;}
+  if(n1/d1===n2/d2)n2=Math.min(n2+1,d2);
+  var name1=pick(NAMES),name2=pick(NAMES.filter(function(n){return n!==name1;}));
+  var bigger=(n1/d1)>(n2/d2)?name1:name2;
+  var vis='<div style="display:flex;gap:20px;align-items:center;flex-wrap:wrap;justify-content:center">';
+  vis+='<div style="text-align:center"><div style="font-weight:600;margin-bottom:4px">'+name1+' ('+n1+'/'+d1+')</div>'+svgCircle(d1,n1,100)+'</div>';
+  vis+='<div style="text-align:center"><div style="font-weight:600;margin-bottom:4px">'+name2+' ('+n2+'/'+d2+')</div>'+svgCircle(d2,n2,100)+'</div></div>';
+  var nudge='Look at the two circles. Which one has <em>more</em> of its area shaded?';
+  var strategy='Compare how much of each circle is colored in. '+name1+' ate <strong>'+n1+'/'+d1+'</strong> and '+name2+' ate <strong>'+n2+'/'+d2+'</strong>. Look at which shaded area is bigger.';
+  var v1=(n1/d1),v2=(n2/d2);
+  var walkthrough=name1+'’s fraction: '+n1+'/'+d1+' = <strong>'+(v1*100).toFixed(0)+'%</strong> of the circle<br>'+name2+'’s fraction: '+n2+'/'+d2+' = <strong>'+(v2*100).toFixed(0)+'%</strong> of the circle<br><br>'+(v1>v2?name1:name2)+' ate more because <strong>'+(v1>v2?(v1*100).toFixed(0):(v2*100).toFixed(0))+'%</strong> is bigger than <strong>'+(v1>v2?(v2*100).toFixed(0):(v1*100).toFixed(0))+'%</strong>.';
+  var choices=[name1,name2,'They ate the same'];
+  return{story:name1+' ate '+n1+'/'+d1+' of a pizza. '+name2+' ate '+n2+'/'+d2+' of the same size pizza.',question:'Who ate more pizza?',answer:bigger,choices:choices,mcString:true,nudge:nudge,strategy:strategy,walkthrough:walkthrough,visual:vis,type:'fracCompare'};
+}
+
+function genFracOfGroup(lv){
+  var denom=pick(lv.fracDenom);var groups=rand(2,5);var total=denom*groups;var numer=rand(1,denom-1);
+  var answer=numer*groups;var n1=pick(NAMES);var item=pick(ITEMS);
+  var nudge='To find a fraction of a group, first figure out what <em>one part</em> of the group looks like, then count how many parts you need.';
+  var strategy='<strong>'+numer+'/'+denom+'</strong> of '+total+' means: divide '+total+' into <strong>'+denom+' equal groups</strong>. Each group has <strong>'+groups+'</strong> '+item.p+'. Then take <strong>'+numer+'</strong> of those groups.';
+  var groupVisual=buildFracGroupVisual(total,denom,numer);
+  var walkthrough='Step 1: Divide '+total+' into '+denom+' equal groups: '+total+' ÷ '+denom+' = <strong>'+groups+'</strong> in each group.<br><br>'+groupVisual+'<br>Step 2: Take '+numer+' group'+(numer>1?'s':'')+': '+numer+' × '+groups+' = <strong>'+answer+'</strong><br><br>The shaded groups show the '+numer+'/'+denom+' that were given away.';
+  var choices=distractors(answer,4,1,total);
+  return{story:n1+' has '+total+' '+iname(item,total)+'. '+n1+' gives away '+numer+'/'+denom+' of them.',question:'How many '+item.p+' did '+n1+' give away?',answer:answer,choices:choices,nudge:nudge,strategy:strategy,walkthrough:walkthrough,type:'fracOfGroup',nums:[total,denom,numer]};
+}
+
+// ═══════════════════════════════════════
+// EASIER PROBLEM GENERATOR
+// ═══════════════════════════════════════
+function tryEasier(){
+  var p=state._problem;
+  if(!p)return newRound();
+  // Generate a simpler version of the same type
+  var easyLv={name:'Easy',unlockScore:0,addMin:10,addMax:50,subMin:10,subMax:40,fracDenom:[2,4],multiStep:false};
+  var problem;
+  switch(p.type){
+    case 'addition': problem=genAddition(easyLv); break;
+    case 'subtraction': problem=genSubtraction(easyLv); break;
+    case 'multiStep': problem=genSubtraction(easyLv); break; // downgrade to single step
+    case 'comparison': problem=genComparison(easyLv); break;
+    case 'fracShading': problem=genFracShading(easyLv); break;
+    case 'fracEqual': problem=genFracEqualParts(easyLv); break;
+    case 'fracPartition': problem=genFracPartition(easyLv); break;
+    case 'fracCompare': problem=genFracCompareVisual(easyLv); break;
+    case 'fracOfGroup': problem=genFracOfGroup(easyLv); break;
+    default: problem=genAddition(easyLv);
+  }
+  loadProblem(problem, true);
+}
+
+// ═══════════════════════════════════════
+// ROUND LOGIC
+// ═══════════════════════════════════════
+function loadProblem(problem, isEasier){
+  state.answered=false;state.hintUsed=false;
+  teachLevel=0;
+  document.getElementById('feedback').innerHTML='';
+  document.getElementById('teach-container').innerHTML='';
+  if(!isEasier)document.getElementById('levelup').innerHTML='';
+  updateUI();
+
+  state.answer=problem.answer;
+  state._problem=problem;
+
+  var html='';
+  if(isEasier) html+='<div style="text-align:center;margin-bottom:10px;font-size:13px;font-weight:600;color:#5B21A6;background:#F0E6FB;padding:6px 12px;border-radius:8px;display:inline-block;">Let’s try an easier one!</div><br>';
+  html+='<div class="problem-card"><div class="problem-story">'+problem.story+'</div><div class="problem-question">'+problem.question+'</div></div>';
+  if(problem.visual)html+='<div class="visual-area">'+problem.visual+'</div>';
+
+  html+='<div class="answer-section"><div class="mc-grid" id="mc-grid">';
+  if(problem.mcLabeled){
+    problem.choices.forEach(function(c){html+='<button class="mc-btn" onclick="checkMC(this,'+c.val+')">'+c.label+'</button>';});
+  }else if(problem.mcString){
+    problem.choices.forEach(function(c){html+='<button class="mc-btn" onclick="checkMCStr(this,\''+c.replace(/'/g,"\\'")+'\')">'+c+'</button>';});
+  }else{
+    problem.choices.forEach(function(c){html+='<button class="mc-btn" onclick="checkMC(this,'+c+')">'+c+'</button>';});
+  }
+  html+='</div>';
+  html+='<div class="btn-row"><button class="btn btn-teach" onclick="showTeach()">Teach me</button></div>';
+  html+='</div>';
+  document.getElementById('problem-area').innerHTML=html;
+}
+
+function newRound(){
+  var lv=LEVELS[state.diff];var problem;
+  if(state.mode==='add_sub'){
+    var types=[genAddition,genSubtraction,genComparison];
+    if(lv.multiStep)types.push(genMultiStep);
+    problem=pick(types)(lv);
+  }else{
+    var types=[genFracShading,genFracEqualParts,genFracPartition,genFracCompareVisual];
+    if(state.diff>=1)types.push(genFracOfGroup);
+    problem=pick(types)(lv);
+  }
+  loadProblem(problem, false);
+}
+
+function checkMC(btn,val){
+  if(state.answered)return;state.answered=true;
+  if(val===state.answer){btn.classList.add('mc-correct');correct();}
+  else{
+    btn.classList.add('mc-wrong');
+    document.querySelectorAll('.mc-btn').forEach(function(b){
+      if(b!==btn){var t=b.textContent.trim();if(t==String(state.answer))b.classList.add('mc-correct');else b.classList.add('mc-disabled');}
+    });
+    wrong();
+  }
+}
+function checkMCStr(btn,val){
+  if(state.answered)return;state.answered=true;
+  if(val===state.answer){btn.classList.add('mc-correct');correct();}
+  else{
+    btn.classList.add('mc-wrong');
+    document.querySelectorAll('.mc-btn').forEach(function(b){
+      if(b.textContent===state.answer)b.classList.add('mc-correct');
+      else if(!b.classList.contains('mc-wrong'))b.classList.add('mc-disabled');
+    });
+    wrong();
+  }
+}
+
+function correct(){
+  var pts=state.hintUsed?5:10;state.score+=pts;state.streak++;
+  updateUI();checkUnlocks();
+  var msgs=['Great job!','You got it!','Amazing!','Super star!','Awesome!','Nailed it!','Perfect!','Way to go!','So smart!','Fantastic!'];
+  var msg=pick(msgs);
+  var bonus=(state.streak>0&&state.streak%5===0)?'<span class="celebration">Wow, '+state.streak+' in a row!</span>':'';
+  document.getElementById('feedback').innerHTML='<span class="feedback-correct">'+msg+' +'+pts+' points</span>'+bonus+'<br><button class="btn btn-next" onclick="newRound()" style="margin-top:8px">Next</button>';
+  saveState();
+}
+
+function wrong(){
+  state.streak=0;updateUI();
+  // Show the walkthrough automatically on wrong answer
+  teachLevel=3;
+  document.getElementById('teach-container').innerHTML=buildTeachContent();
+  document.getElementById('feedback').innerHTML='<span class="feedback-wrong">Not quite! The answer is <strong>'+state.answer+'</strong></span><br><div class="btn-row" style="margin-top:8px"><button class="btn btn-easier" onclick="tryEasier()">Try an easier one</button><button class="btn btn-next" onclick="newRound()">Next</button></div>';
+  saveState();
+}
+
+// ── Init ──
+updateUI();renderDiffBar();
+document.querySelectorAll('.mode-btn').forEach(function(b,i){b.classList.toggle('active',(i===0&&state.mode==='add_sub')||(i===1&&state.mode==='fractions'));});
+newRound();
+</script>
+</body>
+</html>

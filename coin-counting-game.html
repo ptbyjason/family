@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<script type="application/json" id="cowork-artifact-meta">
+{
+  "name": "Coin Counting Game",
+  "schemaVersion": 1,
+  "description": "Interactive coin counting game for 2nd graders. Starts with just pennies and progressively unlocks nickels, dimes, quarters, and more as the player scores points. Three game modes: count the coins, make the amount, and which is more."
+}
+</script>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Coin Counting Game</title>
+<style>
+:root { color-scheme: light; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #1a1a1a; background: #fff; padding: 16px; }
+.game-area { max-width: 600px; margin: 0 auto; }
+h1 { font-size: 22px; font-weight: 600; text-align: center; margin-bottom: 4px; }
+.subtitle { font-size: 14px; color: #666; text-align: center; margin-bottom: 16px; }
+.score-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; gap: 6px; }
+.badge { font-size: 13px; font-weight: 600; padding: 5px 12px; border-radius: 8px; }
+.badge-score { background: #E6F1FB; color: #0C447C; }
+.badge-level { background: #FAEEDA; color: #633806; }
+.badge-streak { background: #EAF3DE; color: #27500A; }
+.diff-bar { display: flex; gap: 5px; justify-content: center; margin-bottom: 12px; flex-wrap: wrap; }
+.diff-btn { padding: 5px 11px; border-radius: 8px; font-size: 12px; cursor: pointer; border: 1.5px solid #ddd; background: #fff; color: #666; transition: all 0.15s; }
+.diff-btn.active { border-color: #1D9E75; background: #EAF3DE; color: #27500A; font-weight: 600; }
+.diff-btn:disabled { opacity: 0.45; cursor: default; }
+.diff-btn:not(:disabled):hover { border-color: #aaa; }
+.mode-selector { display: flex; gap: 6px; justify-content: center; margin-bottom: 14px; flex-wrap: wrap; }
+.mode-btn { padding: 7px 14px; border-radius: 8px; font-size: 13px; cursor: pointer; border: 1.5px solid #ddd; background: #fff; color: #666; transition: all 0.15s; }
+.mode-btn.active { border-color: #378ADD; background: #E6F1FB; color: #0C447C; font-weight: 600; }
+.mode-btn:hover { border-color: #aaa; }
+.prompt-text { font-size: 18px; font-weight: 600; text-align: center; margin-bottom: 16px; line-height: 1.4; color: #1a1a1a; }
+.coins-display { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-bottom: 20px; min-height: 80px; align-items: center; }
+.coin { border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 600; cursor: default; transition: transform 0.2s; border: 2.5px solid; position: relative; }
+.coin:hover { transform: scale(1.1); }
+.coin-penny { background: #F5C4B3; border-color: #D85A30; color: #712B13; width: 62px; height: 62px; }
+.coin-nickel { background: #D3D1C7; border-color: #888780; color: #2C2C2A; width: 66px; height: 66px; }
+.coin-dime { background: #D3D1C7; border-color: #5F5E5A; color: #2C2C2A; width: 52px; height: 52px; }
+.coin-quarter { background: #D3D1C7; border-color: #888780; color: #2C2C2A; width: 76px; height: 76px; }
+.coin-half { background: #D3D1C7; border-color: #5F5E5A; color: #2C2C2A; width: 84px; height: 84px; }
+.coin-dollar { background: #FAC775; border-color: #BA7517; color: #412402; width: 78px; height: 78px; }
+.coin-name { font-size: 10px; margin-top: 1px; opacity: 0.75; }
+.coin-value { font-size: 13px; font-weight: 600; }
+.coin-tap { cursor: pointer !important; }
+.coin-tap:active { transform: scale(0.95); }
+.answer-section { text-align: center; margin-bottom: 8px; }
+.answer-row { display: flex; align-items: center; justify-content: center; gap: 6px; margin-bottom: 12px; }
+.dollar-sign, .cents-label { font-size: 20px; font-weight: 600; color: #888; }
+.answer-input { width: 120px; font-size: 22px; text-align: center; padding: 8px 10px; border-radius: 8px; border: 2px solid #ccc; background: #fff; color: #1a1a1a; font-family: monospace; }
+.answer-input:focus { outline: none; border-color: #378ADD; }
+.btn-row { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+.btn { padding: 10px 22px; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; border: none; transition: transform 0.1s, background 0.15s; }
+.btn:active { transform: scale(0.96); }
+.btn-check { background: #378ADD; color: #fff; }
+.btn-check:hover { background: #185FA5; }
+.btn-next { background: #1D9E75; color: #fff; }
+.btn-next:hover { background: #0F6E56; }
+.btn-hint { background: #f5f5f3; color: #666; border: 1px solid #ddd; }
+.btn-hint:hover { background: #eee; }
+.feedback { font-size: 15px; font-weight: 600; min-height: 24px; margin-top: 12px; text-align: center; line-height: 1.5; }
+.feedback-correct { color: #1D9E75; }
+.feedback-wrong { color: #E24B4A; }
+.feedback-hint { color: #888; font-weight: 400; font-size: 13px; }
+.levelup-msg { background: #EAF3DE; color: #27500A; padding: 10px 14px; border-radius: 10px; text-align: center; margin-bottom: 12px; font-size: 14px; font-weight: 600; animation: pop 0.4s ease-out; }
+.compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+.group-card { border: 2px solid #e0e0e0; border-radius: 12px; padding: 12px; text-align: center; cursor: pointer; transition: border-color 0.15s, background 0.15s; }
+.group-card:hover { border-color: #378ADD; background: #f8fbff; }
+.group-label { font-weight: 600; margin-bottom: 8px; font-size: 15px; }
+.running-total { font-size: 20px; font-weight: 600; margin-bottom: 12px; }
+@keyframes pop { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+@keyframes bounce { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+.coin-bounce { animation: bounce 0.4s ease; }
+.celebration { font-size: 22px; animation: pop 0.4s ease-out; display: block; margin-top: 4px; }
+</style>
+</head>
+<body>
+<div class="game-area">
+  <h1>Coin Counting Game</h1>
+  <p class="subtitle">Count coins, make change, and level up!</p>
+
+  <div class="score-bar">
+    <span class="badge badge-score" id="score">Score: 0</span>
+    <span class="badge badge-level" id="level">Lv 1: pennies</span>
+    <span class="badge badge-streak" id="streak">Streak: 0</span>
+  </div>
+
+  <div class="diff-bar" id="diffBar"></div>
+
+  <div class="mode-selector">
+    <button class="mode-btn active" onclick="setMode('count')">Count the coins</button>
+    <button class="mode-btn" onclick="setMode('make')">Make the amount</button>
+    <button class="mode-btn" onclick="setMode('compare')">Which is more?</button>
+  </div>
+
+  <div id="levelup"></div>
+  <div class="prompt-text" id="prompt"></div>
+  <div class="coins-display" id="coins"></div>
+  <div id="game-content"></div>
+  <div class="feedback" id="feedback"></div>
+</div>
+
+<script>
+const COINS = [
+  { name: 'penny', value: 1, plural: 'pennies' },
+  { name: 'nickel', value: 5, plural: 'nickels' },
+  { name: 'dime', value: 10, plural: 'dimes' },
+  { name: 'quarter', value: 25, plural: 'quarters' },
+  { name: 'half dollar', value: 50, plural: 'half dollars' },
+  { name: 'dollar', value: 100, plural: 'dollars' }
+];
+
+const LEVELS = [
+  { name: 'Pennies only',      coins: [0],                maxTotal: 10,  minCoins: 2, maxCoins: 6,  unlockScore: 0 },
+  { name: 'Pennies + nickels', coins: [0, 1],             maxTotal: 25,  minCoins: 2, maxCoins: 5,  unlockScore: 30 },
+  { name: 'Add dimes',         coins: [0, 1, 2],          maxTotal: 50,  minCoins: 2, maxCoins: 5,  unlockScore: 70 },
+  { name: 'Add quarters',      coins: [0, 1, 2, 3],       maxTotal: 100, minCoins: 2, maxCoins: 6,  unlockScore: 120 },
+  { name: 'All coins',         coins: [0, 1, 2, 3, 4, 5], maxTotal: 200, minCoins: 2, maxCoins: 7,  unlockScore: 200 },
+];
+
+const SAVE_KEY = 'coin-game-save';
+let state = loadState();
+
+function defaultState() {
+  return { score: 0, streak: 0, mode: 'count', answer: 0, coins: [], hintUsed: false, answered: false, diff: 0, highestUnlocked: 0, selectedCoins: [], g1: null, g2: null };
+}
+
+function loadState() {
+  try {
+    let s = localStorage.getItem(SAVE_KEY);
+    if (s) { let parsed = JSON.parse(s); return Object.assign(defaultState(), parsed); }
+  } catch(e) {}
+  return defaultState();
+}
+
+function saveState() {
+  try {
+    localStorage.setItem(SAVE_KEY, JSON.stringify({ score: state.score, streak: state.streak, mode: state.mode, diff: state.diff, highestUnlocked: state.highestUnlocked }));
+  } catch(e) {}
+}
+
+function rand(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+function fmt(cents) { return (cents / 100).toFixed(2); }
+function fmtCents(cents) { return cents + '¢'; }
+function useCentsInput() { return LEVELS[state.diff].maxTotal < 100; }
+
+function makeCoinEl(coin, extra) {
+  let cls = 'coin coin-' + coin.name.split(' ')[0] + (extra || '');
+  let label = coin.value >= 100 ? '$' + (coin.value / 100) : coin.value + '¢';
+  return '<div class="' + cls + '"><span class="coin-value">' + label + '</span><span class="coin-name">' + coin.name + '</span></div>';
+}
+
+function renderDiffBar() {
+  let html = '';
+  LEVELS.forEach(function(lv, i) {
+    let unlocked = i <= state.highestUnlocked;
+    let active = i === state.diff;
+    let cls = 'diff-btn' + (active ? ' active' : '');
+    let lock = unlocked ? '' : ' (score ' + lv.unlockScore + ')';
+    html += '<button class="' + cls + '" onclick="setDiff(' + i + ')" ' + (unlocked ? '' : 'disabled') + '>Lv ' + (i + 1) + lock + '</button>';
+  });
+  document.getElementById('diffBar').innerHTML = html;
+}
+
+function checkUnlocks() {
+  let prev = state.highestUnlocked;
+  for (let i = 0; i < LEVELS.length; i++) {
+    if (state.score >= LEVELS[i].unlockScore) state.highestUnlocked = i;
+  }
+  if (state.highestUnlocked > prev) {
+    document.getElementById('levelup').innerHTML = '<div class="levelup-msg">New level unlocked: ' + LEVELS[state.highestUnlocked].name + '!</div>';
+    setTimeout(function() { document.getElementById('levelup').innerHTML = ''; }, 3500);
+    state.diff = state.highestUnlocked;
+  }
+  renderDiffBar();
+  saveState();
+}
+
+function setDiff(d) {
+  if (d > state.highestUnlocked) return;
+  state.diff = d;
+  renderDiffBar();
+  updateLevelLabel();
+  newRound();
+  saveState();
+}
+
+function updateLevelLabel() {
+  document.getElementById('level').textContent = 'Lv ' + (state.diff + 1) + ': ' + LEVELS[state.diff].name.toLowerCase();
+}
+
+function updateScoreUI() {
+  document.getElementById('score').textContent = 'Score: ' + state.score;
+  document.getElementById('streak').textContent = 'Streak: ' + state.streak;
+}
+
+function pickCoinsForLevel() {
+  let lv = LEVELS[state.diff];
+  let available = lv.coins.map(function(i) { return COINS[i]; });
+  let coins = [];
+  let total = 0;
+  let numCoins = rand(lv.minCoins, lv.maxCoins);
+  for (let n = 0; n < numCoins; n++) {
+    let possible = available.filter(function(c) { return c.value + total <= lv.maxTotal; });
+    if (possible.length === 0) break;
+    let c = possible[rand(0, possible.length - 1)];
+    coins.push(c);
+    total += c.value;
+  }
+  if (total === 0) { coins.push(available[0]); total = available[0].value; }
+  return { coins: coins, total: total };
+}
+
+function setMode(mode) {
+  state.mode = mode;
+  document.querySelectorAll('.mode-btn').forEach(function(b, i) {
+    b.classList.toggle('active', (i === 0 && mode === 'count') || (i === 1 && mode === 'make') || (i === 2 && mode === 'compare'));
+  });
+  newRound();
+  saveState();
+}
+
+function newRound() {
+  state.hintUsed = false;
+  state.answered = false;
+  document.getElementById('feedback').innerHTML = '';
+  document.getElementById('levelup').innerHTML = '';
+  updateLevelLabel();
+  if (state.mode === 'count') setupCount();
+  else if (state.mode === 'make') setupMake();
+  else setupCompare();
+}
+
+function setupCount() {
+  let r = pickCoinsForLevel();
+  state.answer = r.total;
+  state.coins = r.coins;
+  r.coins.sort(function(a, b) { return b.value - a.value; });
+  document.getElementById('prompt').textContent = 'How much money is this?';
+  document.getElementById('coins').innerHTML = r.coins.map(function(c) { return makeCoinEl(c); }).join('');
+
+  var inputHtml;
+  if (useCentsInput()) {
+    inputHtml = '<div class="answer-row"><input class="answer-input" id="ans" type="number" placeholder="0" autocomplete="off" min="0" style="width:100px"><span class="cents-label">¢</span></div>';
+  } else {
+    inputHtml = '<div class="answer-row"><span class="dollar-sign">$</span><input class="answer-input" id="ans" type="text" placeholder="0.00" autocomplete="off"></div>';
+  }
+  document.getElementById('game-content').innerHTML =
+    '<div class="answer-section">' + inputHtml +
+    '<div class="btn-row"><button class="btn btn-check" onclick="checkAnswer()">Check</button>' +
+    '<button class="btn btn-hint" onclick="giveHint()">Hint</button></div></div>';
+  var inp = document.getElementById('ans');
+  inp.addEventListener('keydown', function(e) { if (e.key === 'Enter') checkAnswer(); });
+  inp.focus();
+}
+
+function setupMake() {
+  var lv = LEVELS[state.diff];
+  var target;
+  if (state.diff === 0) target = rand(2, 10);
+  else target = rand(Math.max(1, Math.round(lv.maxTotal * 0.15)), lv.maxTotal);
+  state.answer = target;
+  state.selectedCoins = [];
+
+  var label = useCentsInput() ? fmtCents(target) : '$' + fmt(target);
+  document.getElementById('prompt').textContent = 'Tap coins to make ' + label;
+  document.getElementById('coins').innerHTML = '';
+
+  var coinTypes = lv.coins.map(function(i) { return COINS[i]; });
+  var html = '<div class="answer-section"><div class="coins-display" style="margin-bottom:10px">';
+  coinTypes.forEach(function(c, i) {
+    var cls = 'coin coin-' + c.name.split(' ')[0] + ' coin-tap';
+    var val = c.value >= 100 ? '$' + (c.value / 100) : c.value + '¢';
+    html += '<div class="' + cls + '" onclick="tapCoin(' + i + ',' + c.value + ')"><span class="coin-value">' + val + '</span><span class="coin-name">' + c.name + '</span></div>';
+  });
+  html += '</div>';
+  var runLabel = useCentsInput() ? '<span id="running">0</span>¢' : '$<span id="running">0.00</span>';
+  html += '<div class="running-total">Your total: ' + runLabel + '</div>';
+  html += '<div class="btn-row"><button class="btn btn-check" onclick="checkMake()">Check</button><button class="btn btn-hint" onclick="resetMake()">Start over</button></div></div>';
+  document.getElementById('game-content').innerHTML = html;
+}
+
+function tapCoin(idx, value) {
+  state.selectedCoins.push(value);
+  var total = state.selectedCoins.reduce(function(a, b) { return a + b; }, 0);
+  document.getElementById('running').textContent = useCentsInput() ? total : fmt(total);
+  var coinEls = document.querySelectorAll('#game-content .coin');
+  if (coinEls[idx]) { coinEls[idx].classList.remove('coin-bounce'); void coinEls[idx].offsetWidth; coinEls[idx].classList.add('coin-bounce'); }
+}
+
+function resetMake() {
+  state.selectedCoins = [];
+  document.getElementById('running').textContent = useCentsInput() ? '0' : '0.00';
+  document.getElementById('feedback').innerHTML = '';
+}
+
+function checkMake() {
+  if (state.answered) return;
+  var total = state.selectedCoins.reduce(function(a, b) { return a + b; }, 0);
+  if (total === state.answer) { correct(); }
+  else if (total > state.answer) {
+    document.getElementById('feedback').innerHTML = '<span class="feedback-wrong">That\'s too much! Try starting over.</span>';
+  } else {
+    document.getElementById('feedback').innerHTML = '<span class="feedback-wrong">Not enough yet! Keep adding coins.</span>';
+  }
+}
+
+function setupCompare() {
+  var g1 = pickCoinsForLevel();
+  var g2 = pickCoinsForLevel();
+  var tries = 0;
+  while (g1.total === g2.total && tries < 20) { g2 = pickCoinsForLevel(); tries++; }
+  if (g1.total === g2.total) { g2.coins.push(COINS[0]); g2.total += 1; }
+  state.answer = g1.total > g2.total ? 'A' : 'B';
+  state.g1 = g1; state.g2 = g2;
+
+  document.getElementById('prompt').textContent = 'Which group has more money?';
+  document.getElementById('coins').innerHTML = '';
+
+  var g1s = g1.coins.slice().sort(function(a, b) { return b.value - a.value; });
+  var g2s = g2.coins.slice().sort(function(a, b) { return b.value - a.value; });
+  var html = '<div class="answer-section"><div class="compare-grid">' +
+    '<div class="group-card" onclick="pickGroup(\'A\')" id="groupA">' +
+    '<div class="group-label">Group A</div>' +
+    '<div class="coins-display" style="min-height:auto;margin-bottom:0">' + g1s.map(function(c) { return makeCoinEl(c); }).join('') + '</div></div>' +
+    '<div class="group-card" onclick="pickGroup(\'B\')" id="groupB">' +
+    '<div class="group-label">Group B</div>' +
+    '<div class="coins-display" style="min-height:auto;margin-bottom:0">' + g2s.map(function(c) { return makeCoinEl(c); }).join('') + '</div></div></div></div>';
+  document.getElementById('game-content').innerHTML = html;
+}
+
+function pickGroup(choice) {
+  if (state.answered) return;
+  if (choice === state.answer) { correct(); }
+  else {
+    state.streak = 0;
+    updateScoreUI();
+    var fA = useCentsInput() ? fmtCents(state.g1.total) : '$' + fmt(state.g1.total);
+    var fB = useCentsInput() ? fmtCents(state.g2.total) : '$' + fmt(state.g2.total);
+    document.getElementById('feedback').innerHTML =
+      '<span class="feedback-wrong">Not quite! Group A = ' + fA + ', Group B = ' + fB + '</span>' +
+      '<br><button class="btn btn-next" onclick="newRound()" style="margin-top:8px">Next</button>';
+    state.answered = true;
+    saveState();
+  }
+}
+
+function checkAnswer() {
+  if (state.answered) return;
+  var input = document.getElementById('ans').value.trim().replace('$', '');
+  var val;
+  if (useCentsInput()) { val = Math.round(parseFloat(input)); }
+  else { val = Math.round(parseFloat(input) * 100); }
+  if (isNaN(val)) {
+    var hint = useCentsInput() ? 'Type a number like 7' : 'Type a number like 0.75';
+    document.getElementById('feedback').innerHTML = '<span class="feedback-wrong">' + hint + '</span>';
+    return;
+  }
+  if (val === state.answer) { correct(); }
+  else {
+    state.streak = 0;
+    updateScoreUI();
+    var ans = useCentsInput() ? fmtCents(state.answer) : '$' + fmt(state.answer);
+    document.getElementById('feedback').innerHTML =
+      '<span class="feedback-wrong">Not quite! The answer is ' + ans + '</span>' +
+      '<br><button class="btn btn-next" onclick="newRound()" style="margin-top:8px">Next</button>';
+    state.answered = true;
+    saveState();
+  }
+}
+
+function correct() {
+  state.answered = true;
+  var pts = state.hintUsed ? 5 : 10;
+  state.score += pts;
+  state.streak++;
+  updateScoreUI();
+  checkUnlocks();
+
+  var msgs = ['Great job!', 'You got it!', 'Amazing!', 'Super star!', 'Awesome!', 'Nailed it!', 'Perfect!', 'Way to go!', 'So smart!', 'Fantastic!'];
+  var msg = msgs[rand(0, msgs.length - 1)];
+  var bonus = (state.streak > 0 && state.streak % 5 === 0) ? '<span class="celebration">Wow, ' + state.streak + ' in a row!</span>' : '';
+
+  document.getElementById('feedback').innerHTML =
+    '<span class="feedback-correct">' + msg + ' +' + pts + ' points</span>' +
+    bonus +
+    '<br><button class="btn btn-next" onclick="newRound()" style="margin-top:8px">Next</button>';
+  saveState();
+}
+
+function giveHint() {
+  if (state.answered) return;
+  state.hintUsed = true;
+  if (state.mode === 'count') {
+    var byType = {};
+    state.coins.forEach(function(c) { byType[c.name] = (byType[c.name] || 0) + 1; });
+    var parts = [];
+    Object.keys(byType).forEach(function(name) {
+      var count = byType[name];
+      var coin = COINS.find(function(c) { return c.name === name; });
+      var label = count === 1 ? coin.name : coin.plural;
+      var total = count * coin.value;
+      parts.push(count + ' ' + label + ' = ' + (useCentsInput() ? fmtCents(total) : '$' + fmt(total)));
+    });
+    document.getElementById('feedback').innerHTML = '<span class="feedback-hint">Hint: ' + parts.join(' + ') + '<br>Add them up! (half points for hints)</span>';
+  }
+}
+
+// Initialize
+updateScoreUI();
+renderDiffBar();
+
+// Restore mode buttons
+document.querySelectorAll('.mode-btn').forEach(function(b, i) {
+  b.classList.toggle('active', (i === 0 && state.mode === 'count') || (i === 1 && state.mode === 'make') || (i === 2 && state.mode === 'compare'));
+});
+
+newRound();
+</script>
+</body>
+</html>
