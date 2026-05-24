@@ -3,31 +3,38 @@
 {
   "name": "Summer Training Dashboard",
   "schemaVersion": 1,
-  "description": "Interactive summer training dashboard with detailed, periodized workout programs for a 13-year-old soccer/XC athlete. 3-phase progression (Foundation, Development, Preseason) across 11 weeks covering sprint speed, cardio endurance, soccer technical work, and mobility. Checkbox + notes tracking, progress charts, and adaptive insights."
+  "description": "Isaiah's 11-week summer training dashboard with daily schedule, fitness tests, adaptive insights, and movement assessment correctives. Covers soccer, cross country, sprint speed, mobility, and corrective exercises from his April 2026 assessment."
 }
 </script>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Training">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#2d6a4f">
+<meta name="application-name" content="Summer Training">
+<link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxODAgMTgwIj48cmVjdCB3aWR0aD0iMTgwIiBoZWlnaHQ9IjE4MCIgcng9IjQwIiBmaWxsPSIjMmQ2YTRmIi8+PHRleHQgeD0iOTAiIHk9IjEyNSIgZm9udC1zaXplPSIxMTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IndoaXRlIj7wn4+LPC90ZXh0Pjwvc3ZnPg==">
 <title>Summer Training Dashboard</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js" integrity="sha384-iU8HYtnGQ8Cy4zl7gbNMOhsDTTKX02BTXptVP/vqAWIaTfM7isw76iyZCsjL2eVi" crossorigin="anonymous"></script>
 <style>
 :root{color-scheme:light}
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f8f9fa;color:#1a1a2e;line-height:1.5;padding:16px}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f8f9fa;color:#1a1a2e;line-height:1.5;padding:16px;padding-top:max(16px,env(safe-area-inset-top));padding-bottom:max(16px,env(safe-area-inset-bottom));-webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent}
 .header{text-align:center;margin-bottom:16px}
 .header h1{font-size:22px;font-weight:700;color:#1a1a2e}
 .header .subtitle{font-size:13px;color:#666;margin-top:2px}
 .phase-banner{text-align:center;padding:8px 16px;border-radius:8px;margin-bottom:12px;font-size:13px;font-weight:600}
 .phase-1{background:#dbeafe;color:#1e40af}.phase-2{background:#fef3c7;color:#92400e}.phase-3{background:#fce7f3;color:#9d174d}
-.nav{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap;justify-content:center}
-.nav button{padding:8px 16px;border:1px solid #ddd;background:#fff;border-radius:20px;font-size:13px;font-weight:500;cursor:pointer;transition:all .2s}
+.nav{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap;justify-content:center;position:sticky;top:0;z-index:10;background:#f8f9fa;padding:8px 0}
+.nav button{padding:8px 16px;border:1px solid #ddd;background:#fff;border-radius:20px;font-size:13px;font-weight:500;cursor:pointer;transition:all .2s;-webkit-tap-highlight-color:transparent}
 .nav button.active{background:#2d6a4f;color:#fff;border-color:#2d6a4f}
 .nav button:hover:not(.active){background:#f0f0f0}
 .week-nav{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:12px}
-.week-nav button{background:#fff;border:1px solid #ddd;border-radius:8px;padding:6px 12px;cursor:pointer;font-size:14px}
-.week-nav button:hover{background:#f0f0f0}
+.week-nav button{background:#fff;border:1px solid #ddd;border-radius:8px;padding:8px 14px;cursor:pointer;font-size:16px;-webkit-tap-highlight-color:transparent}
+.week-nav button:active{background:#e0e0e0}
 .week-nav .week-label{font-size:15px;font-weight:600;min-width:220px;text-align:center}
 .day-card{background:#fff;border-radius:12px;padding:16px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.08);border-left:4px solid #ddd}
 .day-card.rest{border-left-color:#adb5bd;opacity:.7}.day-card.travel{border-left-color:#ffc107;background:#fffdf0}
@@ -35,30 +42,31 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .day-card .date-label{font-size:12px;color:#888;font-weight:400}
 .day-card .day-theme{font-size:12px;color:#2d6a4f;font-weight:500;margin-bottom:10px}
 .workout-block{border:1px solid #e5e7eb;border-radius:8px;margin-bottom:10px;overflow:hidden}
-.workout-header{display:flex;align-items:center;gap:10px;padding:10px 12px;cursor:pointer;background:#fafafa;user-select:none}
-.workout-header:hover{background:#f0f0f0}
-.workout-header input[type="checkbox"]{width:18px;height:18px;accent-color:#2d6a4f;cursor:pointer;flex-shrink:0}
+.workout-header{display:flex;align-items:center;gap:10px;padding:10px 12px;cursor:pointer;background:#fafafa;user-select:none;-webkit-tap-highlight-color:transparent}
+.workout-header:active{background:#ececec}
+.workout-header input[type="checkbox"]{width:22px;height:22px;accent-color:#2d6a4f;cursor:pointer;flex-shrink:0}
 .workout-header .workout-title{flex:1;font-size:14px;font-weight:600}
 .workout-header .workout-title.done{text-decoration:line-through;color:#999}
 .workout-header .expand-icon{font-size:12px;color:#999;transition:transform .2s}
 .workout-header .expand-icon.open{transform:rotate(90deg)}
 .category-tag{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;margin-right:6px;vertical-align:middle}
-.tag-sprint{background:#fee2e2;color:#dc2626}.tag-cardio{background:#dbeafe;color:#2563eb}.tag-soccer{background:#d1fae5;color:#059669}.tag-strength{background:#fef3c7;color:#d97706}.tag-mobility{background:#ede9fe;color:#7c3aed}
+.tag-sprint{background:#fee2e2;color:#dc2626}.tag-cardio{background:#dbeafe;color:#2563eb}.tag-soccer{background:#d1fae5;color:#059669}.tag-strength{background:#fef3c7;color:#d97706}.tag-mobility{background:#ede9fe;color:#7c3aed}.tag-corrective{background:#ffe4e6;color:#be123c}
 .workout-detail{display:none;padding:0 12px 12px 40px}
 .workout-detail.open{display:block}
 .exercise-list{list-style:none}
-.exercise-list li{padding:5px 0;font-size:13px;border-bottom:1px solid #f5f5f5;display:flex;gap:8px}
+.exercise-list li{padding:6px 0;font-size:13px;border-bottom:1px solid #f5f5f5;display:flex;gap:8px}
 .exercise-list li:last-child{border-bottom:none}
 .exercise-list .ex-name{font-weight:500;min-width:40%}
 .exercise-list .ex-prescription{color:#555}
 .exercise-list .ex-note{font-size:11px;color:#888;font-style:italic;display:block;margin-top:2px}
+.vid-link{color:#aaa;font-size:10px;text-decoration:none;margin-left:4px;padding:3px 5px;border:1px solid #ddd;border-radius:4px;vertical-align:middle;display:inline-block;line-height:1}.vid-link:active{color:#dc2626;border-color:#dc2626}
 .workout-footer{padding:6px 12px 10px 12px}
-.notes-input{width:100%;border:1px solid #e5e7eb;border-radius:6px;padding:6px 10px;font-size:12px;font-family:inherit;resize:none}
+.notes-input{width:100%;border:1px solid #e5e7eb;border-radius:6px;padding:8px 10px;font-size:14px;font-family:inherit;resize:none;-webkit-appearance:none}
 .notes-input:focus{outline:none;border-color:#2d6a4f}
 .difficulty-row{display:flex;align-items:center;gap:6px;margin-bottom:6px;padding:0 0 0 28px}
 .difficulty-label{font-size:11px;color:#888;font-weight:500;white-space:nowrap}
-.diff-btn{padding:4px 10px;border-radius:14px;border:1.5px solid #e0e0e0;font-size:11px;font-weight:600;cursor:pointer;background:#fff;transition:all .15s}
-.diff-btn:hover{border-color:#bbb}
+.diff-btn{padding:6px 12px;border-radius:14px;border:1.5px solid #e0e0e0;font-size:12px;font-weight:600;cursor:pointer;background:#fff;transition:all .15s;-webkit-tap-highlight-color:transparent}
+.diff-btn:active{transform:scale(0.95)}
 .diff-btn.selected-easy{background:#d1fae5;border-color:#059669;color:#059669}
 .diff-btn.selected-right{background:#dbeafe;border-color:#2563eb;color:#2563eb}
 .diff-btn.selected-hard{background:#fee2e2;border-color:#dc2626;color:#dc2626}
@@ -96,7 +104,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .test-section-header{font-size:16px;font-weight:700;margin-bottom:4px}
 .test-section-sub{font-size:13px;color:#666;margin-bottom:16px}
 .test-selector{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;justify-content:center}
-.test-selector button{padding:6px 14px;border:1.5px solid #ddd;background:#fff;border-radius:16px;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s}
+.test-selector button{padding:6px 14px;border:1.5px solid #ddd;background:#fff;border-radius:16px;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;-webkit-tap-highlight-color:transparent}
 .test-selector button.active-test{background:#1e40af;color:#fff;border-color:#1e40af}
 .test-selector button:hover:not(.active-test){background:#f0f0f0}
 .test-card{background:#fff;border-radius:12px;padding:20px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.08);border-top:4px solid #1e40af}
@@ -107,22 +115,20 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .test-input-row{display:flex;gap:12px;align-items:flex-end;margin-bottom:16px;flex-wrap:wrap}
 .test-input-group{display:flex;flex-direction:column;gap:4px}
 .test-input-group label{font-size:11px;font-weight:600;color:#666}
-.test-input-group select,.test-input-group input{padding:8px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;font-family:inherit;width:140px}
+.test-input-group select,.test-input-group input{padding:10px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:16px;font-family:inherit;width:160px;-webkit-appearance:none}
 .test-input-group input:focus,.test-input-group select:focus{outline:none;border-color:#1e40af}
-.save-test-btn{padding:8px 20px;background:#1e40af;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;align-self:flex-end}
-.save-test-btn:hover{background:#1e3a8a}
-.save-test-btn:disabled{background:#ccc;cursor:not-allowed}
+.save-test-btn{padding:10px 20px;background:#1e40af;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;-webkit-tap-highlight-color:transparent}
+.save-test-btn:active{background:#1e3a8a;transform:scale(0.97)}
 .save-msg{font-size:12px;color:#059669;font-weight:500;margin-left:8px;opacity:0;transition:opacity .3s}
 .save-msg.show{opacity:1}
 .results-table{width:100%;border-collapse:collapse;margin-bottom:16px;font-size:13px}
 .results-table th{text-align:left;padding:8px 10px;background:#f8f9fa;border-bottom:2px solid #e5e7eb;font-weight:600;font-size:12px;color:#666}
 .results-table td{padding:8px 10px;border-bottom:1px solid #f0f0f0}
-.results-table tr:hover{background:#f8fdf9}
 .pr-badge{display:inline-block;background:#fef3c7;color:#d97706;font-size:10px;font-weight:700;padding:1px 6px;border-radius:8px;margin-left:4px}
 .improve-badge{font-size:11px;font-weight:600;margin-left:4px}
 .improve-up{color:#059669}.improve-down{color:#dc2626}.improve-same{color:#888}
-.delete-btn{background:none;border:none;color:#ccc;cursor:pointer;font-size:14px;padding:2px 6px}
-.delete-btn:hover{color:#dc2626}
+.delete-btn{background:none;border:none;color:#ccc;cursor:pointer;font-size:16px;padding:4px 8px;-webkit-tap-highlight-color:transparent}
+.delete-btn:active{color:#dc2626}
 .test-pr-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px}
 .pr-card{background:#fff;border-radius:10px;padding:14px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.08);border-top:3px solid #d97706}
 .pr-card .pr-value{font-size:24px;font-weight:700;color:#d97706}
@@ -135,10 +141,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
   .nav button{padding:6px 12px;font-size:12px}
   .exercise-list li{flex-direction:column;gap:2px}
   .exercise-list .ex-name{min-width:auto}
-  .difficulty-row{flex-wrap:wrap}
-  .test-input-row{flex-direction:column}
+  .difficulty-row{flex-wrap:wrap;padding-left:0}
+  .test-input-row{flex-direction:column;align-items:stretch}
   .test-input-group input,.test-input-group select{width:100%}
   .test-pr-grid{grid-template-columns:repeat(2,1fr)}
+  .save-test-btn{width:100%}
 }
 </style>
 </head>
@@ -146,7 +153,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
 <div class="header">
   <h1>Summer Training Dashboard</h1>
-  <div class="subtitle">May 25 – Aug 12, 2026 • 5 days/week • Soccer | XC | Speed | Mobility</div>
+  <div class="subtitle">May 25 – Aug 12, 2026 • 5 days/week • Soccer | XC | Speed | Mobility | Correctives</div>
 </div>
 <div id="phase-banner" class="phase-banner phase-1"></div>
 
@@ -190,353 +197,103 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 <div id="insights-section" class="section"></div>
 
 <script>
-const START_DATE=new Date(2026,4,25),TOTAL_WEEKS=11;
-let currentWeek=0;
+const START_DATE=new Date(2026,4,25),TOTAL_WEEKS=11;let currentWeek=0;
 const DIFF={EASY:1,RIGHT:2,HARD:3},DIFF_LABELS={1:'Too Easy',2:'Just Right',3:'Too Hard'},DIFF_CSS={1:'selected-easy',2:'selected-right',3:'selected-hard'},DIFF_IND={1:'ind-easy',2:'ind-right',3:'ind-hard'};
 function getPhase(w){return w<4?1:w<8?2:3}
 function getPhaseLabel(w){const p=getPhase(w);if(p===1)return{label:'Phase 1: Foundation (Weeks 1–4)',cls:'phase-1'};if(p===2)return{label:'Phase 2: Development (Weeks 5–8)',cls:'phase-2'};return{label:'Phase 3: Preseason (Weeks 9–11)',cls:'phase-3'}}
-const CATEGORIES={sprint:{label:'Speed',color:'#dc2626',tagClass:'tag-sprint'},cardio:{label:'Cardio',color:'#2563eb',tagClass:'tag-cardio'},soccer:{label:'Soccer',color:'#059669',tagClass:'tag-soccer'},strength:{label:'Strength',color:'#d97706',tagClass:'tag-strength'},mobility:{label:'Mobility',color:'#7c3aed',tagClass:'tag-mobility'}};
-
-// ===== FITNESS TESTS =====
+const CATEGORIES={sprint:{label:'Speed',color:'#dc2626',tagClass:'tag-sprint'},cardio:{label:'Cardio',color:'#2563eb',tagClass:'tag-cardio'},soccer:{label:'Soccer',color:'#059669',tagClass:'tag-soccer'},strength:{label:'Strength',color:'#d97706',tagClass:'tag-strength'},mobility:{label:'Mobility',color:'#7c3aed',tagClass:'tag-mobility'},corrective:{label:'Corrective',color:'#be123c',tagClass:'tag-corrective'}};
 const TEST_WEEKS=[0,2,4,6,8,10];
 const TESTS=[
-  {
-    id:'sprint_30m',name:'30m Sprint',unit:'seconds',cat:'Speed',color:'#dc2626',
-    lowerIsBetter:true,icon:'⚡',
-    protocol:`<strong>What it measures:</strong> Acceleration and raw sprint speed.<br><br>
-<strong>Setup:</strong> Mark 30 meters on flat ground (use a tape measure or count ~33 large steps). Set a clear start and finish line.<br><br>
-<strong>Protocol:</strong><br>
-1. Full dynamic warmup first (at least 5 min)<br>
-2. 2 practice runs at 80% to prime your legs<br>
-3. Start from a standing 3-point stance<br>
-4. <strong>3 max-effort trials</strong> with 2 min rest between each<br>
-5. Have someone start the timer on your first movement and stop at the finish line<br>
-6. <strong>Record your best time</strong><br><br>
-<strong>Tips:</strong> Drive your arms hard. Stay low through the first 10m. Don't look at the timer mid-sprint.`
-  },
-  {
-    id:'broad_jump',name:'Broad Jump',unit:'inches',cat:'Power',color:'#d97706',
-    lowerIsBetter:false,icon:'💪',
-    protocol:`<strong>What it measures:</strong> Explosive lower-body power from plyometric training.<br><br>
-<strong>Setup:</strong> Find flat ground. Mark a start line with tape. Have a tape measure ready.<br><br>
-<strong>Protocol:</strong><br>
-1. Stand with toes behind the line, feet shoulder-width<br>
-2. Swing arms back, bend knees, then explode forward<br>
-3. Land on both feet — <strong>measure from start line to back of nearest heel</strong><br>
-4. <strong>3 attempts</strong> with 60s rest between each<br>
-5. <strong>Record your best distance in inches</strong><br><br>
-<strong>Tips:</strong> The arm swing is half the jump. Reach forward as you land. If you fall backward, retake it.`
-  },
-  {
-    id:'six_min_run',name:'6-Minute Run',unit:'meters',cat:'Cardio',color:'#2563eb',
-    lowerIsBetter:false,icon:'🏃',
-    protocol:`<strong>What it measures:</strong> Aerobic endurance — your engine for XC and soccer.<br><br>
-<strong>Setup:</strong> Find a flat route you can measure. A field perimeter works great — measure one lap. Or use a GPS app.<br><br>
-<strong>Protocol:</strong><br>
-1. Light 3 min jog warmup, then a few strides<br>
-2. Set a <strong>6-minute countdown timer</strong><br>
-3. Run as far as you can in exactly 6 minutes — <strong>pacing matters</strong><br>
-4. When the timer goes off, stop and mark your spot<br>
-5. <strong>Record total distance in meters</strong> (1 lap of a soccer field ≈ 350m)<br><br>
-<strong>Tips:</strong> Start at a pace you can hold for 6 min. Most people go out too fast. Even splits = good pacing.`
-  },
-  {
-    id:'juggling',name:'Juggling Record',unit:'touches',cat:'Soccer',color:'#059669',
-    lowerIsBetter:false,icon:'⚽',
-    protocol:`<strong>What it measures:</strong> Ball control, touch quality, and focus under pressure.<br><br>
-<strong>Setup:</strong> Flat surface, properly inflated ball. No wind if possible.<br><br>
-<strong>Protocol:</strong><br>
-1. Light ball mastery warmup (2 min toe taps, sole rolls)<br>
-2. <strong>5 attempts</strong> to set your max consecutive touches<br>
-3. Any surface counts: feet, thighs, head, shoulders, chest<br>
-4. The ball cannot touch the ground between touches<br>
-5. <strong>Record your highest number</strong><br><br>
-<strong>Tips:</strong> Keep ball below head height. Relax your ankle on contact. Use thigh to reset when it drifts. Count out loud.`
-  },
-  {
-    id:'squat_hold',name:'Deep Squat Hold',unit:'seconds',cat:'Mobility',color:'#7c3aed',
-    lowerIsBetter:false,icon:'🧘',
-    protocol:`<strong>What it measures:</strong> Functional mobility across ankles, hips, and thoracic spine — the three areas that matter most for soccer and running performance.<br><br>
-<strong>Setup:</strong> Flat, firm surface. No shoes (barefoot or socks) for the most honest test. Have a phone timer ready.<br><br>
-<strong>Protocol:</strong><br>
-1. Warm up first — 5 min of easy movement, leg swings, bodyweight squats<br>
-2. Drop into a full deep squat with these standards:<br>
-&nbsp;&nbsp;• <strong>Heels flat on the ground</strong> (no lifting onto toes)<br>
-&nbsp;&nbsp;• <strong>Hips below knees</strong> (full depth)<br>
-&nbsp;&nbsp;• <strong>Chest up, back relatively straight</strong> (not collapsed forward)<br>
-&nbsp;&nbsp;• <strong>Feet roughly shoulder-width</strong>, toes can angle out up to 30°<br>
-&nbsp;&nbsp;• <strong>Arms in front for balance</strong> (not holding onto anything)<br>
-3. Start the timer when you're in position<br>
-4. Hold as long as you can <strong>maintain ALL of the standards above</strong><br>
-5. Stop the timer when any standard breaks — heels lift, chest collapses, or you have to grab something<br>
-6. <strong>3 attempts</strong> with 60s rest. <strong>Record your best time.</strong><br><br>
-<strong>Tips:</strong> Push your knees out over your toes — don't let them cave in. Breathe slowly and deeply. If you can't hold it at all with heels down, that's your starting point — the mobility work in the program is designed to fix exactly this. Most 13-year-olds start around 30–60 seconds. Elite movers can hold 3+ minutes.`
-  },
-  {
-    id:'shuttle_5_10_5',name:'5-10-5 Shuttle',unit:'seconds',cat:'Agility',color:'#f59e0b',
-    lowerIsBetter:true,icon:'🔄',
-    protocol:`<strong>What it measures:</strong> Change-of-direction speed and lateral agility — critical for soccer.<br><br>
-<strong>Setup:</strong> Place 3 cones in a line, 5 yards apart (so 5 yds – center – 5 yds). Start at center cone.<br><br>
-<strong>Protocol:</strong><br>
-1. Full dynamic warmup + 2 practice runs at 80%<br>
-2. Start in a 3-point stance at the center cone<br>
-3. Sprint 5 yards RIGHT, touch the line<br>
-4. Sprint 10 yards LEFT (past center to far cone), touch the line<br>
-5. Sprint 5 yards RIGHT back through center — timer stops<br>
-6. <strong>3 attempts</strong> with 2 min rest. Record best time.<br><br>
-<strong>Tips:</strong> Stay low through turns — lower = faster direction change. Plant hard on outside foot. Don't round the turns.`
-  }
+{id:'sprint_30m',name:'30m Sprint',unit:'seconds',cat:'Speed',color:'#dc2626',lowerIsBetter:true,icon:'⚡',protocol:'<strong>What it measures:</strong> Acceleration and raw sprint speed.<br><br><strong>Setup:</strong> Mark 30 meters on flat ground (~33 large steps).<br><br><strong>Protocol:</strong><br>1. Full dynamic warmup (5+ min)<br>2. 2 practice runs at 80%<br>3. 3-point stance start<br>4. <strong>3 max-effort trials</strong>, 2 min rest between<br>5. Timer starts on first movement, stops at finish<br>6. <strong>Record best time</strong><br><br><strong>Tips:</strong> Drive arms hard. Stay low first 10m. Don\'t peek at the timer.'},
+{id:'broad_jump',name:'Broad Jump',unit:'inches',cat:'Power',color:'#d97706',lowerIsBetter:false,icon:'💪',protocol:'<strong>What it measures:</strong> Explosive lower-body power.<br><br><strong>Setup:</strong> Flat ground, tape start line, tape measure.<br><br><strong>Protocol:</strong><br>1. Toes behind line, feet shoulder-width<br>2. Swing arms, bend knees, explode forward<br>3. Measure from start line to back of nearest heel<br>4. <strong>3 attempts</strong>, 60s rest<br>5. <strong>Record best in inches</strong><br><br><strong>Tips:</strong> Arm swing is half the jump. Reach forward on landing. Fall backward = retake.'},
+{id:'six_min_run',name:'6-Minute Run',unit:'meters',cat:'Cardio',color:'#2563eb',lowerIsBetter:false,icon:'🏃',protocol:'<strong>What it measures:</strong> Aerobic endurance — your engine for XC and soccer.<br><br><strong>Setup:</strong> Flat route you can measure. Use GPS app or field perimeter (~350m/lap).<br><br><strong>Protocol:</strong><br>1. Light 3 min jog warmup + strides<br>2. Set <strong>6-minute countdown</strong><br>3. Run as far as you can — pacing matters<br>4. Stop and mark spot at the beep<br>5. <strong>Record total meters</strong><br><br><strong>Tips:</strong> Start at a pace you can hold all 6 min. First minute should feel easy. Last minute should hurt.'},
+{id:'juggling',name:'Juggling Record',unit:'touches',cat:'Soccer',color:'#059669',lowerIsBetter:false,icon:'⚽',protocol:'<strong>What it measures:</strong> Ball control and focus.<br><br><strong>Setup:</strong> Flat surface, inflated ball, no wind.<br><br><strong>Protocol:</strong><br>1. 2 min ball mastery warmup<br>2. <strong>5 attempts</strong> at max consecutive touches<br>3. Any surface: feet, thighs, head, chest<br>4. Ball can\'t touch ground<br>5. <strong>Record highest number</strong><br><br><strong>Tips:</strong> Keep ball below head height. Relax ankle on contact. Use thigh to reset. Count out loud.'},
+{id:'squat_hold',name:'Deep Squat Hold',unit:'seconds',cat:'Mobility',color:'#7c3aed',lowerIsBetter:false,icon:'🧘',protocol:'<strong>What it measures:</strong> Functional mobility — ankles, hips, and thoracic spine together.<br><br><strong>Setup:</strong> Flat surface. Barefoot or socks. Phone timer.<br><br><strong>Protocol:</strong><br>1. Warm up first (5 min movement, squats, leg swings)<br>2. Drop into a full deep squat with these standards:<br>&nbsp;&nbsp;• <strong>Heels flat</strong> (no lifting onto toes)<br>&nbsp;&nbsp;• <strong>Hips below knees</strong><br>&nbsp;&nbsp;• <strong>Chest up, back straight</strong> (not collapsed)<br>&nbsp;&nbsp;• <strong>Feet shoulder-width</strong>, toes out up to 30°<br>&nbsp;&nbsp;• <strong>Arms in front</strong> (not holding anything)<br>3. Start timer when in position<br>4. Stop when ANY standard breaks<br>5. <strong>3 attempts</strong>, 60s rest. <strong>Record best time.</strong><br><br><strong>Tips:</strong> Push knees out over toes. Breathe slowly. If you can\'t hold at all with heels down, that\'s your baseline — the program fixes this. Most kids start 30–60s. Elite movers hold 3+ min.'},
+{id:'shuttle_5_10_5',name:'5-10-5 Shuttle',unit:'seconds',cat:'Agility',color:'#f59e0b',lowerIsBetter:true,icon:'🔄',protocol:'<strong>What it measures:</strong> Change-of-direction speed.<br><br><strong>Setup:</strong> 3 cones in a line, 5 yards apart. Start at center.<br><br><strong>Protocol:</strong><br>1. Full warmup + 2 practice at 80%<br>2. 3-point stance at center cone<br>3. Sprint 5 yds RIGHT, touch line<br>4. Sprint 10 yds LEFT (past center to far cone), touch<br>5. Sprint 5 yds RIGHT back through center<br>6. <strong>3 attempts</strong>, 2 min rest. <strong>Record best.</strong><br><br><strong>Tips:</strong> Stay LOW through turns. Plant outside foot hard. Don\'t round the turns.'}
 ];
-
 let activeTestId=TESTS[0].id;
-
-// ===== STATE =====
 function getState(){try{return JSON.parse(localStorage.getItem('trainingV5')||'{}')}catch{return{}}}
 function saveState(s){localStorage.setItem('trainingV5',JSON.stringify(s))}
 function getWS(w,bid){return getState()[`w${w}_${bid}`]||{done:false,notes:'',diff:0}}
 function setWS(w,bid,d){const s=getState();s[`w${w}_${bid}`]=d;saveState(s)}
 function isTravel(w){return getState()[`w${w}_travel`]||false}
 function setTravelState(w,v){const s=getState();s[`w${w}_travel`]=v;saveState(s)}
-function getTestResults(tid){const s=getState();return s[`test_${tid}`]||[]}
+function getTestResults(tid){return getState()[`test_${tid}`]||[]}
 function saveTestResult(tid,wk,val){const s=getState(),k=`test_${tid}`;let r=s[k]||[];r=r.filter(x=>x.week!==wk);r.push({week:wk,value:parseFloat(val),date:new Date(START_DATE.getTime()+wk*7*24*60*60*1000).toISOString()});r.sort((a,b)=>a.week-b.week);s[k]=r;saveState(s)}
 function deleteTestResult(tid,wk){const s=getState(),k=`test_${tid}`;s[k]=(s[k]||[]).filter(x=>x.week!==wk);saveState(s)}
 function getWeekDates(w){const d=[];for(let i=0;i<7;i++){const dt=new Date(START_DATE);dt.setDate(dt.getDate()+w*7+i);d.push(dt)}return d}
 function fmtDate(d){return d.toLocaleDateString('en-US',{month:'short',day:'numeric'})}
 function getCurrentWeekIdx(){return Math.max(0,Math.min(Math.floor((new Date()-START_DATE)/(7*24*60*60*1000)),TOTAL_WEEKS-1))}
 const expandedBlocks={};
-
-// ===== PROGRAMS =====
 function getPrograms(phase){return{
-monday:{warmup:'Dynamic warmup: 10 yd high knees, 10 yd butt kicks, 10 yd carioca each way, 10 yd A-skips, 10 yd B-skips, 5 walking lunges w/ twist each side, 10 leg swings each leg (≈8 min)',blocks:[
-{id:'mon_speed',cat:'sprint',title:phase===1?'Acceleration Mechanics & Sprints':phase===2?'Acceleration Sprints — Increased Volume':'Game-Speed Acceleration',exercises:phase===1?[{name:'Wall Drive Drill',rx:'2 × 8 each leg',note:'Hands on wall, drive knee to 90°, hold 2 sec.'},{name:'Falling Start to 10m',rx:'4 reps — walk back',note:'Lean until you fall into a sprint. Arms hard.'},{name:'10m Build-Ups',rx:'4 reps — 60s rest',note:'70% to 90%. Stay low first 5 steps.'},{name:'20m from 3-Point',rx:'4 reps — 90s rest',note:'Explode, pump arms, drive knees.'},{name:'30m Sprint',rx:'2 reps — 2 min rest',note:'Max effort, good form.'}]:phase===2?[{name:'Wall Drive to Sprint',rx:'3×5 each leg → 10m sprint',note:'Drive off wall into sprint.'},{name:'10m Sprints',rx:'4 reps — 60s rest',note:'Max effort. Time if possible.'},{name:'20m Sprints',rx:'5 reps — 90s rest',note:'Transition drive to upright at 10m.'},{name:'30m Sprints',rx:'3 reps — 2 min rest',note:'Relax shoulders and jaw.'},{name:'40m Sprint',rx:'2 reps — 2 min rest',note:'Build top-end speed.'}]:[{name:'Reaction Starts',rx:'4×10m — react to cue, 60s rest',note:'Face away, react, turn, sprint.'},{name:'20m + Direction Change',rx:'4 reps — 90s rest',note:'15m sprint, cut 45°, 5m more.'},{name:'30m Sprints',rx:'4 reps — 90s rest',note:'Should feel sharp.'},{name:'40m Sprint',rx:'3 reps — 2 min rest',note:'Breakaway sim.'},{name:'Flying 20m',rx:'2 reps — 2 min rest',note:'10m build → 20m max.'}]},
-{id:'mon_soccer',cat:'soccer',title:phase===1?'Close Control & Dribbling':phase===2?'Advanced Dribbling & 1v1':'Pressure Dribbling',exercises:phase===1?[{name:'Toe Taps',rx:'2×30s each foot',note:'Quick, light.'},{name:'Inside-Outside Cones',rx:'4 trips, 8 cones',note:'Both feet.'},{name:'Figure-8 Dribbling',rx:'3 min',note:'Sole rolls, inside cuts.'},{name:'Pull-Back Turn',rx:'10 each foot',note:'Sell the move.'},{name:'Ladder Quick Feet',rx:'4 trips',note:'In-in-out-out, icky shuffle.'}]:phase===2?[{name:'Coerver Circuit',rx:'6 min continuous',note:'Toe taps, inside-inside, sole rolls, scissors. 30s each.'},{name:'Cone Slalom + Moves',rx:'4 trips, 10 cones',note:'Stepover, scissors, chop, Cruyff.'},{name:'Matthews Cut + Accel',rx:'8 reps',note:'Fake inside, push outside, sprint 5m.'},{name:'Stepover to Shot',rx:'6 reps',note:'Exit with pace, strike.'},{name:'Lateral Shuffle to Sprint',rx:'6 reps',note:'Shuffle 5m, sprint 10m dribbling.'}]:[{name:'Pressure Circuit',rx:'4×45s on/30s rest',note:'6 cones in 10×10 box. Move at each.'},{name:'1v1 Attacking',rx:'8 reps',note:'2-move combo, finish.'},{name:'Speed Dribble 40m',rx:'4 timed reps',note:'Track improvement.'},{name:'Receive & Attack',rx:'8 reps',note:'Wall toss, control, attack.'},{name:'Complex Ladder',rx:'4 trips',note:'Crossover, Ali shuffle.'}]},
-{id:'mon_mob',cat:'mobility',title:'Hip & Ankle Mobility',exercises:phase===1?[{name:'90/90 Hip Stretch',rx:'30s each ×2',note:'Lean over front shin.'},{name:'Ankle Dorsiflexion',rx:'10 rocks each ×2',note:'Knee over pinky toe.'},{name:'Leg Swings F/B',rx:'15 each',note:'Controlled.'},{name:'Leg Swings Lateral',rx:'15 each',note:'Open groin.'},{name:'Deep Squat Hold',rx:'3×20s',note:'Elbows push knees.'}]:phase===2?[{name:'90/90 Switches',rx:'10 switches ×2',note:'Spine tall.'},{name:'Ankle Rocks + Hold',rx:'8+15s each ×2',note:'Pause end range.'},{name:'Adductor Rock-Back',rx:'10 each ×2',note:'Inner thigh.'},{name:'Figure-4 Standing',rx:'30s each ×2',note:'Deep rotators.'},{name:'Calf Raises off Step',rx:'15 — 3s lower',note:'Slow eccentric.'}]:[{name:'90/90 + Rotation',rx:'8 switches ×2',note:'Hip + thoracic.'},{name:'Banded Ankle',rx:'10 each ×2',note:'Rock against band.'},{name:'WGS Dynamic',rx:'5 each side',note:'Flow continuously.'},{name:'Squat-to-Stand',rx:'8 reps',note:'Toes to squat.'},{name:'SL Balance Eyes Closed',rx:'3×20s each',note:'Ankle stability.'}]}
-]},
-tuesday:{warmup:'5 min jog + arm circles, hip circles, leg swings (≈7 min)',blocks:[
-{id:'tue_str',cat:'strength',title:'Strength Training (Your Program)',exercises:[{name:'Follow your existing program',rx:'Full session',note:''}]},
-{id:'tue_run',cat:'cardio',title:phase===1?'Easy Aerobic Run':phase===2?'Easy Run — Extended':'Easy Run — Maintain',exercises:phase===1?[{name:'Easy Run',rx:'20 min conversational',note:'Full sentences.'},{name:'Pace Check',rx:'9:30–10:30/mi',note:'Not a workout.'},{name:'Cooldown Walk',rx:'3 min',note:''}]:phase===2?[{name:'Easy Run',rx:'25–30 min easy',note:'Stay at 25 if tired.'},{name:'Strides (Optional)',rx:'3×80m at 75%',note:'Only if fresh.'},{name:'Cooldown Walk',rx:'3 min',note:''}]:[{name:'Easy Run',rx:'25–30 min easy',note:'Save energy for Thu.'},{name:'Strides',rx:'4×80m at 80%',note:'Smooth and fast.'},{name:'Cooldown Walk',rx:'3 min',note:''}]},
-{id:'tue_mob',cat:'mobility',title:'Recovery Stretch',exercises:phase===1?[{name:'Quad Stretch',rx:'30s each',note:''},{name:'Hamstring Stretch',rx:'30s each',note:''},{name:'Calf Stretch',rx:'30s each',note:''},{name:'Cross-Body Shoulder',rx:'20s each',note:''},{name:'Child\'s Pose',rx:'45s',note:''}]:[{name:'Foam Roll Quads',rx:'60s each',note:'Pause on sore spots.'},{name:'Foam Roll Calves',rx:'60s each',note:''},{name:'Pigeon Stretch',rx:'45s each',note:''},{name:'Seated Hamstring',rx:'30s each',note:''},{name:'Spinal Twist',rx:'30s each',note:''}]}
-]},
-wednesday:{warmup:'Ball mastery: 2 min juggling, 1 min toe taps, 1 min sole rolls, 1 min inside-inside (≈5 min)',blocks:[
-{id:'wed_soccer1',cat:'soccer',title:phase===1?'First Touch & Passing':phase===2?'First Touch Under Pressure':'Technical Sharpening',exercises:phase===1?[{name:'Wall Pass — Inside',rx:'50 reps each foot',note:''},{name:'Wall Pass — Outside',rx:'20 reps each',note:''},{name:'Receive-Turn-Pass',rx:'3 min',note:''},{name:'Throw-Trap-Volley',rx:'10 each foot',note:''},{name:'Driven Pass Target',rx:'15 each foot',note:''}]:phase===2?[{name:'One-Touch Wall',rx:'2×1 min each foot',note:'No trapping.'},{name:'Receive-and-Go',rx:'15 each direction',note:'First touch 45°.'},{name:'Chipped Pass',rx:'15 each foot',note:''},{name:'Back-to-Wall Turn',rx:'10 each side',note:''},{name:'Weak-Foot Focus',rx:'30 reps',note:''}]:[{name:'Rapid-Fire Wall',rx:'3×45s, 15s rest',note:'Max quality.'},{name:'Long Ball Target',rx:'10 each foot, 20-25 yds',note:''},{name:'Receive from Air',rx:'15 reps',note:'Alternate surfaces.'},{name:'Give-and-Go',rx:'10 each side',note:''},{name:'Weak-Foot Shooting',rx:'10 strikes',note:''}]},
-{id:'wed_soccer2',cat:'soccer',title:phase===1?'Juggling & Mastery':phase===2?'Small-Sided & Juggling':'Game Sim & Finishing',exercises:phase===1?[{name:'Juggling Challenge',rx:'10 min — beat record',note:''},{name:'Around the World',rx:'5 each direction',note:''},{name:'Sole Roll Drag-Back',rx:'3 min',note:''}]:phase===2?[{name:'Juggling + Head',rx:'5 min',note:'1 header per 5 touches.'},{name:'Finishing Circuit',rx:'10 shots, 5 positions',note:''},{name:'2v1 Scenarios',rx:'10 min',note:''}]:[{name:'Timed Juggling',rx:'3×2 min count',note:''},{name:'Shoot Under Fatigue',rx:'5× sprint→receive→shoot',note:''},{name:'Full Scenario',rx:'8 reps',note:'Receive, beat defender, shoot.'}]},
-{id:'wed_mob',cat:'mobility',title:phase===1?'Yoga Flow':'Yoga + Thoracic',exercises:phase===1?[{name:'Cat-Cow',rx:'10 reps',note:''},{name:'Down Dog to Cobra',rx:'8 reps',note:''},{name:'Low Lunge + Reach',rx:'30s each ×2',note:''},{name:'Seated Twist',rx:'30s each',note:''},{name:'Pigeon',rx:'45s each',note:''},{name:'Figure-4 Supine',rx:'30s each',note:''}]:[{name:'Cat-Cow → Thread Needle',rx:'8 reps alternating',note:''},{name:'DD→Lunge→Twist Flow',rx:'5 each side',note:''},{name:'Prone Scorpion',rx:'8 each',note:''},{name:'Straddle + Rotation',rx:'30s each ×2',note:''},{name:'Pigeon',rx:'60s each',note:''},{name:'Windshield Wipers',rx:'10 each',note:''}]}
-]},
-thursday:{warmup:'5 min jog + high knees, butt kicks, A-skips, lateral shuffle (≈8 min)',blocks:[
-{id:'thu_str',cat:'strength',title:'Strength Training (Your Program)',exercises:[{name:'Follow your existing program',rx:'Full session',note:'Opposite of Tuesday if splitting.'}]},
-{id:'thu_cardio',cat:'cardio',title:phase===1?'Interval Introduction':phase===2?'Interval Development':'Race-Pace Intervals',exercises:phase===1?[{name:'200m Repeats',rx:'5×200m at 80%',note:'Comfortably hard.'},{name:'Recovery',rx:'90s walk/jog',note:''},{name:'Cooldown',rx:'5 min easy',note:''}]:phase===2?[{name:'200m Repeats',rx:'6×200m at 85%',note:'Last 2 should be tough.'},{name:'Recovery',rx:'75s walk/jog',note:''},{name:'400m Finisher',rx:'1×400m at 85%',note:'Mental toughness.'},{name:'Cooldown',rx:'5 min easy',note:''}]:[{name:'400m Repeats',rx:'4×400m race effort',note:'XC pace feel.'},{name:'Recovery',rx:'2 min jog',note:'Active recovery.'},{name:'200m Kicks',rx:'2×200m at 90%',note:'Finishing kick practice.'},{name:'Cooldown',rx:'5 min easy',note:''}]},
-{id:'thu_mob',cat:'mobility',title:'Hip Flexor & Hamstring',exercises:phase===1?[{name:'HK Hip Flexor',rx:'30s each ×2',note:'Squeeze glute.'},{name:'Hamstring Scoop',rx:'10 each leg',note:''},{name:'Supine Hamstring',rx:'30s each ×2',note:''},{name:'Band Pull-Aparts',rx:'2×15',note:''}]:[{name:'HK Hip Flexor + Lean',rx:'30s each ×2',note:''},{name:'SL RDL Stretch',rx:'8 each, 3s hold',note:''},{name:'Banded Hamstring PNF',rx:'30s each ×2',note:''},{name:'Banded Hip IR',rx:'10 each',note:''},{name:'T-Spine on Roller',rx:'10 ext + 30s hold',note:''}]}
-]},
-friday:{warmup:'Jog 200m + 10 yd: high knees, butt kicks, A-skips, B-skips, carioca, backpedal. 5× tuck jumps, 5× squat jumps (≈10 min)',blocks:[
-{id:'fri_speed',cat:'sprint',title:phase===1?'Hill Sprints & Intro Plyos':phase===2?'Hill Sprints & Plyo Dev':'Advanced Plyos & Speed Endurance',exercises:phase===1?[{name:'Hill Sprints ~30m',rx:'6 reps — walk down',note:'Teaches forward lean.'},{name:'Pogo Hops',rx:'3×10',note:'Stiff ankles, springy.'},{name:'Broad Jumps',rx:'3×4',note:'Stick landing.'},{name:'Lateral Hops',rx:'3×8 each',note:'Quick, low, soft.'}]:phase===2?[{name:'Hill Sprints',rx:'8 reps — walk down',note:''},{name:'SL Pogo Hops',rx:'2×8 each',note:'Much harder.'},{name:'Broad Jump→Sprint',rx:'4 reps',note:'Power→speed.'},{name:'SL Bounding',rx:'3×6 each',note:'Max distance.'},{name:'Depth Drop to Stick',rx:'3×4',note:'Absorb quietly.'}]:[{name:'Hill Sprints',rx:'6 reps — jog down',note:'Max effort, fewer reps.'},{name:'Depth Jump→Broad',rx:'3×3',note:'Reactive power.'},{name:'SL Bounding Distance',rx:'3×8 each',note:''},{name:'Lateral Bound→Sprint',rx:'4 each way',note:'Game-like.'},{name:'10-5 Repeated Hops',rx:'3×6',note:'Hot floor.'}]},
-{id:'fri_soccer',cat:'soccer',title:phase===1?'Shooting Fundamentals':phase===2?'Shooting Variety':'Finishing Under Pressure',exercises:phase===1?[{name:'Laces Strikes',rx:'10 each foot',note:''},{name:'Inside Placement',rx:'10 each foot',note:''},{name:'One-Touch Wall Finish',rx:'10 reps',note:''}]:phase===2?[{name:'Dribble to Shoot',rx:'8 reps',note:''},{name:'Volley Finishing',rx:'8 reps',note:''},{name:'Chip Shots',rx:'6 reps',note:''},{name:'Angle Shooting',rx:'5 each side',note:''}]:[{name:'Sprint→Receive→Shoot',rx:'6 reps',note:''},{name:'1v1 to Finish',rx:'6 reps',note:''},{name:'Weak-Foot Circuit',rx:'8 reps',note:''},{name:'Penalty Kicks',rx:'5 reps',note:'Pick spot first.'}]},
-{id:'fri_cardio',cat:'cardio',title:'Cooldown Jog',exercises:[{name:'Easy Cooldown',rx:'8–10 min very easy',note:'Flush legs.'}]},
-{id:'fri_mob',cat:'mobility',title:'Full-Body Mobility',exercises:phase===1?[{name:'FR Quads',rx:'60s each',note:''},{name:'FR IT Band',rx:'45s each',note:''},{name:'FR Calves',rx:'45s each',note:''},{name:'WGS',rx:'5 each side',note:''},{name:'Quad/HF Stretch',rx:'30s each',note:''},{name:'Child\'s Pose→Cobra',rx:'8 reps',note:''}]:[{name:'FR Full Lower',rx:'5 min total',note:''},{name:'Lacrosse Ball Glutes',rx:'60s each',note:''},{name:'WGS',rx:'5 each, 5s holds',note:''},{name:'Straddle Fold',rx:'45s',note:''},{name:'Spinal Twist',rx:'30s each',note:''},{name:'Legs Up Wall',rx:'2 min',note:'End-of-week recovery.'}]}
-]},
+monday:{warmup:'Dynamic warmup: 10 yd high knees, butt kicks, carioca, A-skips, B-skips, walking lunges w/ twist, leg swings (≈8 min)',blocks:[
+{id:'mon_corr',cat:'corrective',title:phase===1?'Correctives: Hip Activation + Ankles':phase===2?'Correctives: Hip Stability + Mobility':'Correctives: Dynamic Stability',exercises:phase===1?[{name:'Side-Lying Hip Raises',rx:'2×12 each (L first)',note:'Keep hips stacked. Lift from outer hip, not waist.'},{name:'Single-Leg Balance',rx:'3×20s each (L first)',note:'Keep hips level — don\'t let standing hip drop.'},{name:'Wall Ankle Rocks',rx:'10 each ×2',note:'Knee over pinky toe, heel stays down.'},{name:'Quadruped T-Spine Rotation',rx:'2×8 each side',note:'Hand behind head, rotate from mid-back only.'}]:phase===2?[{name:'Side Plank + Hip Raise',rx:'2×20s each (L first)',note:'Stack hips, lift top leg without rotating.'},{name:'SL RDL (Bodyweight)',rx:'2×8 each (L first)',note:'Slow 3s down, hips level, reach long.'},{name:'Pronation Lunges',rx:'2×8 each side',note:'Let back heel roll in, feel inside of ankle.'},{name:'Half-Kneel T-Spine Rotation',rx:'2×8 each side',note:'Rotate chest, keep hips facing forward.'}]:[{name:'Side Plank + Hip Raise',rx:'3×20s each (L first)',note:'Straight line head to toe, top leg lifts.'},{name:'SL Squat to Tap',rx:'2×6 each (L first)',note:'3s down, knee tracks over toes.'},{name:'Pronation Lunge + Rotate',rx:'2×8 each',note:'Lunge + rotate chest over front leg.'},{name:'Standing T-Spine Rotation',rx:'2×10 each',note:'Arms wide, rotate mid-back only.'}]},
+{id:'mon_speed',cat:'sprint',title:phase===1?'Acceleration Mechanics & Sprints':phase===2?'Acceleration — Increased Volume':'Game-Speed Acceleration',exercises:phase===1?[{name:'Wall Drive Drill',rx:'2×8 each leg',note:'Drive knee to 90°, hold 2s.'},{name:'Falling Start → 10m',rx:'4 reps, walk back',note:'Lean until you fall into sprint.'},{name:'10m Build-Ups',rx:'4 reps, 60s rest',note:'70→90%. Stay low.'},{name:'20m from 3-Point',rx:'4 reps, 90s rest',note:'Full effort.'},{name:'30m Sprint',rx:'2 reps, 2 min rest',note:'Max effort.'}]:phase===2?[{name:'Wall Drive → Sprint',rx:'3×5 each → 10m',note:''},{name:'10m Sprints',rx:'4 reps, 60s rest',note:'Time if possible.'},{name:'20m Sprints',rx:'5 reps, 90s rest',note:''},{name:'30m Sprints',rx:'3 reps, 2 min rest',note:''},{name:'40m Sprint',rx:'2 reps, 2 min rest',note:'Top-end speed.'}]:[{name:'Reaction Starts',rx:'4×10m, 60s rest',note:'React to cue.'},{name:'20m + Cut',rx:'4 reps, 90s rest',note:'15m sprint, 45° cut, 5m.'},{name:'30m Sprints',rx:'4 reps, 90s rest',note:''},{name:'40m Sprint',rx:'3 reps, 2 min rest',note:''},{name:'Flying 20m',rx:'2 reps, 2 min rest',note:'10m build → 20m max.'}]},
+{id:'mon_soccer',cat:'soccer',title:phase===1?'Close Control & Dribbling':phase===2?'Advanced Dribbling & 1v1':'Pressure Dribbling',exercises:phase===1?[{name:'Toe Taps',rx:'2×30s each foot',note:''},{name:'Inside-Outside Cones',rx:'4 trips, 8 cones',note:''},{name:'Figure-8 Dribbling',rx:'3 min',note:''},{name:'Pull-Back Turn',rx:'10 each foot',note:''},{name:'Ladder Quick Feet',rx:'4 trips',note:''}]:phase===2?[{name:'Coerver Circuit',rx:'6 min continuous',note:'30s each: toe taps, inside-inside, sole rolls, scissors.'},{name:'Slalom + Moves',rx:'4 trips, 10 cones',note:''},{name:'Matthews Cut + Accel',rx:'8 reps',note:''},{name:'Stepover → Shot',rx:'6 reps',note:''},{name:'Shuffle → Sprint',rx:'6 reps',note:''}]:[{name:'Pressure Circuit',rx:'4×45s/30s rest',note:''},{name:'1v1 Attacking',rx:'8 reps',note:''},{name:'Speed Dribble 40m',rx:'4 timed reps',note:''},{name:'Receive & Attack',rx:'8 reps',note:''},{name:'Complex Ladder',rx:'4 trips',note:''}]},
+{id:'mon_mob',cat:'mobility',title:'Hip & Ankle Mobility',exercises:phase===1?[{name:'90/90 Hip Stretch',rx:'30s each ×2',note:''},{name:'Ankle Dorsiflexion',rx:'10 rocks each ×2',note:''},{name:'Leg Swings F/B',rx:'15 each',note:''},{name:'Leg Swings Lateral',rx:'15 each',note:''},{name:'Deep Squat Hold',rx:'3×20s',note:''}]:phase===2?[{name:'90/90 Switches',rx:'10 ×2',note:''},{name:'Ankle Rocks + Hold',rx:'8+15s each ×2',note:''},{name:'Adductor Rock-Back',rx:'10 each ×2',note:''},{name:'Figure-4 Standing',rx:'30s each ×2',note:''},{name:'Calf Raises off Step',rx:'15, 3s lower',note:''}]:[{name:'90/90 + Rotation',rx:'8 ×2',note:''},{name:'Banded Ankle',rx:'10 each ×2',note:''},{name:'WGS Dynamic',rx:'5 each side',note:''},{name:'Squat-to-Stand',rx:'8 reps',note:''},{name:'SL Balance Eyes Closed',rx:'3×20s each',note:''}]}]},
+tuesday:{warmup:'5 min jog + arm/hip circles, leg swings (≈7 min)',blocks:[
+{id:'tue_corr',cat:'corrective',title:phase===1?'Correctives: Core + T-Spine':phase===2?'Correctives: Core Stability':'Correctives: Integrated Core',exercises:phase===1?[{name:'Dead Bugs',rx:'2×8 each side',note:'Press lower back into floor, ribs down.'},{name:'Bird-Dog',rx:'2×8 each, 3s hold',note:'Reach long without rotating. Keep ribs down.'},{name:'Cat-Cow',rx:'10 reps slow',note:'Initiate movement from mid-back, not low back.'},{name:'Quadruped T-Spine Rotation',rx:'2×8 each',note:'Hand behind head, rotate from mid-back.'}]:phase===2?[{name:'Dead Bugs + Reach',rx:'3×8 each side',note:'Opposite arm/leg extend, back stays flat.'},{name:'Bird-Dog Anti-Rotation',rx:'3×8 each',note:'Someone could balance a cup on your back.'},{name:'Half-Kneel Rotation',rx:'2×10 each',note:'Rotate chest only, hips stay square.'},{name:'Hollow Body Hold',rx:'2×15s',note:'Ribs down, lower back flat, arms overhead.'}]:[{name:'Hollow Body Hold',rx:'3×20s',note:'Full extension, back pressed to floor.'},{name:'Bird-Dog + Knee Tap',rx:'3×8 each',note:'Extend, bring knee to elbow, extend again.'},{name:'Standing Rotation + Reach',rx:'2×10 each',note:'Feet planted, rotate and reach mid-height.'},{name:'Dead Bug + Opposite Reach',rx:'3×8 each',note:'Slow, controlled, breathe out on extension.'}]},
+{id:'tue_str',cat:'strength',title:'Strength Training (Your Program)',exercises:[{name:'Follow your program',rx:'Full session',note:''}]},
+{id:'tue_run',cat:'cardio',title:phase===1?'Easy Aerobic Run':phase===2?'Easy Run — Extended':'Easy Run — Maintain',exercises:phase===1?[{name:'Easy Run',rx:'20 min conversational',note:''},{name:'Pace Check',rx:'9:30–10:30/mi',note:''},{name:'Cooldown Walk',rx:'3 min',note:''}]:phase===2?[{name:'Easy Run',rx:'25–30 min',note:''},{name:'Strides (Optional)',rx:'3×80m at 75%',note:''},{name:'Cooldown Walk',rx:'3 min',note:''}]:[{name:'Easy Run',rx:'25–30 min',note:''},{name:'Strides',rx:'4×80m at 80%',note:''},{name:'Cooldown Walk',rx:'3 min',note:''}]},
+{id:'tue_mob',cat:'mobility',title:'Recovery Stretch',exercises:phase===1?[{name:'Quad Stretch',rx:'30s each',note:''},{name:'Hamstring Stretch',rx:'30s each',note:''},{name:'Calf Stretch',rx:'30s each',note:''},{name:'Shoulder Stretch',rx:'20s each',note:''},{name:'Child\'s Pose',rx:'45s',note:''}]:[{name:'FR Quads',rx:'60s each',note:''},{name:'FR Calves',rx:'60s each',note:''},{name:'Pigeon',rx:'45s each',note:''},{name:'Seated Hamstring',rx:'30s each',note:''},{name:'Spinal Twist',rx:'30s each',note:''}]}]},
+wednesday:{warmup:'Ball mastery: juggling 2 min, toe taps 1 min, sole rolls 1 min, inside-inside 1 min (≈5 min)',blocks:[
+{id:'wed_corr',cat:'corrective',title:phase===1?'Correctives: Hip Rotation':phase===2?'Correctives: Rotation + Dissociation':'Correctives: Rotational Power',exercises:phase===1?[{name:'90/90 Hip Stretch',rx:'30s each side ×2',note:'Sit tall, feel front hip and back hip.'},{name:'Hip Flexor Stretch (Kneel)',rx:'30s each ×2',note:'Tuck tailbone, squeeze back glute.'},{name:'Half-Kneel Rotation',rx:'2×8 each (extra left)',note:'Rotate chest left for extra reps.'},{name:'Deep Squat Hold',rx:'2×15s',note:'Heels down, chest up, push knees out.'}]:phase===2?[{name:'90/90 Switches',rx:'2×10',note:'Smooth transitions, sit tall throughout.'},{name:'Pigeon + Reach',rx:'30s each side',note:'Square hips, reach forward, breathe.'},{name:'Standing Rotation + Step',rx:'2×10 each (extra left)',note:'Step and rotate, hips follow chest.'},{name:'Deep Squat + Shift',rx:'2×20s',note:'Shift weight side to side in squat.'}]:[{name:'90/90 Flow',rx:'3×8',note:'Switch + lean + rotate — continuous.'},{name:'Pelvis-Thorax Rotation',rx:'2×10 each',note:'Keep hips forward, rotate chest only.'},{name:'Deep Squat Rotations',rx:'2×8',note:'In squat, reach one arm up and rotate.'},{name:'Tall Kneel Hip Circles',rx:'2×8 each direction',note:'Big circles from the hips, core tight.'}]},
+{id:'wed_soccer1',cat:'soccer',title:phase===1?'First Touch & Passing':phase===2?'First Touch Under Pressure':'Technical Sharpening',exercises:phase===1?[{name:'Wall Pass — Inside',rx:'50 each foot',note:''},{name:'Wall Pass — Outside',rx:'20 each',note:''},{name:'Receive-Turn-Pass',rx:'3 min',note:''},{name:'Throw-Trap-Volley',rx:'10 each foot',note:''},{name:'Driven Pass Target',rx:'15 each foot',note:''}]:phase===2?[{name:'One-Touch Wall',rx:'2×1 min each',note:''},{name:'Receive-and-Go',rx:'15 each dir',note:''},{name:'Chipped Pass',rx:'15 each foot',note:''},{name:'Back-to-Wall Turn',rx:'10 each side',note:''},{name:'Weak-Foot Focus',rx:'30 reps',note:''}]:[{name:'Rapid-Fire Wall',rx:'3×45s/15s rest',note:''},{name:'Long Ball Target',rx:'10 each, 20-25 yds',note:''},{name:'Receive from Air',rx:'15 reps',note:''},{name:'Give-and-Go',rx:'10 each side',note:''},{name:'Weak-Foot Shooting',rx:'10 strikes',note:''}]},
+{id:'wed_soccer2',cat:'soccer',title:phase===1?'Juggling & Mastery':phase===2?'Small-Sided & Juggling':'Game Sim & Finishing',exercises:phase===1?[{name:'Juggling Challenge',rx:'10 min — beat record',note:''},{name:'Around the World',rx:'5 each direction',note:''},{name:'Sole Roll Drag-Back',rx:'3 min',note:''}]:phase===2?[{name:'Juggling + Head',rx:'5 min',note:''},{name:'Finishing Circuit',rx:'10 shots, 5 spots',note:''},{name:'2v1 Scenarios',rx:'10 min',note:''}]:[{name:'Timed Juggling',rx:'3×2 min count',note:''},{name:'Shoot Under Fatigue',rx:'5× sprint→shoot',note:''},{name:'Full Scenario',rx:'8 reps',note:''}]},
+{id:'wed_mob',cat:'mobility',title:phase===1?'Yoga Flow':'Yoga + Thoracic',exercises:phase===1?[{name:'Cat-Cow',rx:'10 reps',note:''},{name:'Down Dog → Cobra',rx:'8 reps',note:''},{name:'Low Lunge + Reach',rx:'30s each ×2',note:''},{name:'Seated Twist',rx:'30s each',note:''},{name:'Pigeon',rx:'45s each',note:''},{name:'Figure-4 Supine',rx:'30s each',note:''}]:[{name:'Cat-Cow → Thread Needle',rx:'8 alternating',note:''},{name:'DD→Lunge→Twist',rx:'5 each side',note:''},{name:'Prone Scorpion',rx:'8 each',note:''},{name:'Straddle + Rotation',rx:'30s each ×2',note:''},{name:'Pigeon',rx:'60s each',note:''},{name:'Windshield Wipers',rx:'10 each',note:''}]}]},
+thursday:{warmup:'5 min jog + high knees, butt kicks, A-skips, shuffles (≈8 min)',blocks:[
+{id:'thu_corr',cat:'corrective',title:phase===1?'Correctives: Left Leg + Hip Flexors':phase===2?'Correctives: SL Strength + Hips':'Correctives: Left Leg Power',exercises:phase===1?[{name:'Side-Lying Hip Raises',rx:'2×12 each (L first)',note:'Slow, feel the outer hip burn.'},{name:'SL Glute Bridge',rx:'2×10 each (L first)',note:'Drive through heel, squeeze glute at top.'},{name:'Kneeling Hip Flexor Stretch',rx:'30s each ×2',note:'Tuck tailbone, lean forward slightly.'},{name:'Supine Hamstring Stretch',rx:'30s each ×2',note:'Keep low back flat on floor.'}]:phase===2?[{name:'Side Plank + Hip Raise',rx:'2×20s each (L first)',note:'Stack hips, control the lift.'},{name:'SL Glute Bridge March',rx:'2×8 each (L first)',note:'Hold bridge, alternate lifting feet.'},{name:'Hip Flexor + Overhead Reach',rx:'30s each ×2',note:'Reach up in lunge, feel stretch deepen.'},{name:'90/90 Hip IR Focus',rx:'2×10 each (R emphasis)',note:'Sit tall, rotate knee inward. Extra on right.'}]:[{name:'SL Glute Bridge + Reach',rx:'3×8 each (L first)',note:'Bridge up, reach opposite arm overhead.'},{name:'Side Plank + Hip Raise',rx:'3×20s each (L first)',note:'Straight line, top leg lift, no wobble.'},{name:'Tall Kneel Hip Flexor + Rotate',rx:'30s each ×2',note:'Lunge stretch + rotate toward front leg.'},{name:'90/90 + Lean',rx:'2×10 each',note:'Switch + lean into front hip each time.'}]},
+{id:'thu_str',cat:'strength',title:'Strength Training (Your Program)',exercises:[{name:'Follow your program',rx:'Full session',note:'Opposite of Tuesday if splitting.'}]},
+{id:'thu_cardio',cat:'cardio',title:phase===1?'Interval Introduction':phase===2?'Interval Development':'Race-Pace Intervals',exercises:phase===1?[{name:'200m Repeats',rx:'5×200m at 80%',note:''},{name:'Recovery',rx:'90s walk/jog',note:''},{name:'Cooldown',rx:'5 min easy',note:''}]:phase===2?[{name:'200m Repeats',rx:'6×200m at 85%',note:''},{name:'Recovery',rx:'75s walk/jog',note:''},{name:'400m Finisher',rx:'1×400m at 85%',note:''},{name:'Cooldown',rx:'5 min easy',note:''}]:[{name:'400m Repeats',rx:'4×400m race effort',note:''},{name:'Recovery',rx:'2 min jog',note:''},{name:'200m Kicks',rx:'2×200m at 90%',note:''},{name:'Cooldown',rx:'5 min easy',note:''}]},
+{id:'thu_mob',cat:'mobility',title:'Hip Flexor & Hamstring',exercises:phase===1?[{name:'HK Hip Flexor',rx:'30s each ×2',note:''},{name:'Hamstring Scoop',rx:'10 each',note:''},{name:'Supine Hamstring',rx:'30s each ×2',note:''},{name:'Band Pull-Aparts',rx:'2×15',note:''}]:[{name:'HK Hip Flexor + Lean',rx:'30s each ×2',note:''},{name:'SL RDL Stretch',rx:'8 each, 3s hold',note:''},{name:'Banded Hamstring PNF',rx:'30s each ×2',note:''},{name:'Banded Hip IR',rx:'10 each',note:''},{name:'T-Spine Roller',rx:'10 ext + 30s hold',note:''}]}]},
+friday:{warmup:'Jog 200m + dynamic drills + 5 tuck jumps, 5 squat jumps (≈10 min)',blocks:[
+{id:'fri_corr',cat:'corrective',title:phase===1?'Correctives: Quick Activation':phase===2?'Correctives: Pre-Plyo Activation':'Correctives: Speed Prep',exercises:phase===1?[{name:'Single-Leg Balance',rx:'2×15s each (L first)',note:'Hips level, eyes forward.'},{name:'Bird-Dog',rx:'2×6 each',note:'Quick but controlled. No rotation.'},{name:'Side-Lying Hip Raises',rx:'2×8 each (L first)',note:'Wake up the outer hips before plyos.'},{name:'Wall Ankle Rocks',rx:'8 each',note:'Quick ankle prep for jumping.'}]:phase===2?[{name:'SL Balance Eyes Closed',rx:'2×15s each (L first)',note:'Feel the ground, stay tall.'},{name:'Dead Bugs (Quick)',rx:'2×6 each',note:'Fast but controlled. Core on.'},{name:'Side Plank Hold',rx:'2×15s each',note:'Quick activation, straight body.'},{name:'Pronation Lunges',rx:'2×6 each',note:'Ankle warm-up for plyos.'}]:[{name:'SL Hop + Stick',rx:'3×4 each (L first)',note:'Hop forward, land and freeze 2s.'},{name:'Bird-Dog + Tap',rx:'2×6 each',note:'Fast: extend, elbow-to-knee, extend.'},{name:'Side Plank + Hip Raise',rx:'2×15s each',note:'Quick activation, lift top leg.'},{name:'Deep Squat Hold',rx:'20s',note:'Full depth, heels down, chest up.'}]},
+{id:'fri_speed',cat:'sprint',title:phase===1?'Hill Sprints & Intro Plyos':phase===2?'Hill Sprints & Plyo Dev':'Advanced Plyos',exercises:phase===1?[{name:'Hill Sprints ~30m',rx:'6 reps, walk down',note:''},{name:'Pogo Hops',rx:'3×10',note:''},{name:'Broad Jumps',rx:'3×4',note:''},{name:'Lateral Hops',rx:'3×8 each',note:''}]:phase===2?[{name:'Hill Sprints',rx:'8 reps, walk down',note:''},{name:'SL Pogo Hops',rx:'2×8 each',note:''},{name:'Broad Jump→Sprint',rx:'4 reps',note:''},{name:'SL Bounding',rx:'3×6 each',note:''},{name:'Depth Drop to Stick',rx:'3×4',note:''}]:[{name:'Hill Sprints',rx:'6 reps, jog down',note:''},{name:'Depth Jump→Broad',rx:'3×3',note:''},{name:'SL Bounding',rx:'3×8 each',note:''},{name:'Lateral Bound→Sprint',rx:'4 each way',note:''},{name:'10-5 Repeated Hops',rx:'3×6',note:''}]},
+{id:'fri_soccer',cat:'soccer',title:phase===1?'Shooting Fundamentals':phase===2?'Shooting Variety':'Finishing Under Pressure',exercises:phase===1?[{name:'Laces Strikes',rx:'10 each foot',note:''},{name:'Inside Placement',rx:'10 each foot',note:''},{name:'One-Touch Finish',rx:'10 reps',note:''}]:phase===2?[{name:'Dribble → Shoot',rx:'8 reps',note:''},{name:'Volley Finishing',rx:'8 reps',note:''},{name:'Chip Shots',rx:'6 reps',note:''},{name:'Angle Shooting',rx:'5 each side',note:''}]:[{name:'Sprint→Receive→Shoot',rx:'6 reps',note:''},{name:'1v1 to Finish',rx:'6 reps',note:''},{name:'Weak-Foot Circuit',rx:'8 reps',note:''},{name:'Penalty Kicks',rx:'5 reps',note:''}]},
+{id:'fri_cardio',cat:'cardio',title:'Cooldown Jog',exercises:[{name:'Easy Cooldown',rx:'8–10 min very easy',note:''}]},
+{id:'fri_mob',cat:'mobility',title:'Full-Body Mobility',exercises:phase===1?[{name:'FR Quads',rx:'60s each',note:''},{name:'FR IT Band',rx:'45s each',note:''},{name:'FR Calves',rx:'45s each',note:''},{name:'WGS',rx:'5 each side',note:''},{name:'Quad/HF Stretch',rx:'30s each',note:''},{name:'Child\'s Pose→Cobra',rx:'8 reps',note:''}]:[{name:'FR Full Lower',rx:'5 min',note:''},{name:'Lacrosse Ball Glutes',rx:'60s each',note:''},{name:'WGS',rx:'5 each, 5s holds',note:''},{name:'Straddle Fold',rx:'45s',note:''},{name:'Spinal Twist',rx:'30s each',note:''},{name:'Legs Up Wall',rx:'2 min',note:''}]}]},
 saturday:{rest:true},sunday:{rest:true}}}
 
-// ===== SCHEDULE =====
-function renderSchedule(){
-  const dates=getWeekDates(currentWeek),phase=getPhase(currentWeek),pi=getPhaseLabel(currentWeek);
-  document.getElementById('week-label').textContent=`Week ${currentWeek+1} — ${fmtDate(dates[0])} – ${fmtDate(dates[6])}`;
-  document.getElementById('travel-toggle').checked=isTravel(currentWeek);
-  const b=document.getElementById('phase-banner');b.className=`phase-banner ${pi.cls}`;b.textContent=pi.label;
-  const prg=getPrograms(phase),dk=['monday','tuesday','wednesday','thursday','friday','saturday','sunday'],dl=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'],dt=['Speed + Soccer + Mobility','Strength + Easy Run + Stretch','Soccer Technical + Yoga (Light)','Strength + Intervals + Mobility','Plyos + Shooting + Full Mobility','Rest & Recovery','Rest & Recovery'];
-  const c=document.getElementById('day-cards');c.innerHTML='';const tv=isTravel(currentWeek);
-  const isTestWeek=TEST_WEEKS.includes(currentWeek);
-  dk.forEach((key,di)=>{
-    const day=prg[key],card=document.createElement('div'),isR=day.rest;
-    card.className=`day-card${isR?' rest':''}${tv?' travel':''}`;
-    let h=`<h3>${dl[di]} <span class="date-label">${fmtDate(dates[di])}</span></h3>`;
-    if(tv){h+=`<p style="font-size:13px;color:#888;font-style:italic">Travel week — rest or do what you can!</p>`}
-    else if(isR){
-      h+=`<p style="font-size:13px;color:#888;font-style:italic">Rest & recovery — go outside, stretch, have fun.</p>`;
-      if(di===5&&isTestWeek)h+=`<div style="margin-top:8px;padding:8px 12px;background:#eff6ff;border-radius:6px;border-left:3px solid #1e40af;font-size:12px"><strong>📋 Test Week!</strong> Run your fitness tests this week. Go to the Fitness Tests tab to log results.</div>`;
-    } else {
-      h+=`<div class="day-theme">${dt[di]}</div>`;
-      if(di===0&&isTestWeek)h+=`<div style="margin-bottom:10px;padding:8px 12px;background:#eff6ff;border-radius:6px;border-left:3px solid #1e40af;font-size:12px"><strong>📋 Test Week ${TEST_WEEKS.indexOf(currentWeek)+1} of 6</strong> — Run your fitness tests this week. Go to the <strong>Fitness Tests</strong> tab to log results.</div>`;
-      h+=`<div class="warmup-block"><h4>WARMUP</h4><p>${day.warmup}</p></div>`;
-      day.blocks.forEach(bl=>{
-        const ws=getWS(currentWeek,bl.id),cat=CATEGORIES[bl.cat],io=expandedBlocks[`${currentWeek}_${bl.id}`],dv=ws.diff||0;
-        h+=`<div class="workout-block"><div class="workout-header" onclick="toggleExpand(${currentWeek},'${bl.id}',this)"><input type="checkbox" ${ws.done?'checked':''} onclick="event.stopPropagation();toggleDone(${currentWeek},'${bl.id}',this.checked)"><span class="workout-title ${ws.done?'done':''}"><span class="category-tag ${cat.tagClass}">${cat.label}</span>${bl.title}`;
-        if(dv)h+=` <span class="diff-indicator ${DIFF_IND[dv]}"></span>`;
-        h+=`</span><span class="expand-icon ${io?'open':''}">▶</span></div>`;
-        h+=`<div class="workout-detail ${io?'open':''}"><ul class="exercise-list">`;
-        bl.exercises.forEach(ex=>{h+=`<li><span class="ex-name">${ex.name}</span><span class="ex-prescription">${ex.rx}${ex.note?`<span class="ex-note">${ex.note}</span>`:''}</span></li>`});
-        h+=`</ul></div><div class="workout-footer"><div class="difficulty-row"><span class="difficulty-label">How was it?</span>`;
-        [1,2,3].forEach(d=>{h+=`<button class="diff-btn ${dv===d?DIFF_CSS[d]:''}" onclick="setDiff(${currentWeek},'${bl.id}',${d})">${DIFF_LABELS[d]}</button>`});
-        h+=`</div><textarea class="notes-input" rows="1" placeholder="Notes..." onchange="saveNotes(${currentWeek},'${bl.id}',this.value)" onfocus="this.rows=2" onblur="if(!this.value)this.rows=1">${ws.notes||''}</textarea></div></div>`;
-      });
-      const tot=day.blocks.length;let dn=0;day.blocks.forEach(bl=>{if(getWS(currentWeek,bl.id).done)dn++});
-      h+=`<div style="font-size:11px;color:#888;margin-top:8px">${dn}/${tot} blocks complete</div>`;
-    }
-    card.innerHTML=h;c.appendChild(card);
-  });
-}
+function renderSchedule(){const dates=getWeekDates(currentWeek),phase=getPhase(currentWeek),pi=getPhaseLabel(currentWeek);document.getElementById('week-label').textContent=`Week ${currentWeek+1} — ${fmtDate(dates[0])} – ${fmtDate(dates[6])}`;document.getElementById('travel-toggle').checked=isTravel(currentWeek);const b=document.getElementById('phase-banner');b.className=`phase-banner ${pi.cls}`;b.textContent=pi.label;const prg=getPrograms(phase),dk=['monday','tuesday','wednesday','thursday','friday','saturday','sunday'],dl=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'],dt=['Speed + Soccer + Mobility','Strength + Easy Run + Stretch','Soccer Technical + Yoga (Light)','Strength + Intervals + Mobility','Plyos + Shooting + Full Mobility','Rest & Recovery','Rest & Recovery'];const c=document.getElementById('day-cards');c.innerHTML='';const tv=isTravel(currentWeek),isTW=TEST_WEEKS.includes(currentWeek);
+dk.forEach((key,di)=>{const day=prg[key],card=document.createElement('div'),isR=day.rest;card.className=`day-card${isR?' rest':''}${tv?' travel':''}`;let h=`<h3>${dl[di]} <span class="date-label">${fmtDate(dates[di])}</span></h3>`;if(tv){h+=`<p style="font-size:13px;color:#888;font-style:italic">Travel week — rest or do what you can!</p>`}else if(isR){h+=`<p style="font-size:13px;color:#888;font-style:italic">Rest & recovery.</p>`;if(di===5&&isTW)h+=`<div style="margin-top:8px;padding:8px 12px;background:#eff6ff;border-radius:6px;border-left:3px solid #1e40af;font-size:12px"><strong>📋 Test Week!</strong> Run fitness tests this week.</div>`}else{h+=`<div class="day-theme">${dt[di]}</div>`;if(di===0&&isTW)h+=`<div style="margin-bottom:10px;padding:8px 12px;background:#eff6ff;border-radius:6px;border-left:3px solid #1e40af;font-size:12px"><strong>📋 Test Week ${TEST_WEEKS.indexOf(currentWeek)+1}/6</strong> — Go to <strong>Fitness Tests</strong> tab.</div>`;h+=`<div class="warmup-block"><h4>WARMUP</h4><p>${day.warmup}</p></div>`;day.blocks.forEach(bl=>{const ws=getWS(currentWeek,bl.id),cat=CATEGORIES[bl.cat],io=expandedBlocks[`${currentWeek}_${bl.id}`],dv=ws.diff||0;h+=`<div class="workout-block"><div class="workout-header" onclick="toggleExpand(${currentWeek},'${bl.id}',this)"><input type="checkbox" ${ws.done?'checked':''} onclick="event.stopPropagation();toggleDone(${currentWeek},'${bl.id}',this.checked)"><span class="workout-title ${ws.done?'done':''}"><span class="category-tag ${cat.tagClass}">${cat.label}</span>${bl.title}`;if(dv)h+=` <span class="diff-indicator ${DIFF_IND[dv]}"></span>`;h+=`</span><span class="expand-icon ${io?'open':''}">▶</span></div><div class="workout-detail ${io?'open':''}"><ul class="exercise-list">`;bl.exercises.forEach(ex=>{const yt='https://www.youtube.com/results?search_query='+encodeURIComponent(ex.name+' exercise form');const vl=ex.name!=='Follow your program'?` <a href="${yt}" target="_blank" rel="noopener" class="vid-link" title="Watch how on YouTube">▶</a>`:'';h+=`<li><span class="ex-name">${ex.name}${vl}</span><span class="ex-prescription">${ex.rx}${ex.note?`<span class="ex-note">${ex.note}</span>`:''}</span></li>`});h+=`</ul></div><div class="workout-footer"><div class="difficulty-row"><span class="difficulty-label">How was it?</span>`;[1,2,3].forEach(d=>{h+=`<button class="diff-btn ${dv===d?DIFF_CSS[d]:''}" onclick="setDiff(${currentWeek},'${bl.id}',${d})">${DIFF_LABELS[d]}</button>`});h+=`</div><textarea class="notes-input" rows="1" placeholder="Notes..." onchange="saveNotes(${currentWeek},'${bl.id}',this.value)" onfocus="this.rows=2" onblur="if(!this.value)this.rows=1">${ws.notes||''}</textarea></div></div>`});const tot=day.blocks.length;let dn=0;day.blocks.forEach(bl=>{if(getWS(currentWeek,bl.id).done)dn++});h+=`<div style="font-size:11px;color:#888;margin-top:8px">${dn}/${tot} complete</div>`}card.innerHTML=h;c.appendChild(card)})}
 function toggleExpand(w,bid,el){const k=`${w}_${bid}`;expandedBlocks[k]=!expandedBlocks[k];el.nextElementSibling.classList.toggle('open');el.querySelector('.expand-icon').classList.toggle('open')}
 function toggleDone(w,bid,ch){const ws=getWS(w,bid);ws.done=ch;setWS(w,bid,ws);renderSchedule()}
 function saveNotes(w,bid,n){const ws=getWS(w,bid);ws.notes=n;setWS(w,bid,ws)}
 function setDiff(w,bid,d){const ws=getWS(w,bid);ws.diff=ws.diff===d?0:d;setWS(w,bid,ws);renderSchedule()}
 function toggleTravel(){setTravelState(currentWeek,document.getElementById('travel-toggle').checked);renderSchedule()}
 function changeWeek(dir){currentWeek=Math.max(0,Math.min(TOTAL_WEEKS-1,currentWeek+dir));renderSchedule()}
-
-// ===== FITNESS TESTS =====
-function renderTests(){
-  const prGrid=document.getElementById('test-pr-grid');
-  let prHtml='';
-  TESTS.forEach(t=>{
-    const results=getTestResults(t.id);
-    if(results.length===0){prHtml+=`<div class="pr-card"><div class="pr-value" style="color:#ccc">—</div><div class="pr-label">${t.name}</div><div class="pr-change" style="color:#888">No data yet</div></div>`;return}
-    const best=t.lowerIsBetter?Math.min(...results.map(r=>r.value)):Math.max(...results.map(r=>r.value));
-    let changeHtml='';
-    if(results.length>=2){const first=results[0].value,last=results[results.length-1].value;const pct=((last-first)/first*100).toFixed(1);const imp=t.lowerIsBetter?(last<first):(last>first);changeHtml=`<div class="pr-change" style="color:${imp?'#059669':'#dc2626'}">${imp?'▲':'▼'} ${Math.abs(pct)}% ${imp?'improvement':'regression'}</div>`}
-    const unitSuffix=t.unit==='seconds'?'s':t.unit==='inches'?'"':'';
-    prHtml+=`<div class="pr-card"><div class="pr-value" style="color:${t.color}">${best}${unitSuffix}</div><div class="pr-label">${t.icon} ${t.name} PR</div>${changeHtml}</div>`;
-  });
-  prGrid.innerHTML=prHtml;
-  const sel=document.getElementById('test-selector');
-  sel.innerHTML=TESTS.map(t=>`<button class="${t.id===activeTestId?'active-test':''}" onclick="selectTest('${t.id}')">${t.icon} ${t.name}</button>`).join('');
-  const test=TESTS.find(t=>t.id===activeTestId);const results=getTestResults(test.id);
-  const cont=document.getElementById('test-content');
-  let html=`<div class="test-card" style="border-top-color:${test.color}"><h3>${test.icon} ${test.name}</h3><div class="test-cat" style="color:${test.color}">Category: ${test.cat} • ${test.lowerIsBetter?'Lower is better':'Higher is better'} • Unit: ${test.unit}</div><div class="test-protocol">${test.protocol}</div>`;
-  html+=`<div class="test-input-row"><div class="test-input-group"><label>Test Week</label><select id="test-week-select">`;
-  TEST_WEEKS.forEach(w=>{const dates=getWeekDates(w);const has=results.some(r=>r.week===w);html+=`<option value="${w}">Week ${w+1} (${fmtDate(dates[0])})${has?' ✓':''}</option>`});
-  html+=`</select></div><div class="test-input-group"><label>Result (${test.unit})</label><input type="number" step="any" id="test-value-input" placeholder="Enter result"></div><button class="save-test-btn" onclick="saveTest('${test.id}')">Save Result</button><span class="save-msg" id="save-msg">Saved!</span></div></div>`;
-  if(results.length>0){
-    const prVal=test.lowerIsBetter?Math.min(...results.map(r=>r.value)):Math.max(...results.map(r=>r.value));
-    html+=`<div class="chart-container"><h3>Results History</h3><table class="results-table"><thead><tr><th>Week</th><th>Date</th><th>Result</th><th>Change</th><th></th></tr></thead><tbody>`;
-    results.forEach((r,i)=>{
-      const dates=getWeekDates(r.week);const isPR=r.value===prVal;let ch='';
-      if(i>0){const prev=results[i-1].value;const diff=r.value-prev;const pct=((diff/prev)*100).toFixed(1);const imp=test.lowerIsBetter?(diff<0):(diff>0);ch=`<span class="improve-badge ${imp?'improve-up':diff===0?'improve-same':'improve-down'}">${imp?'▲':'▼'} ${Math.abs(pct)}%</span>`}else{ch='<span style="color:#888;font-size:11px">Baseline</span>'}
-      html+=`<tr><td>Week ${r.week+1}</td><td>${fmtDate(dates[0])}</td><td><strong>${r.value}</strong> ${test.unit}${isPR?' <span class="pr-badge">PR!</span>':''}</td><td>${ch}</td><td><button class="delete-btn" onclick="deleteTest('${test.id}',${r.week})" title="Delete">✕</button></td></tr>`;
-    });
-    html+=`</tbody></table></div>`;
-    html+=`<div class="chart-container"><h3>Progress Over Time</h3><div class="chart-wrap-test"><canvas id="testProgressChart"></canvas></div></div>`;
-  }else{html+=`<div class="no-data-msg">No results yet for ${test.name}. Run your first test and log it above!</div>`}
-  cont.innerHTML=html;
-  if(results.length>0){
-    const prVal=test.lowerIsBetter?Math.min(...results.map(r=>r.value)):Math.max(...results.map(r=>r.value));
-    new Chart(document.getElementById('testProgressChart').getContext('2d'),{type:'line',data:{labels:results.map(r=>'Wk '+(r.week+1)),datasets:[{label:test.name,data:results.map(r=>r.value),borderColor:test.color,backgroundColor:test.color+'22',fill:true,tension:.3,pointRadius:6,pointBackgroundColor:results.map(r=>r.value===prVal?'#d97706':test.color),pointBorderWidth:results.map(r=>r.value===prVal?3:1)}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{title:{display:true,text:test.unit},reverse:test.lowerIsBetter}},plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.parsed.y} ${test.unit}`}}}}});
-  }
-}
+function renderTests(){const prGrid=document.getElementById('test-pr-grid');let prH='';TESTS.forEach(t=>{const r=getTestResults(t.id);if(!r.length){prH+=`<div class="pr-card"><div class="pr-value" style="color:#ccc">—</div><div class="pr-label">${t.name}</div><div class="pr-change" style="color:#888">No data</div></div>`;return}const best=t.lowerIsBetter?Math.min(...r.map(x=>x.value)):Math.max(...r.map(x=>x.value));let ch='';if(r.length>=2){const f=r[0].value,l=r[r.length-1].value,p=((l-f)/f*100).toFixed(1),imp=t.lowerIsBetter?(l<f):(l>f);ch=`<div class="pr-change" style="color:${imp?'#059669':'#dc2626'}">${imp?'▲':'▼'} ${Math.abs(p)}%</div>`}const u=t.unit==='seconds'?'s':t.unit==='inches'?'"':'';prH+=`<div class="pr-card"><div class="pr-value" style="color:${t.color}">${best}${u}</div><div class="pr-label">${t.icon} ${t.name} PR</div>${ch}</div>`});prGrid.innerHTML=prH;
+document.getElementById('test-selector').innerHTML=TESTS.map(t=>`<button class="${t.id===activeTestId?'active-test':''}" onclick="selectTest('${t.id}')">${t.icon} ${t.name}</button>`).join('');
+const test=TESTS.find(t=>t.id===activeTestId),results=getTestResults(test.id),cont=document.getElementById('test-content');
+let html=`<div class="test-card" style="border-top-color:${test.color}"><h3>${test.icon} ${test.name}</h3><div class="test-cat" style="color:${test.color}">${test.cat} • ${test.lowerIsBetter?'Lower':'Higher'} is better • ${test.unit}</div><div class="test-protocol">${test.protocol}</div><div class="test-input-row"><div class="test-input-group"><label>Test Week</label><select id="test-week-select">`;TEST_WEEKS.forEach(w=>{const d=getWeekDates(w),has=results.some(r=>r.week===w);html+=`<option value="${w}">Wk ${w+1} (${fmtDate(d[0])})${has?' ✓':''}</option>`});html+=`</select></div><div class="test-input-group"><label>Result (${test.unit})</label><input type="number" step="any" id="test-value-input" placeholder="Enter result" inputmode="decimal"></div><button class="save-test-btn" onclick="saveTest('${test.id}')">Save</button><span class="save-msg" id="save-msg">Saved!</span></div></div>`;
+if(results.length>0){const pv=test.lowerIsBetter?Math.min(...results.map(r=>r.value)):Math.max(...results.map(r=>r.value));html+=`<div class="chart-container"><h3>History</h3><table class="results-table"><thead><tr><th>Week</th><th>Date</th><th>Result</th><th>Δ</th><th></th></tr></thead><tbody>`;results.forEach((r,i)=>{const d=getWeekDates(r.week),isPR=r.value===pv;let ch='';if(i>0){const prev=results[i-1].value,diff=r.value-prev,pct=((diff/prev)*100).toFixed(1),imp=test.lowerIsBetter?(diff<0):(diff>0);ch=`<span class="improve-badge ${imp?'improve-up':'improve-down'}">${imp?'▲':'▼'} ${Math.abs(pct)}%</span>`}else ch='<span style="color:#888;font-size:11px">Base</span>';html+=`<tr><td>Wk ${r.week+1}</td><td>${fmtDate(d[0])}</td><td><strong>${r.value}</strong> ${test.unit}${isPR?' <span class="pr-badge">PR!</span>':''}</td><td>${ch}</td><td><button class="delete-btn" onclick="deleteTest('${test.id}',${r.week})">✕</button></td></tr>`});html+=`</tbody></table></div><div class="chart-container"><h3>Progress</h3><div class="chart-wrap-test"><canvas id="testProgressChart"></canvas></div></div>`}else html+=`<div class="no-data-msg">No results yet. Run your first test!</div>`;cont.innerHTML=html;
+if(results.length>0){const pv=test.lowerIsBetter?Math.min(...results.map(r=>r.value)):Math.max(...results.map(r=>r.value));new Chart(document.getElementById('testProgressChart').getContext('2d'),{type:'line',data:{labels:results.map(r=>'Wk '+(r.week+1)),datasets:[{label:test.name,data:results.map(r=>r.value),borderColor:test.color,backgroundColor:test.color+'22',fill:true,tension:.3,pointRadius:6,pointBackgroundColor:results.map(r=>r.value===pv?'#d97706':test.color),pointBorderWidth:results.map(r=>r.value===pv?3:1)}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{title:{display:true,text:test.unit},reverse:test.lowerIsBetter}},plugins:{legend:{display:false}}}})}}
 function selectTest(id){activeTestId=id;renderTests()}
-function saveTest(tid){const wk=parseInt(document.getElementById('test-week-select').value);const val=document.getElementById('test-value-input').value;if(!val||isNaN(parseFloat(val)))return;saveTestResult(tid,wk,val);document.getElementById('test-value-input').value='';const msg=document.getElementById('save-msg');msg.classList.add('show');setTimeout(()=>msg.classList.remove('show'),2000);renderTests()}
+function saveTest(tid){const wk=parseInt(document.getElementById('test-week-select').value),val=document.getElementById('test-value-input').value;if(!val||isNaN(parseFloat(val)))return;saveTestResult(tid,wk,val);document.getElementById('test-value-input').value='';const m=document.getElementById('save-msg');m.classList.add('show');setTimeout(()=>m.classList.remove('show'),2000);renderTests()}
 function deleteTest(tid,wk){deleteTestResult(tid,wk);renderTests()}
-
-// ===== PROGRESS =====
 let completionChart=null,categoryChart=null,difficultyChart=null;
-function getAllBlocks(phase){const p=getPrograms(phase),b=[];['monday','tuesday','wednesday','thursday','friday'].forEach((d,i)=>{if(p[d].blocks)p[d].blocks.forEach(bl=>b.push({...bl,dayIdx:i}))});return b}
+function getAllBlocks(phase){const p=getPrograms(phase),b=[];['monday','tuesday','wednesday','thursday','friday'].forEach(d=>{if(p[d].blocks)p[d].blocks.forEach(bl=>b.push({...bl}))});return b}
 function getCatDiffHistory(cat){const h=[];for(let w=0;w<TOTAL_WEEKS;w++){if(isTravel(w)){h.push(null);continue}const bl=getAllBlocks(getPhase(w)).filter(b=>b.cat===cat);let s=0,c=0;bl.forEach(b=>{const ws=getWS(w,b.id);if(ws.diff>0){s+=ws.diff;c++}});h.push(c>0?s/c:null)}return h}
-function getRecentTrend(cat){const h=getCatDiffHistory(cat).filter(v=>v!==null);if(h.length<2)return{trend:'unknown',avg:h.length?h[h.length-1]:0,values:h};const r=h.slice(-3),f=r[0],l=r[r.length-1],a=r.reduce((s,v)=>s+v,0)/r.length;let t='flat';if(l-f>=.4)t='getting_harder';else if(f-l>=.4)t='getting_easier';return{trend:t,avg:a,values:r,first:f,last:l}}
-function renderProgress(){
-  let tB=0,cB=0;const cs={};Object.keys(CATEGORIES).forEach(c=>{cs[c]={total:0,done:0}});const wr=[];
-  for(let w=0;w<TOTAL_WEEKS;w++){if(isTravel(w)){wr.push(null);continue}const bl=getAllBlocks(getPhase(w));let wT=0,wD=0;bl.forEach(b=>{tB++;wT++;cs[b.cat].total++;if(getWS(w,b.id).done){cB++;wD++;cs[b.cat].done++}});wr.push(wT>0?Math.round(wD/wT*100):0)}
-  const pct=tB>0?Math.round(cB/tB*100):0;let streak=0;for(let w=getCurrentWeekIdx();w>=0;w--){if(isTravel(w))continue;const bl=getAllBlocks(getPhase(w));if(bl.every(b=>getWS(w,b.id).done)&&bl.length>0)streak++;else if(w<getCurrentWeekIdx())break}
-  let tR=0;for(let w=0;w<TOTAL_WEEKS;w++){if(isTravel(w))continue;getAllBlocks(getPhase(w)).forEach(b=>{if(getWS(w,b.id).diff>0)tR++})}
-  document.getElementById('stat-cards').innerHTML=`<div class="stat-card"><div class="stat-value" style="color:#2d6a4f">${pct}%</div><div class="stat-label">Completion</div></div><div class="stat-card"><div class="stat-value" style="color:#2563eb">${cB}</div><div class="stat-label">Blocks Done</div></div><div class="stat-card"><div class="stat-value" style="color:#d97706">${tR}</div><div class="stat-label">Ratings</div></div><div class="stat-card"><div class="stat-value" style="color:#7c3aed">${streak}</div><div class="stat-label">Week Streak</div></div>`;
-  const x1=document.getElementById('completionChart').getContext('2d');if(completionChart)completionChart.destroy();
-  completionChart=new Chart(x1,{type:'bar',data:{labels:wr.map((_,i)=>`Wk ${i+1}`),datasets:[{data:wr.map(v=>v===null?0:v),backgroundColor:wr.map((v,i)=>v===null?'#ffc107':i>getCurrentWeekIdx()?'#e5e7eb':v>=80?'#2d6a4f':v>=50?'#a7c4b5':'#f87171'),borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{beginAtZero:true,max:100,ticks:{callback:v=>v+'%'}}},plugins:{legend:{display:false}}}});
-  const x2=document.getElementById('categoryChart').getContext('2d');if(categoryChart)categoryChart.destroy();const ck=Object.keys(CATEGORIES);
-  categoryChart=new Chart(x2,{type:'radar',data:{labels:ck.map(k=>CATEGORIES[k].label),datasets:[{data:ck.map(k=>cs[k].total>0?Math.round(cs[k].done/cs[k].total*100):0),backgroundColor:'rgba(45,106,79,0.2)',borderColor:'#2d6a4f',pointBackgroundColor:ck.map(k=>CATEGORIES[k].color),pointRadius:5}]},options:{responsive:true,maintainAspectRatio:false,scales:{r:{beginAtZero:true,max:100,ticks:{display:false}}},plugins:{legend:{display:false}}}});
-  const x3=document.getElementById('difficultyChart').getContext('2d');if(difficultyChart)difficultyChart.destroy();
-  difficultyChart=new Chart(x3,{type:'line',data:{labels:Array.from({length:TOTAL_WEEKS},(_,i)=>`Wk ${i+1}`),datasets:ck.map(k=>({label:CATEGORIES[k].label,data:getCatDiffHistory(k).map(v=>v===null?null:Math.round(v*100)/100),borderColor:CATEGORIES[k].color,backgroundColor:CATEGORIES[k].color+'33',tension:.3,spanGaps:true,pointRadius:4}))},options:{responsive:true,maintainAspectRatio:false,scales:{y:{min:.5,max:3.5,ticks:{callback:v=>{if(v===1)return'Too Easy';if(v===2)return'Just Right';if(v===3)return'Too Hard';return''}}}},plugins:{legend:{position:'bottom',labels:{boxWidth:12,font:{size:11}}}}}});
-}
-
-// ===== INSIGHTS =====
-function renderInsights(){
-  const c=document.getElementById('insights-section');const cs={};Object.keys(CATEGORIES).forEach(k=>{cs[k]={total:0,done:0,notes:[],diffs:[]}});
-  const wc=Math.min(getCurrentWeekIdx()+1,TOTAL_WEEKS);
-  for(let w=0;w<wc;w++){if(isTravel(w))continue;getAllBlocks(getPhase(w)).forEach(b=>{cs[b.cat].total++;const ws=getWS(w,b.id);if(ws.done)cs[b.cat].done++;if(ws.notes)cs[b.cat].notes.push(ws.notes);if(ws.diff>0)cs[b.cat].diffs.push(ws.diff)})}
-  let html='<h3 style="font-size:16px;font-weight:600;margin-bottom:12px">Training Insights</h3>';
-  const cr=Object.keys(CATEGORIES).map(k=>({key:k,label:CATEGORIES[k].label,rate:cs[k].total>0?cs[k].done/cs[k].total:0,total:cs[k].total,done:cs[k].done,diffs:cs[k].diffs})).filter(x=>x.total>0).sort((a,b)=>b.rate-a.rate);
-  const td=cr.reduce((s,x)=>s+x.diffs.length,0);
-  const testInsights=getTestInsights();if(testInsights)html+=testInsights;
-  if(cr.length===0){html+=`<div class="insight-card"><h4>No data yet</h4><p>Start checking off workouts and rating difficulty.</p></div>`;c.innerHTML=html;return}
-  if(td>=2){
-    html+='<h3 style="font-size:15px;font-weight:600;margin:16px 0 10px">Adaptive Recommendations</h3>';
-    Object.keys(CATEGORIES).forEach(cat=>{const t=getRecentTrend(cat),st=cs[cat];if(st.diffs.length<2)return;const rd=st.diffs.slice(-4),ra=rd.reduce((s,v)=>s+v,0)/rd.length,ec=rd.filter(d=>d===1).length,rc=rd.filter(d=>d===2).length,hc=rd.filter(d=>d===3).length;
-    let rt='',rT='',rB='',ti='',tc='';
-    if(ra<=1.4||(ec>=3&&hc===0)){rt='progress-up';ti='↑';tc='trend-down';rT=`${CATEGORIES[cat].label}: Ready to Progress`;rB=getProgressionRec(cat)}
-    else if(ra>=2.7||(hc>=3&&ec===0)){rt='caution';ti='↓';tc='trend-up';rT=`${CATEGORIES[cat].label}: Consider Scaling Back`;rB=getDeloadRec(cat)}
-    else if(t.trend==='getting_harder'&&ra>=2.3){rt='warning';ti='⚠';tc='trend-up';rT=`${CATEGORIES[cat].label}: Difficulty Climbing`;rB=getClimbingRec(cat)}
-    else if(t.trend==='getting_easier'){rt='progress-up';ti='✓';tc='trend-down';rT=`${CATEGORIES[cat].label}: Adapting Well`;rB=getAdaptingRec(cat)}
-    else if(rc>=2){rt='';ti='→';tc='trend-flat';rT=`${CATEGORIES[cat].label}: On Track`;rB='Difficulty feels right. Stay the course.'}
-    else if(ec>=1&&hc>=1){rt='warning';ti='~';tc='trend-flat';rT=`${CATEGORIES[cat].label}: Mixed Signals`;rB=getMixedRec(cat)}
-    if(rT){let sk='';const comp=st.total>0?st.done/st.total:0;if(comp<.5&&hc>=2)sk=' <em>Also skipping often — difficulty may be discouraging. Try scaled-back version.</em>';html+=`<div class="insight-card ${rt}"><h4><span class="trend-arrow ${tc}">${ti}</span> ${rT}</h4><p>${rB}${sk}</p></div>`}});
-  }else if(td>0){html+=`<div class="insight-card"><h4>Keep Rating!</h4><p>${td} rating${td>1?'s':''} logged. Need more for adaptive recommendations.</p></div>`}
-  else{html+=`<div class="insight-card warning"><h4>Rate Your Workouts</h4><p>Use "Too Easy / Just Right / Too Hard" to power adaptive recommendations.</p></div>`}
-  html+='<h3 style="font-size:15px;font-weight:600;margin:20px 0 10px">Completion Insights</h3>';
-  const best=cr[0],worst=cr[cr.length-1];
-  if(best.rate>0)html+=`<div class="insight-card strength-insight"><h4>Strongest: ${best.label}</h4><p>${Math.round(best.rate*100)}% (${best.done}/${best.total})</p></div>`;
-  if(worst.rate<best.rate){const adv={sprint:"Move speed work earlier or pair with soccer.",cardio:"Even 15 min counts.",soccer:"10 min of wall passes adds up.",strength:"Just show up.",mobility:"Tack 5 min onto other sessions."};html+=`<div class="insight-card warning"><h4>Needs Attention: ${worst.label}</h4><p>${Math.round(worst.rate*100)}% (${worst.done}/${worst.total}). ${adv[worst.key]||''}</p></div>`}
-  const ov=cr.reduce((s,x)=>s+x.done,0)/Math.max(cr.reduce((s,x)=>s+x.total,0),1);
-  if(ov>=.8)html+=`<div class="insight-card"><h4>Excellent Consistency</h4><p>Over 80%. Check adaptive recs to level up.</p></div>`;
-  else if(ov>=.5)html+=`<div class="insight-card"><h4>Solid — Room to Grow</h4><p>${Math.round(ov*100)}%. Make easy sessions non-negotiable.</p></div>`;
-  else if(ov>0)html+=`<div class="insight-card warning"><h4>Building Momentum</h4><p>Under 50%. Focus on 3 must-do blocks per day.</p></div>`;
-  let tw=0;for(let w=0;w<TOTAL_WEEKS;w++)if(isTravel(w))tw++;
-  if(tw>0)html+=`<div class="insight-card"><h4>Travel: ${tw}/${TOTAL_WEEKS} weeks</h4><p>15 min bodyweight + mobility keeps the habit.</p></div>`;
-  const wn=getCurrentWeekIdx()+1;
-  if(wn>=4&&wn<8)html+=`<div class="insight-card strength-insight"><h4>Phase 2 Check-In</h4><p>Should feel harder — that's by design. Use ratings to check if it's productive-hard or too-much-hard.</p></div>`;
-  if(wn>=8)html+=`<div class="insight-card strength-insight"><h4>Preseason Mode</h4><p>${TOTAL_WEEKS-wn+1} weeks left. Sharpen, don't add.</p></div>`;
-  c.innerHTML=html;
-}
-
-function getTestInsights(){
-  let html='';let hasAny=false;
-  TESTS.forEach(t=>{
-    const r=getTestResults(t.id);if(r.length<2)return;hasAny=true;
-    const first=r[0].value,last=r[r.length-1].value;
-    const pct=((last-first)/first*100).toFixed(1);
-    const improved=t.lowerIsBetter?(last<first):(last>first);
-    const stagnant=Math.abs(pct)<1;
-    if(improved&&Math.abs(pct)>=5){html+=`<div class="insight-card progress-up"><h4>${t.icon} ${t.name}: ${Math.abs(pct)}% Improvement!</h4><p>From ${first} to ${last} ${t.unit}. ${getTestProgressTip(t.id)}</p></div>`}
-    else if(!improved&&Math.abs(pct)>=3){html+=`<div class="insight-card caution"><h4>${t.icon} ${t.name}: Trending Wrong Direction</h4><p>${Math.abs(pct)}% regression (${first} → ${last} ${t.unit}). ${getTestRegressTip(t.id)}</p></div>`}
-    else if(stagnant&&r.length>=3){html+=`<div class="insight-card warning"><h4>${t.icon} ${t.name}: Plateau Detected</h4><p>Stuck around ${last} ${t.unit} for ${r.length} tests. ${getTestPlateauTip(t.id)}</p></div>`}
-  });
-  if(hasAny)html='<h3 style="font-size:15px;font-weight:600;margin:0 0 10px">Fitness Test Insights</h3>'+html;
-  return html||'';
-}
-
-function getTestProgressTip(id){return{
-  sprint_30m:'Keep building acceleration mechanics. Once you plateau, try resisted sprints (uphill or sled).',
-  broad_jump:'Explosive power developing. Your plyometric work is translating directly.',
-  six_min_run:'Aerobic base is growing. This will show up big in XC season.',
-  juggling:'Ball comfort improving. Challenge yourself with weak-foot-only sessions.',
-  squat_hold:'Ankle, hip, and thoracic mobility all improving together. This means fewer injuries and better movement quality in everything else.',
-  shuttle_5_10_5:'Change-of-direction speed improving. Great for soccer positioning and defensive recovery.'}[id]||''}
-
-function getTestRegressTip(id){return{
-  sprint_30m:'Could be fatigue accumulation. Make sure speed days follow rest days. Consider a lighter week.',
-  broad_jump:'Leg power dipping — might be overtraining with too much running + lifting. Check recovery.',
-  six_min_run:'Aerobic capacity dropping. Skipping easy runs? Those build the base. Also check sleep and hydration.',
-  juggling:'Touch getting worse under fatigue? Make sure technical work happens on fresh legs.',
-  squat_hold:'Losing squat depth usually means other training is tightening you up — ankles and hips especially. Are you skipping mobility work? Also check if you\'re foam rolling after hard sessions. This is an early warning sign for potential injury.',
-  shuttle_5_10_5:'Agility dropping — could be fatigue or tightness. Check mobility work and recovery.'}[id]||''}
-
-function getTestPlateauTip(id){return{
-  sprint_30m:'Sprint plateau — try contrast training (heavy strength then sprint) or work on arm mechanics.',
-  broad_jump:'Broad jump plateau — add more reactive plyos (depth jumps, bounds) rather than just strength.',
-  six_min_run:'Aerobic plateau — try a true tempo run (20 min comfortably hard) once a week.',
-  juggling:'Juggling plateau? Add constraints: weak foot only, thigh-to-foot alternating, or head-included sequences.',
-  squat_hold:'Deep squat plateau — your body has adapted to current mobility work. Try these: (1) Add a light weight held in front of you as a counterbalance — many people can squat deeper with 5–10 lbs held at chest height. (2) Spend 30 seconds shifting weight side to side in the squat to open different angles. (3) Add banded ankle dorsiflexion work — ankle stiffness is usually the limiting factor.',
-  shuttle_5_10_5:'Agility plateau — work on deceleration: approach a cone at full speed and stop in 2 steps.'}[id]||''}
-
-function getProgressionRec(cat){const r={sprint:'<span class="rec-tag rec-progress">PROGRESS</span> Add 1–2 sprint reps, extend to a longer distance, or reduce rest by 15s.',cardio:'<span class="rec-tag rec-progress">PROGRESS</span> Add 5 min to easy runs, add 1 interval rep, or reduce rest by 15s.',soccer:'<span class="rec-tag rec-progress">PROGRESS</span> Speed up drills with a timer, add a defender, or use weak foot for 50% of reps.',strength:'<span class="rec-tag rec-progress">PROGRESS</span> Add weight, reps, or an extra set.',mobility:'<span class="rec-tag rec-progress">PROGRESS</span> Hold 15s longer, try deeper variations, or add banded stretches.'};return r[cat]||'Ready for more.'}
-function getDeloadRec(cat){const r={sprint:'<span class="rec-tag rec-deload">SCALE BACK</span> Drop 2 reps per distance, add 30s rest, run at 85% instead of max.',cardio:'<span class="rec-tag rec-deload">SCALE BACK</span> Shorten runs by 5 min, drop 1–2 interval reps, add 30s rest.',soccer:'<span class="rec-tag rec-deload">SCALE BACK</span> Cut drills by 30%, focus on 2–3 per session, more juggling for fun.',strength:'<span class="rec-tag rec-deload">SCALE BACK</span> Deload: reduce weight 20% or drop a set.',mobility:'<span class="rec-tag rec-deload">SCALE BACK</span> Shorter holds, stay at 6/10 intensity, basics only.'};return r[cat]||'Reduce 20–30%.'}
-function getClimbingRec(cat){return`<span class="rec-tag rec-adjust">WATCH</span> ${CATEGORIES[cat].label} difficulty rising. Monitor one more week.`}
-function getAdaptingRec(cat){return`<span class="rec-tag rec-maintain">ADAPTING</span> ${CATEGORIES[cat].label} getting easier = adapting. Stay the course until consistently "Too Easy."`}
-function getMixedRec(cat){return`<span class="rec-tag rec-adjust">MIXED</span> Some ${CATEGORIES[cat].label.toLowerCase()} sessions easy, some hard. Check sleep, prior day, time of day.`}
-
-// ===== NAV =====
-function showSection(section,btn){
-  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
-  document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));
-  document.getElementById(`${section}-section`).classList.add('active');
-  btn.classList.add('active');
-  if(section==='progress')renderProgress();
-  if(section==='insights')renderInsights();
-  if(section==='tests')renderTests();
-}
+function getRecentTrend(cat){const h=getCatDiffHistory(cat).filter(v=>v!==null);if(h.length<2)return{trend:'unknown',avg:h.length?h[h.length-1]:0};const r=h.slice(-3),f=r[0],l=r[r.length-1],a=r.reduce((s,v)=>s+v,0)/r.length;return{trend:l-f>=.4?'getting_harder':f-l>=.4?'getting_easier':'flat',avg:a}}
+function renderProgress(){let tB=0,cB=0;const cs={};Object.keys(CATEGORIES).forEach(c=>{cs[c]={total:0,done:0}});const wr=[];for(let w=0;w<TOTAL_WEEKS;w++){if(isTravel(w)){wr.push(null);continue}const bl=getAllBlocks(getPhase(w));let wT=0,wD=0;bl.forEach(b=>{tB++;wT++;cs[b.cat].total++;if(getWS(w,b.id).done){cB++;wD++;cs[b.cat].done++}});wr.push(wT>0?Math.round(wD/wT*100):0)}const pct=tB>0?Math.round(cB/tB*100):0;let streak=0;for(let w=getCurrentWeekIdx();w>=0;w--){if(isTravel(w))continue;const bl=getAllBlocks(getPhase(w));if(bl.every(b=>getWS(w,b.id).done)&&bl.length>0)streak++;else if(w<getCurrentWeekIdx())break}let tR=0;for(let w=0;w<TOTAL_WEEKS;w++){if(isTravel(w))continue;getAllBlocks(getPhase(w)).forEach(b=>{if(getWS(w,b.id).diff>0)tR++})}
+document.getElementById('stat-cards').innerHTML=`<div class="stat-card"><div class="stat-value" style="color:#2d6a4f">${pct}%</div><div class="stat-label">Completion</div></div><div class="stat-card"><div class="stat-value" style="color:#2563eb">${cB}</div><div class="stat-label">Blocks Done</div></div><div class="stat-card"><div class="stat-value" style="color:#d97706">${tR}</div><div class="stat-label">Ratings</div></div><div class="stat-card"><div class="stat-value" style="color:#7c3aed">${streak}</div><div class="stat-label">Week Streak</div></div>`;
+const x1=document.getElementById('completionChart').getContext('2d');if(completionChart)completionChart.destroy();completionChart=new Chart(x1,{type:'bar',data:{labels:wr.map((_,i)=>`Wk ${i+1}`),datasets:[{data:wr.map(v=>v===null?0:v),backgroundColor:wr.map((v,i)=>v===null?'#ffc107':i>getCurrentWeekIdx()?'#e5e7eb':v>=80?'#2d6a4f':v>=50?'#a7c4b5':'#f87171'),borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{beginAtZero:true,max:100,ticks:{callback:v=>v+'%'}}},plugins:{legend:{display:false}}}});
+const x2=document.getElementById('categoryChart').getContext('2d');if(categoryChart)categoryChart.destroy();const ck=Object.keys(CATEGORIES);categoryChart=new Chart(x2,{type:'radar',data:{labels:ck.map(k=>CATEGORIES[k].label),datasets:[{data:ck.map(k=>cs[k].total>0?Math.round(cs[k].done/cs[k].total*100):0),backgroundColor:'rgba(45,106,79,0.2)',borderColor:'#2d6a4f',pointBackgroundColor:ck.map(k=>CATEGORIES[k].color),pointRadius:5}]},options:{responsive:true,maintainAspectRatio:false,scales:{r:{beginAtZero:true,max:100,ticks:{display:false}}},plugins:{legend:{display:false}}}});
+const x3=document.getElementById('difficultyChart').getContext('2d');if(difficultyChart)difficultyChart.destroy();difficultyChart=new Chart(x3,{type:'line',data:{labels:Array.from({length:TOTAL_WEEKS},(_,i)=>`Wk ${i+1}`),datasets:ck.map(k=>({label:CATEGORIES[k].label,data:getCatDiffHistory(k).map(v=>v===null?null:Math.round(v*100)/100),borderColor:CATEGORIES[k].color,backgroundColor:CATEGORIES[k].color+'33',tension:.3,spanGaps:true,pointRadius:4}))},options:{responsive:true,maintainAspectRatio:false,scales:{y:{min:.5,max:3.5,ticks:{callback:v=>{if(v===1)return'Easy';if(v===2)return'Right';if(v===3)return'Hard';return''}}}},plugins:{legend:{position:'bottom',labels:{boxWidth:12,font:{size:11}}}}}})}
+function renderInsights(){const c=document.getElementById('insights-section');const cs={};Object.keys(CATEGORIES).forEach(k=>{cs[k]={total:0,done:0,notes:[],diffs:[]}});const wc=Math.min(getCurrentWeekIdx()+1,TOTAL_WEEKS);for(let w=0;w<wc;w++){if(isTravel(w))continue;getAllBlocks(getPhase(w)).forEach(b=>{cs[b.cat].total++;const ws=getWS(w,b.id);if(ws.done)cs[b.cat].done++;if(ws.notes)cs[b.cat].notes.push(ws.notes);if(ws.diff>0)cs[b.cat].diffs.push(ws.diff)})}
+let html='<h3 style="font-size:16px;font-weight:600;margin-bottom:12px">Training Insights</h3>';const cr=Object.keys(CATEGORIES).map(k=>({key:k,label:CATEGORIES[k].label,rate:cs[k].total>0?cs[k].done/cs[k].total:0,total:cs[k].total,done:cs[k].done,diffs:cs[k].diffs})).filter(x=>x.total>0).sort((a,b)=>b.rate-a.rate);const td=cr.reduce((s,x)=>s+x.diffs.length,0);const ti=getTestInsights();if(ti)html+=ti;
+if(cr.length===0){html+=`<div class="insight-card"><h4>No data yet</h4><p>Start checking off workouts.</p></div>`;c.innerHTML=html;return}
+if(td>=2){html+='<h3 style="font-size:15px;font-weight:600;margin:16px 0 10px">Adaptive Recommendations</h3>';Object.keys(CATEGORIES).forEach(cat=>{const t=getRecentTrend(cat),st=cs[cat];if(st.diffs.length<2)return;const rd=st.diffs.slice(-4),ra=rd.reduce((s,v)=>s+v,0)/rd.length,ec=rd.filter(d=>d===1).length,rc=rd.filter(d=>d===2).length,hc=rd.filter(d=>d===3).length;let rt='',rT='',rB='',tI='',tc='';if(ra<=1.4||(ec>=3&&hc===0)){rt='progress-up';tI='↑';tc='trend-down';rT=`${CATEGORIES[cat].label}: Ready to Progress`;rB=getProgRec(cat)}else if(ra>=2.7||(hc>=3&&ec===0)){rt='caution';tI='↓';tc='trend-up';rT=`${CATEGORIES[cat].label}: Scale Back`;rB=getDeloadRec(cat)}else if(t.trend==='getting_harder'&&ra>=2.3){rt='warning';tI='⚠';tc='trend-up';rT=`${CATEGORIES[cat].label}: Getting Harder`;rB=`<span class="rec-tag rec-adjust">WATCH</span> Monitor one more week.`}else if(t.trend==='getting_easier'){rt='progress-up';tI='✓';tc='trend-down';rT=`${CATEGORIES[cat].label}: Adapting`;rB=`<span class="rec-tag rec-maintain">ADAPTING</span> Stay the course until consistently "Too Easy."`}else if(rc>=2){rt='';tI='→';tc='trend-flat';rT=`${CATEGORIES[cat].label}: On Track`;rB='Difficulty feels right.'}else if(ec>=1&&hc>=1){rt='warning';tI='~';tc='trend-flat';rT=`${CATEGORIES[cat].label}: Mixed`;rB=`<span class="rec-tag rec-adjust">MIXED</span> Check sleep, prior day, time of day.`}if(rT)html+=`<div class="insight-card ${rt}"><h4><span class="trend-arrow ${tc}">${tI}</span> ${rT}</h4><p>${rB}</p></div>`})}else if(td>0)html+=`<div class="insight-card"><h4>Keep Rating!</h4><p>Need more data for adaptive recs.</p></div>`;else html+=`<div class="insight-card warning"><h4>Rate Your Workouts</h4><p>Use the difficulty buttons!</p></div>`;
+html+='<h3 style="font-size:15px;font-weight:600;margin:20px 0 10px">Completion</h3>';const best=cr[0],worst=cr[cr.length-1];if(best.rate>0)html+=`<div class="insight-card strength-insight"><h4>Strongest: ${best.label}</h4><p>${Math.round(best.rate*100)}%</p></div>`;if(worst.rate<best.rate){const adv={sprint:'Earlier in day or pair with soccer.',cardio:'Even 15 min counts.',soccer:'10 min wall passes adds up.',strength:'Just show up.',mobility:'Tack 5 min onto other sessions.',corrective:'5 min a day makes a big difference.'};html+=`<div class="insight-card warning"><h4>Needs Work: ${worst.label}</h4><p>${Math.round(worst.rate*100)}%. ${adv[worst.key]||''}</p></div>`}
+const ov=cr.reduce((s,x)=>s+x.done,0)/Math.max(cr.reduce((s,x)=>s+x.total,0),1);if(ov>=.8)html+=`<div class="insight-card"><h4>Excellent!</h4><p>Over 80%. Check adaptive recs to level up.</p></div>`;else if(ov>=.5)html+=`<div class="insight-card"><h4>Solid</h4><p>${Math.round(ov*100)}%. Make easy sessions non-negotiable.</p></div>`;else if(ov>0)html+=`<div class="insight-card warning"><h4>Building</h4><p>Under 50%. Focus on 3 blocks/day.</p></div>`;
+const wn=getCurrentWeekIdx()+1;if(wn>=4&&wn<8)html+=`<div class="insight-card strength-insight"><h4>Phase 2</h4><p>Should feel harder — by design.</p></div>`;if(wn>=8)html+=`<div class="insight-card strength-insight"><h4>Preseason</h4><p>${TOTAL_WEEKS-wn+1} weeks left. Sharpen, don't add.</p></div>`;c.innerHTML=html}
+function getTestInsights(){let html='',any=false;TESTS.forEach(t=>{const r=getTestResults(t.id);if(r.length<2)return;any=true;const f=r[0].value,l=r[r.length-1].value,p=((l-f)/f*100).toFixed(1),imp=t.lowerIsBetter?(l<f):(l>f),stag=Math.abs(p)<1;if(imp&&Math.abs(p)>=5)html+=`<div class="insight-card progress-up"><h4>${t.icon} ${t.name}: ${Math.abs(p)}% Better!</h4><p>${getTPT(t.id)}</p></div>`;else if(!imp&&Math.abs(p)>=3)html+=`<div class="insight-card caution"><h4>${t.icon} ${t.name}: Wrong Direction</h4><p>${getTRT(t.id)}</p></div>`;else if(stag&&r.length>=3)html+=`<div class="insight-card warning"><h4>${t.icon} ${t.name}: Plateau</h4><p>${getTPP(t.id)}</p></div>`});return any?'<h3 style="font-size:15px;font-weight:600;margin:0 0 10px">Test Insights</h3>'+html:''}
+function getTPT(id){return{sprint_30m:'Acceleration improving. Keep building mechanics.',broad_jump:'Explosive power developing from plyos.',six_min_run:'Aerobic base growing. Big for XC season.',juggling:'Ball control improving. Try weak-foot-only sessions.',squat_hold:'Ankle, hip, and thoracic mobility all improving. Fewer injuries ahead.',shuttle_5_10_5:'Direction changes getting faster. Great for soccer.'}[id]||''}
+function getTRT(id){return{sprint_30m:'Possible fatigue. Ensure speed days follow rest. Consider lighter week.',broad_jump:'Leg power dipping. Check recovery — maybe too much running + lifting.',six_min_run:'Aerobic capacity down. Skipping easy runs? Check sleep/hydration.',juggling:'Technical work on fresh legs only.',squat_hold:'Losing squat depth = tightening up. Are you skipping mobility? Early warning for injury.',shuttle_5_10_5:'Agility dropping. Check mobility and recovery.'}[id]||''}
+function getTPP(id){return{sprint_30m:'Try contrast training or focus on arm mechanics.',broad_jump:'Add reactive plyos (depth jumps, bounds).',six_min_run:'Add a 20 min tempo run once per week.',juggling:'Add constraints: weak foot, thigh-foot alternating, headers.',squat_hold:'Try holding a light weight as counterbalance. Shift side to side in the squat. Add banded ankle work — ankles are usually the limiter.',shuttle_5_10_5:'Work deceleration: full speed to 2-step stop at a cone.'}[id]||''}
+function getProgRec(cat){return{sprint:'<span class="rec-tag rec-progress">PROGRESS</span> Add 1–2 reps, longer distance, or 15s less rest.',cardio:'<span class="rec-tag rec-progress">PROGRESS</span> +5 min runs, +1 interval rep, or -15s rest.',soccer:'<span class="rec-tag rec-progress">PROGRESS</span> Speed up drills, add defender, 50% weak foot.',strength:'<span class="rec-tag rec-progress">PROGRESS</span> Add weight, reps, or a set.',mobility:'<span class="rec-tag rec-progress">PROGRESS</span> +15s holds, deeper variations, add bands.',corrective:'<span class="rec-tag rec-progress">PROGRESS</span> Harder variations — eyes closed, longer holds, single-leg.'}[cat]||''}
+function getDeloadRec(cat){return{sprint:'<span class="rec-tag rec-deload">SCALE BACK</span> -2 reps, +30s rest, 85% effort.',cardio:'<span class="rec-tag rec-deload">SCALE BACK</span> -5 min runs, -1-2 reps, +30s rest.',soccer:'<span class="rec-tag rec-deload">SCALE BACK</span> -30% drills, 2-3 per session, more fun stuff.',strength:'<span class="rec-tag rec-deload">SCALE BACK</span> -20% weight or drop a set.',mobility:'<span class="rec-tag rec-deload">SCALE BACK</span> Shorter holds, 6/10 intensity.',corrective:'<span class="rec-tag rec-deload">SCALE BACK</span> Basic versions, fewer reps, shorter holds.'}[cat]||''}
+function showSection(section,btn){document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));document.getElementById(`${section}-section`).classList.add('active');btn.classList.add('active');if(section==='progress')renderProgress();if(section==='insights')renderInsights();if(section==='tests')renderTests()}
 currentWeek=getCurrentWeekIdx();renderSchedule();
 </script>
 </body>

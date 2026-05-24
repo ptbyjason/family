@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Multiplication Quest</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&family=Press+Start+2P&display=swap');
+  *{margin:0;padding:0;box-sizing:border-box;}
+  :root{--bg:#0f0a1e;--card:#1a1030;--border:rgba(139,92,246,0.2);--text:#e8dff5;--muted:#a89cc8;
+    --purple:#8b5cf6;--pink:#ec4899;--blue:#3b82f6;--green:#10b981;--red:#ef4444;--gold:#f59e0b;--cyan:#06b6d4;}
+  body{font-family:'Quicksand',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+
+  /* Stars */
+  .stars{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;}
+  .star{position:absolute;background:white;border-radius:50%;animation:twinkle var(--dur) ease-in-out infinite alternate;}
+  @keyframes twinkle{0%{opacity:.2;transform:scale(.8);}100%{opacity:1;transform:scale(1.2);}}
+
+  .container{position:relative;z-index:1;max-width:900px;margin:0 auto;padding:16px;}
+
+  /* Top HUD */
+  .hud{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--card);border:1px solid var(--border);border-radius:14px;margin-bottom:12px;flex-wrap:wrap;gap:8px;}
+  .hud-left{display:flex;align-items:center;gap:16px;}
+  .hud-avatar{font-size:2em;}
+  .hud-name{font-weight:700;font-size:1.1em;}
+  .hud-level{color:var(--gold);font-size:0.85em;font-family:'Press Start 2P',monospace;}
+  .hud-bars{display:flex;flex-direction:column;gap:4px;min-width:160px;}
+  .bar-row{display:flex;align-items:center;gap:6px;font-size:0.78em;}
+  .bar-label{width:24px;text-align:center;}
+  .bar-track{flex:1;height:10px;background:rgba(255,255,255,0.1);border-radius:5px;overflow:hidden;}
+  .bar-fill{height:100%;border-radius:5px;transition:width 0.5s ease;}
+  .bar-fill.hp{background:linear-gradient(90deg,var(--red),var(--pink));}
+  .bar-fill.xp{background:linear-gradient(90deg,var(--blue),var(--cyan));}
+  .bar-val{font-family:'Press Start 2P',monospace;font-size:0.6em;min-width:50px;}
+  .hud-right{display:flex;align-items:center;gap:14px;}
+  .hud-stat{text-align:center;}
+  .hud-stat .hs-val{font-family:'Press Start 2P',monospace;font-size:1em;color:var(--gold);}
+  .hud-stat .hs-label{font-size:0.7em;color:var(--muted);}
+
+  /* Main card */
+  .card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:28px;margin-bottom:12px;animation:fadeIn .4s ease;}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+
+  /* Character select */
+  .char-select{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:20px 0;}
+  .char-card{background:rgba(139,92,246,0.08);border:2px solid var(--border);border-radius:16px;padding:20px;text-align:center;cursor:pointer;transition:all .3s;}
+  .char-card:hover{border-color:var(--purple);transform:translateY(-4px);box-shadow:0 8px 24px rgba(139,92,246,0.2);}
+  .char-card .cc-icon{font-size:3.5em;margin-bottom:8px;}
+  .char-card .cc-name{font-weight:700;font-size:1.1em;margin-bottom:4px;}
+  .char-card .cc-desc{color:var(--muted);font-size:0.85em;}
+
+  /* World map */
+  .world-map{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:16px 0;}
+  .world-card{background:rgba(139,92,246,0.06);border:2px solid var(--border);border-radius:14px;padding:18px;cursor:pointer;transition:all .3s;position:relative;overflow:hidden;}
+  .world-card:hover{border-color:var(--purple);transform:scale(1.02);}
+  .world-card.locked{opacity:0.45;cursor:not-allowed;}
+  .world-card .wc-icon{font-size:2.2em;margin-bottom:6px;}
+  .world-card .wc-name{font-weight:700;font-size:1.05em;}
+  .world-card .wc-desc{color:var(--muted);font-size:0.82em;margin-top:2px;}
+  .world-card .wc-badge{position:absolute;top:10px;right:10px;font-size:0.7em;padding:3px 10px;border-radius:10px;font-weight:700;}
+  .wc-badge.complete{background:rgba(16,185,129,0.2);color:var(--green);}
+  .wc-badge.new{background:rgba(245,158,11,0.2);color:var(--gold);}
+  .wc-badge.lock{background:rgba(148,163,184,0.2);color:var(--muted);}
+  .world-card .wc-stars{margin-top:6px;font-size:0.9em;letter-spacing:2px;}
+
+  /* Battle screen */
+  .battle-arena{text-align:center;padding:10px 0;}
+  .battle-scene{display:flex;justify-content:space-around;align-items:center;margin:16px 0;min-height:160px;}
+  .fighter{text-align:center;transition:all .3s;}
+  .fighter .f-sprite{font-size:4em;display:block;margin-bottom:6px;}
+  .fighter .f-name{font-weight:700;font-size:0.95em;}
+  .fighter .f-hp-bar{width:120px;height:8px;background:rgba(255,255,255,0.1);border-radius:4px;margin:4px auto;overflow:hidden;}
+  .fighter .f-hp-fill{height:100%;background:var(--green);border-radius:4px;transition:width .5s ease;}
+  .fighter .f-hp-text{font-size:0.7em;color:var(--muted);font-family:'Press Start 2P',monospace;}
+  .vs-icon{font-size:2em;color:var(--gold);animation:pulse 1s ease infinite;}
+  @keyframes pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.2);}}
+
+  .battle-question{margin:20px 0;}
+  .battle-question .bq-problem{font-family:'Press Start 2P',monospace;font-size:1.8em;color:var(--gold);margin-bottom:16px;text-shadow:0 0 20px rgba(245,158,11,0.4);}
+  .answer-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;max-width:400px;margin:0 auto;}
+  .answer-btn{background:rgba(139,92,246,0.12);border:2px solid var(--border);border-radius:12px;padding:14px;font-family:'Press Start 2P',monospace;font-size:1em;color:var(--text);cursor:pointer;transition:all .2s;}
+  .answer-btn:hover{border-color:var(--purple);background:rgba(139,92,246,0.25);transform:scale(1.04);}
+  .answer-btn.correct{border-color:var(--green);background:rgba(16,185,129,0.25);animation:popRight .4s ease;}
+  .answer-btn.wrong{border-color:var(--red);background:rgba(239,68,68,0.15);animation:shake .4s ease;}
+  @keyframes popRight{0%{transform:scale(1);}50%{transform:scale(1.08);}100%{transform:scale(1);}}
+  @keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-8px);}75%{transform:translateX(8px);}}
+
+  .battle-feedback{font-size:1.1em;font-weight:700;margin:12px 0;min-height:30px;}
+  .battle-feedback.hit{color:var(--green);}
+  .battle-feedback.miss{color:var(--red);}
+
+  .timer-bar{width:100%;height:6px;background:rgba(255,255,255,0.1);border-radius:3px;margin:8px 0;overflow:hidden;}
+  .timer-fill{height:100%;background:linear-gradient(90deg,var(--green),var(--gold),var(--red));border-radius:3px;transition:width .1s linear;}
+
+  /* Attack animation */
+  .fighter.attacking{animation:attackRight .4s ease;}
+  .fighter.attacked{animation:hitFlash .4s ease;}
+  @keyframes attackRight{0%{transform:translateX(0);}40%{transform:translateX(60px);}100%{transform:translateX(0);}}
+  @keyframes hitFlash{0%{opacity:1;}25%{opacity:.3;}50%{opacity:1;}75%{opacity:.3;}100%{opacity:1;}}
+
+  /* Victory / Defeat */
+  .result-screen{text-align:center;padding:20px;}
+  .result-screen h2{font-size:1.6em;margin-bottom:8px;}
+  .result-screen h2.victory{color:var(--gold);}
+  .result-screen h2.defeat{color:var(--red);}
+  .result-stats{display:flex;gap:16px;justify-content:center;margin:16px 0;flex-wrap:wrap;}
+  .rs-item{background:rgba(139,92,246,0.1);border:1px solid var(--border);border-radius:12px;padding:14px 20px;text-align:center;}
+  .rs-item .rs-val{font-family:'Press Start 2P',monospace;font-size:1.2em;color:var(--gold);}
+  .rs-item .rs-label{font-size:0.8em;color:var(--muted);margin-top:4px;}
+  .loot-item{display:inline-flex;align-items:center;gap:6px;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:10px;padding:6px 14px;margin:4px;font-size:0.9em;animation:fadeIn .5s ease;}
+
+  .action-btn{background:linear-gradient(135deg,var(--purple),var(--pink));border:none;border-radius:12px;padding:12px 28px;color:white;font-family:'Quicksand',sans-serif;font-size:1.05em;font-weight:700;cursor:pointer;transition:all .3s;margin:6px;}
+  .action-btn:hover{transform:scale(1.04);box-shadow:0 0 20px rgba(139,92,246,0.4);}
+  .action-btn.secondary{background:rgba(139,92,246,0.15);border:1px solid var(--border);}
+
+  /* Inventory */
+  .inventory-grid{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0;}
+  .inv-slot{background:rgba(139,92,246,0.08);border:1px solid var(--border);border-radius:10px;padding:6px 12px;font-size:0.85em;display:flex;align-items:center;gap:5px;}
+
+  /* Progress dots for world */
+  .battle-progress{display:flex;gap:6px;justify-content:center;margin:10px 0;}
+  .bp-dot{width:14px;height:14px;border-radius:50%;background:rgba(255,255,255,0.1);border:1px solid var(--border);transition:all .3s;}
+  .bp-dot.won{background:var(--green);border-color:var(--green);box-shadow:0 0 6px rgba(16,185,129,0.4);}
+  .bp-dot.current{background:var(--gold);border-color:var(--gold);box-shadow:0 0 8px rgba(245,158,11,0.4);animation:pulse 1.5s ease infinite;}
+  .bp-dot.boss{border-color:var(--red);width:18px;height:18px;}
+
+  h2.section-title{text-align:center;font-size:1.4em;margin-bottom:16px;background:linear-gradient(135deg,var(--gold),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+  .subtitle{text-align:center;color:var(--muted);margin-bottom:16px;}
+
+  @media(max-width:600px){
+    .char-select,.world-map{grid-template-columns:1fr;}
+    .answer-grid{grid-template-columns:repeat(2,1fr);}
+    .battle-scene{flex-direction:column;gap:10px;}
+  }
+</style>
+</head>
+<body>
+<div class="stars" id="stars"></div>
+<div class="container">
+  <div class="hud" id="hud" style="display:none;">
+    <div class="hud-left">
+      <div class="hud-avatar" id="hudAvatar">⚔️</div>
+      <div>
+        <div class="hud-name" id="hudName">Hero</div>
+        <div class="hud-level" id="hudLevel">LVL 1</div>
+      </div>
+      <div class="hud-bars">
+        <div class="bar-row"><span class="bar-label">❤️</span><div class="bar-track"><div class="bar-fill hp" id="hpBar" style="width:100%"></div></div><span class="bar-val" id="hpText">100/100</span></div>
+        <div class="bar-row"><span class="bar-label">⭐</span><div class="bar-track"><div class="bar-fill xp" id="xpBar" style="width:0%"></div></div><span class="bar-val" id="xpText">0/50</span></div>
+      </div>
+    </div>
+    <div class="hud-right">
+      <div class="hud-stat"><div class="hs-val" id="hudGold">0</div><div class="hs-label">🪙 Gold</div></div>
+      <div class="hud-stat"><div class="hs-val" id="hudWins">0</div><div class="hs-label">⚔️ Wins</div></div>
+      <div class="hud-stat"><div class="hs-val" id="hudStreak">0</div><div class="hs-label">🔥 Streak</div></div>
+    </div>
+  </div>
+
+  <div class="card" id="mainCard"></div>
+</div>
+
+<script>
+// ─── Stars ───
+(function(){const el=document.getElementById('stars');for(let i=0;i<60;i++){const s=document.createElement('div');s.className='star';const sz=Math.random()*3+1;s.style.cssText=`width:${sz}px;height:${sz}px;left:${Math.random()*100}%;top:${Math.random()*100}%;--dur:${Math.random()*3+2}s;animation-delay:${Math.random()*3}s;`;el.appendChild(s);}})();
+
+// ─── State ───
+let player = {
+  name:'Hero', avatar:'⚔️', class:'',
+  hp:100, maxHp:100,
+  xp:0, xpNeeded:50, level:1,
+  gold:0, wins:0, streak:0,
+  attack:10, defense:5,
+  inventory:[],
+  worldProgress:{} // worldId -> {battlesWon, stars, complete}
+};
+
+// ─── DATA ───
+const CHARACTERS = [
+  {id:'knight',icon:'🗡️',name:'Star Knight',desc:'Brave warrior with strong attacks',attack:12,defense:6,hp:110},
+  {id:'wizard',icon:'🧙‍♀️',name:'Math Wizard',desc:'Smart spellcaster with bonus XP',attack:10,defense:4,hp:90,xpBonus:true},
+  {id:'ranger',icon:'🏹',name:'Forest Ranger',desc:'Quick archer with extra gold',attack:11,defense:5,hp:100,goldBonus:true}
+];
+
+const WORLDS = [
+  {
+    id:'meadow', name:'Sunny Meadow', icon:'🌻', desc:'Gentle creatures — ×1, ×2, ×5, ×10',
+    bg:'linear-gradient(135deg,#0a3d0a,#1a2a0a)', unlock:0,
+    tables:[1,2,5,10],
+    monsters:[
+      {name:'Bunny Puff',sprite:'🐰',hp:30,attack:4},
+      {name:'Ladybug',sprite:'🐞',hp:25,attack:3},
+      {name:'Butterfly',sprite:'🦋',hp:20,attack:2},
+      {name:'Garden Snail',sprite:'🐌',hp:35,attack:3},
+    ],
+    boss:{name:'Flower Guardian',sprite:'🌺',hp:60,attack:7},
+    loot:['Meadow Shield 🛡️','Flower Crown 👑','Lucky Clover 🍀']
+  },
+  {
+    id:'forest', name:'Enchanted Forest', icon:'🌲', desc:'Trickier creatures — ×3, ×4, ×6',
+    bg:'linear-gradient(135deg,#0a2a1a,#1a0a3d)', unlock:1,
+    tables:[3,4,6],
+    monsters:[
+      {name:'Fox Trickster',sprite:'🦊',hp:45,attack:6},
+      {name:'Owl Sage',sprite:'🦉',hp:40,attack:5},
+      {name:'Mushroom Sprite',sprite:'🍄',hp:50,attack:7},
+      {name:'Wolf Pup',sprite:'🐺',hp:55,attack:6},
+    ],
+    boss:{name:'Tree Giant',sprite:'🌳',hp:80,attack:9},
+    loot:['Forest Blade ⚔️','Acorn Charm 🌰','Moonstone Ring 💎']
+  },
+  {
+    id:'cave', name:'Crystal Caverns', icon:'💎', desc:'Strong foes — ×7, ×8, ×9',
+    bg:'linear-gradient(135deg,#1a0a2d,#2d0a1a)', unlock:2,
+    tables:[7,8,9],
+    monsters:[
+      {name:'Cave Bat',sprite:'🦇',hp:55,attack:8},
+      {name:'Rock Golem',sprite:'🗿',hp:70,attack:7},
+      {name:'Crystal Spider',sprite:'🕷️',hp:50,attack:9},
+      {name:'Shadow Cat',sprite:'🐈‍⬛',hp:60,attack:8},
+    ],
+    boss:{name:'Dragon Hatchling',sprite:'🐉',hp:100,attack:11},
+    loot:['Crystal Sword 🗡️','Dragon Scale 🛡️','Gem of Power 💠']
+  },
+  {
+    id:'volcano', name:'Fire Volcano', icon:'🌋', desc:'Ultimate challenge — ×11, ×12, mixed',
+    bg:'linear-gradient(135deg,#3d0a0a,#3d2a0a)', unlock:3,
+    tables:[11,12,0],  // 0 = mixed
+    monsters:[
+      {name:'Lava Slime',sprite:'🔥',hp:65,attack:10},
+      {name:'Fire Phoenix',sprite:'🐦‍🔥',hp:70,attack:9},
+      {name:'Magma Crab',sprite:'🦀',hp:75,attack:11},
+      {name:'Ember Drake',sprite:'🐲',hp:80,attack:10},
+    ],
+    boss:{name:'Volcano King',sprite:'👹',hp:130,attack:13},
+    loot:['Flame Blade 🔥','Lava Crown 👑','Heart of Fire ❤️‍🔥']
+  }
+];
+
+const BATTLE_MESSAGES_HIT = [
+  "Super strike! 💥","Critical hit! ⚡","Boom! Direct hit! 💫",
+  "Amazing attack! 🌟","Powerful blow! 🔥","Perfect shot! 🎯"
+];
+const BATTLE_MESSAGES_MISS = [
+  "The enemy attacks! 😟","Ouch! Keep trying! 💪","Not quite — fight on! ⚔️","Missed! Stay strong! 🛡️"
+];
+
+// ─── Helpers ───
+function genProblem(tables) {
+  const t = tables[Math.floor(Math.random()*tables.length)];
+  let a, b;
+  if (t === 0) { // mixed
+    a = Math.floor(Math.random()*12)+1;
+    b = Math.floor(Math.random()*12)+1;
+  } else {
+    a = t;
+    b = Math.floor(Math.random()*12)+1;
+  }
+  if (Math.random()>0.5) [a,b]=[b,a];
+  return {a, b, answer: a*b};
+}
+
+function genAnswers(correct) {
+  const answers = new Set([correct]);
+  while(answers.size < 4) {
+    let wrong;
+    const r = Math.random();
+    if (r < 0.3) wrong = correct + Math.floor(Math.random()*5)+1;
+    else if (r < 0.6) wrong = correct - Math.floor(Math.random()*5)-1;
+    else wrong = Math.floor(Math.random()*144)+1;
+    if (wrong > 0 && wrong !== correct) answers.add(wrong);
+  }
+  return shuffle([...answers]);
+}
+
+function shuffle(arr) {
+  for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];}
+  return arr;
+}
+
+function updateHUD() {
+  document.getElementById('hudAvatar').textContent = player.avatar;
+  document.getElementById('hudName').textContent = player.name;
+  document.getElementById('hudLevel').textContent = `LVL ${player.level}`;
+  document.getElementById('hpBar').style.width = (player.hp/player.maxHp*100)+'%';
+  document.getElementById('hpText').textContent = `${player.hp}/${player.maxHp}`;
+  document.getElementById('xpBar').style.width = (player.xp/player.xpNeeded*100)+'%';
+  document.getElementById('xpText').textContent = `${player.xp}/${player.xpNeeded}`;
+  document.getElementById('hudGold').textContent = player.gold;
+  document.getElementById('hudWins').textContent = player.wins;
+  document.getElementById('hudStreak').textContent = player.streak;
+}
+
+function addXP(amount) {
+  if (player.class === 'wizard') amount = Math.floor(amount * 1.3);
+  player.xp += amount;
+  while (player.xp >= player.xpNeeded) {
+    player.xp -= player.xpNeeded;
+    player.level++;
+    player.maxHp += 10;
+    player.hp = player.maxHp;
+    player.attack += 2;
+    player.defense += 1;
+    player.xpNeeded = Math.floor(player.xpNeeded * 1.4);
+  }
+}
+
+function addGold(amount) {
+  if (player.class === 'ranger') amount = Math.floor(amount * 1.5);
+  player.gold += amount;
+}
+
+function getWorldsUnlocked() {
+  let count = 0;
+  WORLDS.forEach(w => { if (player.worldProgress[w.id]?.complete) count++; });
+  return count;
+}
+
+// ─── Screens ───
+function showCharSelect() {
+  document.getElementById('hud').style.display = 'none';
+  const card = document.getElementById('mainCard');
+  card.innerHTML = `
+    <h2 class="section-title">⚔️ Multiplication Quest ⚔️</h2>
+    <p class="subtitle">Choose your hero and battle creatures with the power of multiplication!</p>
+    <div class="char-select">
+      ${CHARACTERS.map(c => `
+        <div class="char-card" onclick="selectCharacter('${c.id}')">
+          <div class="cc-icon">${c.icon}</div>
+          <div class="cc-name">${c.name}</div>
+          <div class="cc-desc">${c.desc}</div>
+          <div style="margin-top:8px;font-size:0.8em;color:var(--cyan);">ATK: ${c.attack} · DEF: ${c.defense} · HP: ${c.hp}</div>
+        </div>`).join('')}
+    </div>`;
+}
+
+function selectCharacter(id) {
+  const c = CHARACTERS.find(x=>x.id===id);
+  player.name = c.name;
+  player.avatar = c.icon;
+  player.class = id;
+  player.hp = c.hp;
+  player.maxHp = c.hp;
+  player.attack = c.attack;
+  player.defense = c.defense;
+  showWorldMap();
+}
+
+function showWorldMap() {
+  document.getElementById('hud').style.display = 'flex';
+  updateHUD();
+  const unlocked = getWorldsUnlocked();
+  const card = document.getElementById('mainCard');
+
+  let html = `<h2 class="section-title">🗺️ Choose Your World</h2>
+    <p class="subtitle">Battle monsters by solving multiplication problems! Defeat all creatures to unlock new worlds.</p>`;
+
+  if (player.inventory.length > 0) {
+    html += `<div style="margin-bottom:12px;"><span style="font-size:0.85em;color:var(--muted);">🎒 Inventory:</span>
+      <div class="inventory-grid">${player.inventory.map(i=>`<div class="inv-slot">${i}</div>`).join('')}</div></div>`;
+  }
+
+  html += '<div class="world-map">';
+  WORLDS.forEach((w, i) => {
+    const isLocked = i > unlocked;
+    const prog = player.worldProgress[w.id];
+    const isComplete = prog?.complete;
+    const stars = prog?.stars || 0;
+    let badge = '';
+    if (isComplete) badge = '<span class="wc-badge complete">✅ CLEAR</span>';
+    else if (isLocked) badge = '<span class="wc-badge lock">🔒 LOCKED</span>';
+    else badge = '<span class="wc-badge new">⚔️ GO!</span>';
+
+    html += `<div class="world-card${isLocked?' locked':''}" ${!isLocked?`onclick="enterWorld('${w.id}')"`:''}
+      style="background:${w.bg}">
+      ${badge}
+      <div class="wc-icon">${w.icon}</div>
+      <div class="wc-name">${w.name}</div>
+      <div class="wc-desc">${w.desc}</div>
+      <div class="wc-stars">${'⭐'.repeat(stars)}${'☆'.repeat(3-stars)}</div>
+    </div>`;
+  });
+  html += '</div>';
+  card.innerHTML = html;
+}
+
+// ─── Battle System ───
+let battle = {
+  world: null,
+  monsterQueue: [],
+  currentMonster: null,
+  monsterHp: 0,
+  monsterMaxHp: 0,
+  battlesWon: 0,
+  totalBattles: 5,
+  currentProblem: null,
+  timerInterval: null,
+  timeLeft: 0,
+  correctInRow: 0,
+  totalCorrect: 0,
+  totalProblems: 0,
+  goldEarned: 0,
+  xpEarned: 0
+};
+
+function enterWorld(worldId) {
+  const world = WORLDS.find(w=>w.id===worldId);
+  battle.world = world;
+  battle.battlesWon = 0;
+  battle.totalBattles = 5; // 4 monsters + 1 boss
+  battle.correctInRow = 0;
+  battle.totalCorrect = 0;
+  battle.totalProblems = 0;
+  battle.goldEarned = 0;
+  battle.xpEarned = 0;
+
+  // Generate monster queue: 4 random monsters then boss
+  const monsters = shuffle([...world.monsters]).slice(0,4);
+  battle.monsterQueue = [...monsters, world.boss];
+
+  player.hp = player.maxHp; // heal for new world
+  updateHUD();
+  nextMonster();
+}
+
+function nextMonster() {
+  if (battle.monsterQueue.length === 0) {
+    showVictory();
+    return;
+  }
+  const m = battle.monsterQueue.shift();
+  battle.currentMonster = m;
+  battle.monsterHp = m.hp;
+  battle.monsterMaxHp = m.hp;
+  showBattle();
+}
+
+function showBattle() {
+  const m = battle.currentMonster;
+  const isBoss = battle.monsterQueue.length === 0 && battle.battlesWon === 4;
+  const card = document.getElementById('mainCard');
+
+  // Progress dots
+  let dots = '';
+  for (let i = 0; i < battle.totalBattles; i++) {
+    let cls = '';
+    if (i < battle.battlesWon) cls = 'won';
+    else if (i === battle.battlesWon) cls = 'current';
+    if (i === battle.totalBattles - 1) cls += ' boss';
+    dots += `<div class="bp-dot ${cls}"></div>`;
+  }
+
+  card.innerHTML = `
+    <div class="battle-progress">${dots}</div>
+    <div class="battle-arena">
+      <div class="battle-scene">
+        <div class="fighter" id="playerFighter">
+          <span class="f-sprite">${player.avatar}</span>
+          <div class="f-name">${player.name}</div>
+          <div class="f-hp-bar"><div class="f-hp-fill" id="playerHpFill" style="width:${player.hp/player.maxHp*100}%"></div></div>
+          <div class="f-hp-text">${player.hp} HP</div>
+        </div>
+        <div class="vs-icon">⚔️</div>
+        <div class="fighter" id="monsterFighter">
+          <span class="f-sprite">${m.sprite}</span>
+          <div class="f-name">${isBoss?'👑 ':''}${m.name}</div>
+          <div class="f-hp-bar"><div class="f-hp-fill" id="monsterHpFill" style="width:100%"></div></div>
+          <div class="f-hp-text" id="monsterHpText">${battle.monsterHp} HP</div>
+        </div>
+      </div>
+
+      <div class="timer-bar"><div class="timer-fill" id="timerFill" style="width:100%"></div></div>
+
+      <div class="battle-question" id="questionArea"></div>
+      <div class="battle-feedback" id="battleFeedback"></div>
+    </div>`;
+
+  askQuestion();
+}
+
+function askQuestion() {
+  const problem = genProblem(battle.world.tables);
+  battle.currentProblem = problem;
+  const answers = genAnswers(problem.answer);
+  battle.totalProblems++;
+
+  const qa = document.getElementById('questionArea');
+  qa.innerHTML = `
+    <div class="bq-problem">${problem.a} × ${problem.b} = ?</div>
+    <div class="answer-grid">
+      ${answers.map((a,i) => `<button class="answer-btn" id="ans${i}" onclick="submitAnswer(${a},${i})">${a}</button>`).join('')}
+    </div>`;
+
+  document.getElementById('battleFeedback').textContent = '';
+
+  // Timer (10 seconds)
+  battle.timeLeft = 100;
+  clearInterval(battle.timerInterval);
+  const fill = document.getElementById('timerFill');
+  fill.style.width = '100%';
+  battle.timerInterval = setInterval(() => {
+    battle.timeLeft -= 1;
+    fill.style.width = battle.timeLeft + '%';
+    if (battle.timeLeft <= 0) {
+      clearInterval(battle.timerInterval);
+      handleMiss();
+    }
+  }, 100);
+}
+
+function submitAnswer(answer, btnIdx) {
+  clearInterval(battle.timerInterval);
+  const correct = answer === battle.currentProblem.answer;
+  const btns = document.querySelectorAll('.answer-btn');
+  btns.forEach(b => b.style.pointerEvents = 'none');
+
+  // Highlight correct/wrong
+  btns.forEach((b, i) => {
+    const val = parseInt(b.textContent);
+    if (val === battle.currentProblem.answer) b.classList.add('correct');
+    else if (i === btnIdx && !correct) b.classList.add('wrong');
+  });
+
+  if (correct) handleHit();
+  else handleMiss();
+}
+
+function handleHit() {
+  battle.totalCorrect++;
+  battle.correctInRow++;
+
+  // Damage monster
+  let dmg = player.attack + Math.floor(Math.random()*3);
+  if (battle.correctInRow >= 3) dmg = Math.floor(dmg * 1.5); // combo bonus
+  if (battle.timeLeft > 70) dmg += 3; // speed bonus
+
+  battle.monsterHp = Math.max(0, battle.monsterHp - dmg);
+
+  // Animations
+  const pf = document.getElementById('playerFighter');
+  pf.classList.add('attacking');
+  setTimeout(() => pf.classList.remove('attacking'), 400);
+  setTimeout(() => {
+    const mf = document.getElementById('monsterFighter');
+    mf.classList.add('attacked');
+    setTimeout(() => mf.classList.remove('attacked'), 400);
+  }, 200);
+
+  // Update HP
+  document.getElementById('monsterHpFill').style.width = (battle.monsterHp/battle.monsterMaxHp*100)+'%';
+  document.getElementById('monsterHpText').textContent = battle.monsterHp + ' HP';
+
+  const fb = document.getElementById('battleFeedback');
+  const msg = BATTLE_MESSAGES_HIT[Math.floor(Math.random()*BATTLE_MESSAGES_HIT.length)];
+  let bonus = '';
+  if (battle.correctInRow >= 3) bonus = ` (${battle.correctInRow}× COMBO!)`;
+  if (battle.timeLeft > 70) bonus += ' ⚡SPEED BONUS!';
+  fb.className = 'battle-feedback hit';
+  fb.textContent = `${msg} -${dmg} damage!${bonus}`;
+
+  if (battle.monsterHp <= 0) {
+    setTimeout(monsterDefeated, 800);
+  } else {
+    setTimeout(askQuestion, 1200);
+  }
+}
+
+function handleMiss() {
+  battle.correctInRow = 0;
+
+  // Monster attacks player
+  let dmg = Math.max(1, battle.currentMonster.attack - player.defense + Math.floor(Math.random()*3));
+  player.hp = Math.max(0, player.hp - dmg);
+
+  // Animations
+  const mf = document.getElementById('monsterFighter');
+  mf.classList.add('attacking');
+  setTimeout(() => mf.classList.remove('attacking'), 400);
+  setTimeout(() => {
+    const pf = document.getElementById('playerFighter');
+    pf.classList.add('attacked');
+    setTimeout(() => pf.classList.remove('attacked'), 400);
+  }, 200);
+
+  document.getElementById('playerHpFill').style.width = (player.hp/player.maxHp*100)+'%';
+  updateHUD();
+
+  const fb = document.getElementById('battleFeedback');
+  const msg = BATTLE_MESSAGES_MISS[Math.floor(Math.random()*BATTLE_MESSAGES_MISS.length)];
+  fb.className = 'battle-feedback miss';
+  fb.textContent = `${msg} -${dmg} HP! (Answer: ${battle.currentProblem.answer})`;
+
+  if (player.hp <= 0) {
+    setTimeout(showDefeat, 800);
+  } else {
+    setTimeout(askQuestion, 1500);
+  }
+}
+
+function monsterDefeated() {
+  battle.battlesWon++;
+  const goldReward = 5 + Math.floor(Math.random()*6) + (battle.monsterQueue.length === 0 ? 15 : 0);
+  const xpReward = 10 + (battle.monsterQueue.length === 0 ? 25 : 0);
+  addGold(goldReward);
+  addXP(xpReward);
+  battle.goldEarned += goldReward;
+  battle.xpEarned += xpReward;
+  player.wins++;
+  player.streak++;
+  updateHUD();
+
+  if (battle.monsterQueue.length === 0) {
+    // World complete!
+    setTimeout(showVictory, 600);
+  } else {
+    // Show mini-victory and continue
+    const card = document.getElementById('mainCard');
+    card.innerHTML = `
+      <div class="result-screen">
+        <h2 class="victory">🎉 ${battle.currentMonster.name} Defeated!</h2>
+        <p style="color:var(--muted);margin:8px 0;">+${goldReward} gold · +${xpReward} XP</p>
+        <p style="color:var(--green);font-size:0.9em;">Streak: ${player.streak} 🔥</p>
+        <button class="action-btn" onclick="nextMonster()">Next Battle →</button>
+      </div>`;
+  }
+}
+
+function showVictory() {
+  clearInterval(battle.timerInterval);
+  const world = battle.world;
+  const accuracy = battle.totalProblems > 0 ? Math.round(battle.totalCorrect/battle.totalProblems*100) : 0;
+  let stars = 1;
+  if (accuracy >= 80) stars = 2;
+  if (accuracy >= 95) stars = 3;
+
+  // Save progress
+  const prev = player.worldProgress[world.id];
+  player.worldProgress[world.id] = {
+    complete: true,
+    battlesWon: battle.battlesWon,
+    stars: Math.max(stars, prev?.stars || 0)
+  };
+
+  // Loot
+  const lootItem = world.loot[Math.floor(Math.random()*world.loot.length)];
+  if (!player.inventory.includes(lootItem)) player.inventory.push(lootItem);
+
+  // Heal
+  player.hp = player.maxHp;
+  updateHUD();
+
+  const card = document.getElementById('mainCard');
+  card.innerHTML = `
+    <div class="result-screen">
+      <h2 class="victory">🏆 ${world.name} Complete! 🏆</h2>
+      <div style="font-size:1.6em;margin:10px 0;letter-spacing:4px;">${'⭐'.repeat(stars)}${'☆'.repeat(3-stars)}</div>
+      <div class="result-stats">
+        <div class="rs-item"><div class="rs-val">${battle.totalCorrect}/${battle.totalProblems}</div><div class="rs-label">Correct</div></div>
+        <div class="rs-item"><div class="rs-val">${accuracy}%</div><div class="rs-label">Accuracy</div></div>
+        <div class="rs-item"><div class="rs-val">${battle.goldEarned}</div><div class="rs-label">Gold Earned</div></div>
+        <div class="rs-item"><div class="rs-val">${battle.xpEarned}</div><div class="rs-label">XP Earned</div></div>
+      </div>
+      <div style="margin:12px 0;">
+        <p style="color:var(--gold);font-weight:700;margin-bottom:6px;">🎁 Loot Found!</p>
+        <div class="loot-item">${lootItem}</div>
+      </div>
+      ${accuracy >= 95 ? '<p style="color:var(--cyan);margin:8px 0;">🌟 PERFECT RUN BONUS! 3 Stars! 🌟</p>' : accuracy >= 80 ? '<p style="color:var(--green);margin:8px 0;">Great job! Get 95%+ accuracy for 3 stars!</p>' : '<p style="color:var(--gold);margin:8px 0;">Nice work! Get 80%+ accuracy for more stars!</p>'}
+      <div style="margin-top:16px;">
+        <button class="action-btn" onclick="showWorldMap()">🗺️ World Map</button>
+        <button class="action-btn secondary" onclick="enterWorld('${world.id}')">🔁 Replay World</button>
+      </div>
+    </div>`;
+}
+
+function showDefeat() {
+  clearInterval(battle.timerInterval);
+  player.streak = 0;
+  player.hp = Math.floor(player.maxHp * 0.5); // revive with half HP
+  updateHUD();
+
+  const card = document.getElementById('mainCard');
+  card.innerHTML = `
+    <div class="result-screen">
+      <h2 class="defeat">💔 Defeated...</h2>
+      <p style="color:var(--muted);margin:10px 0;">Don't give up! Every hero falls sometimes.<br>You got ${battle.totalCorrect} out of ${battle.totalProblems} correct this round.</p>
+      <div class="result-stats">
+        <div class="rs-item"><div class="rs-val">${battle.totalCorrect}</div><div class="rs-label">Correct</div></div>
+        <div class="rs-item"><div class="rs-val">${battle.battlesWon}/5</div><div class="rs-label">Monsters</div></div>
+      </div>
+      <p style="color:var(--cyan);font-size:0.9em;margin:12px 0;">💡 Tip: Practice the multiplication facts you missed and try again! Speed bonuses help deal extra damage.</p>
+      <div style="margin-top:16px;">
+        <button class="action-btn" onclick="enterWorld('${battle.world.id}')">⚔️ Try Again!</button>
+        <button class="action-btn secondary" onclick="showWorldMap()">🗺️ World Map</button>
+      </div>
+    </div>`;
+}
+
+// ─── Init ───
+showCharSelect();
+</script>
+</body>
+</html>

@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Code Challenge Arena</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+  *{margin:0;padding:0;box-sizing:border-box;}
+  :root{--bg:#0a0e17;--card:#111827;--border:#1e293b;--text:#e2e8f0;--muted:#94a3b8;
+    --accent:#10b981;--blue:#3b82f6;--purple:#8b5cf6;--yellow:#f59e0b;--red:#ef4444;--cyan:#06b6d4;--pink:#ec4899;}
+  body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 24px;background:var(--card);border-bottom:1px solid var(--border);}
+  .topbar h1{font-size:1.3em;display:flex;align-items:center;gap:10px;}
+  .topbar h1 .icon{font-size:1.3em;}
+  .topbar h1 span{color:var(--accent);}
+  .stats-row{display:flex;gap:16px;align-items:center;}
+  .stat-pill{background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:20px;padding:5px 14px;font-size:0.85em;display:flex;align-items:center;gap:6px;}
+  .stat-pill .sv{color:var(--accent);font-weight:700;font-family:'JetBrains Mono',monospace;}
+
+  .main-layout{display:flex;height:calc(100vh - 56px);}
+
+  /* Sidebar */
+  .sidebar{width:280px;background:var(--card);border-right:1px solid var(--border);overflow-y:auto;flex-shrink:0;padding:12px;}
+  .cat-header{font-size:0.72em;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);padding:8px 4px 4px;margin-top:8px;}
+  .challenge-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer;transition:all 0.2s;margin-bottom:2px;}
+  .challenge-item:hover{background:rgba(16,185,129,0.08);}
+  .challenge-item.active{background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.3);}
+  .challenge-item.solved .ci-status{color:var(--accent);}
+  .ci-status{font-size:1.1em;width:20px;text-align:center;}
+  .ci-info{flex:1;}
+  .ci-title{font-size:0.9em;font-weight:600;}
+  .ci-diff{font-size:0.72em;margin-top:2px;}
+  .ci-diff.easy{color:var(--accent);} .ci-diff.medium{color:var(--yellow);} .ci-diff.hard{color:var(--red);}
+
+  /* Content area */
+  .content{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+
+  /* Problem description */
+  .problem-area{padding:20px 24px;overflow-y:auto;max-height:45%;border-bottom:1px solid var(--border);}
+  .problem-area h2{font-size:1.3em;margin-bottom:4px;display:flex;align-items:center;gap:10px;}
+  .problem-area h2 .badge{font-size:0.55em;padding:3px 10px;border-radius:12px;font-weight:600;}
+  .badge.easy{background:rgba(16,185,129,0.15);color:var(--accent);}
+  .badge.medium{background:rgba(245,158,11,0.15);color:var(--yellow);}
+  .badge.hard{background:rgba(239,68,68,0.15);color:var(--red);}
+  .problem-area .concept{color:var(--cyan);font-size:0.85em;margin-bottom:12px;}
+  .problem-area p{color:var(--muted);line-height:1.65;margin-bottom:10px;font-size:0.95em;}
+  .example-box{background:rgba(59,130,246,0.06);border:1px solid rgba(59,130,246,0.2);border-radius:10px;padding:14px;margin:10px 0;font-family:'JetBrains Mono',monospace;font-size:0.85em;line-height:1.6;color:var(--blue);}
+  .hint-box{background:rgba(245,158,11,0.06);border:1px solid rgba(245,158,11,0.2);border-radius:10px;padding:14px;margin:10px 0;font-size:0.9em;color:var(--yellow);display:none;}
+  .hint-toggle{background:none;border:1px solid var(--border);color:var(--muted);padding:6px 14px;border-radius:8px;font-family:'Inter',sans-serif;font-size:0.82em;cursor:pointer;transition:all 0.2s;}
+  .hint-toggle:hover{border-color:var(--yellow);color:var(--yellow);}
+
+  /* Editor */
+  .editor-area{flex:1;display:flex;flex-direction:column;background:#0d1117;}
+  .editor-tabs{display:flex;align-items:center;padding:6px 12px;background:var(--card);border-bottom:1px solid var(--border);gap:8px;}
+  .editor-tab{padding:5px 14px;border-radius:6px;font-size:0.82em;color:var(--muted);cursor:pointer;}
+  .editor-tab.active{background:rgba(16,185,129,0.1);color:var(--accent);}
+  .run-btn{margin-left:auto;background:var(--accent);border:none;color:#000;padding:6px 18px;border-radius:8px;font-family:'Inter',sans-serif;font-size:0.85em;font-weight:600;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;gap:6px;}
+  .run-btn:hover{filter:brightness(1.1);transform:scale(1.02);}
+  .reset-btn{background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:var(--red);padding:6px 14px;border-radius:8px;font-family:'Inter',sans-serif;font-size:0.82em;cursor:pointer;}
+
+  .editor-wrapper{flex:1;display:flex;overflow:hidden;}
+  textarea.code-editor{flex:1;background:#0d1117;border:none;color:#c9d1d9;font-family:'JetBrains Mono',monospace;font-size:0.9em;line-height:1.7;padding:16px;resize:none;outline:none;tab-size:2;}
+
+  /* Output */
+  .output-panel{height:160px;background:#0a0e14;border-top:1px solid var(--border);padding:12px 16px;overflow-y:auto;font-family:'JetBrains Mono',monospace;font-size:0.85em;}
+  .output-label{font-size:0.72em;text-transform:uppercase;color:var(--muted);letter-spacing:0.05em;margin-bottom:6px;}
+  .output-line{margin-bottom:3px;line-height:1.5;}
+  .output-line.pass{color:var(--accent);}
+  .output-line.fail{color:var(--red);}
+  .output-line.info{color:var(--muted);}
+  .output-line.log{color:var(--blue);}
+
+  .success-banner{display:none;background:rgba(16,185,129,0.1);border:2px solid var(--accent);border-radius:12px;padding:16px;margin:10px 16px;text-align:center;animation:popIn 0.4s ease;}
+  .success-banner.show{display:block;}
+  .success-banner h3{color:var(--accent);margin-bottom:4px;}
+  .success-banner p{color:var(--muted);font-size:0.9em;}
+  @keyframes popIn{0%{transform:scale(0.9);opacity:0;}100%{transform:scale(1);opacity:1;}}
+
+  /* Welcome */
+  .welcome{padding:40px;text-align:center;}
+  .welcome h2{font-size:1.8em;background:linear-gradient(135deg,var(--accent),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:12px;}
+  .welcome p{color:var(--muted);font-size:1.05em;max-width:500px;margin:0 auto 24px;line-height:1.6;}
+  .welcome-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;max-width:700px;margin:0 auto;}
+  .wc{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;text-align:center;transition:all 0.2s;}
+  .wc:hover{border-color:var(--accent);transform:translateY(-2px);}
+  .wc .wc-icon{font-size:2em;margin-bottom:8px;}
+  .wc .wc-title{font-weight:600;margin-bottom:4px;}
+  .wc .wc-desc{color:var(--muted);font-size:0.82em;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1><span class="icon">⚡</span> Code Challenge <span>Arena</span></h1>
+  <div class="stats-row">
+    <div class="stat-pill">🏆 Solved: <span class="sv" id="solvedCount">0</span>/<span class="sv" id="totalCount">0</span></div>
+    <div class="stat-pill">🔥 Streak: <span class="sv" id="streak">0</span></div>
+    <div class="stat-pill">⭐ XP: <span class="sv" id="xp">0</span></div>
+  </div>
+</div>
+
+<div class="main-layout">
+  <div class="sidebar" id="sidebar"></div>
+  <div class="content" id="content">
+    <div class="welcome" id="welcome">
+      <h2>Welcome, Coder!</h2>
+      <p>Solve coding challenges, learn computer science concepts, and level up your skills. Pick a challenge from the sidebar to begin!</p>
+      <div class="welcome-cards">
+        <div class="wc"><div class="wc-icon">🧩</div><div class="wc-title">Logic</div><div class="wc-desc">Patterns, sequences, and problem-solving</div></div>
+        <div class="wc"><div class="wc-icon">⚙️</div><div class="wc-title">Algorithms</div><div class="wc-desc">Sorting, searching, and efficiency</div></div>
+        <div class="wc"><div class="wc-icon">🏗️</div><div class="wc-title">Engineering</div><div class="wc-desc">Real-world CS and engineering concepts</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── State ───
+let solved = new Set();
+let currentChallenge = null;
+let streakCount = 0;
+let xpTotal = 0;
+
+// ─── CHALLENGES ───
+const CHALLENGES = [
+  // ─── LOGIC ───
+  {
+    id:'fizzbuzz', cat:'Logic', title:'FizzBuzz', difficulty:'easy',
+    concept:'Conditionals & Modulo Operator',
+    desc:`<p>Write a function that takes a number <code>n</code> and returns:</p>
+    <p>• <code>"Fizz"</code> if the number is divisible by 3<br>• <code>"Buzz"</code> if the number is divisible by 5<br>• <code>"FizzBuzz"</code> if divisible by both 3 and 5<br>• The number as a string otherwise</p>
+    <p>This is one of the most famous coding interview questions. It tests your understanding of <strong>conditional logic</strong> and the <strong>modulo operator</strong> (<code>%</code>), which gives you the remainder after division.</p>`,
+    example:`fizzbuzz(3)  → "Fizz"\nfizzbuzz(5)  → "Buzz"\nfizzbuzz(15) → "FizzBuzz"\nfizzbuzz(7)  → "7"`,
+    hint:'Use the % (modulo) operator. n % 3 === 0 means n is divisible by 3. Check for "both" first!',
+    starter:`function fizzbuzz(n) {\n  // Your code here\n  \n}`,
+    tests:[
+      {input:[3],expected:'Fizz'},{input:[5],expected:'Buzz'},{input:[15],expected:'FizzBuzz'},
+      {input:[7],expected:'7'},{input:[30],expected:'FizzBuzz'},{input:[9],expected:'Fizz'},
+      {input:[10],expected:'Buzz'},{input:[1],expected:'1'}
+    ],
+    xp: 10
+  },
+  {
+    id:'palindrome', cat:'Logic', title:'Palindrome Checker', difficulty:'easy',
+    concept:'Strings & Reversal',
+    desc:`<p>Write a function that checks if a string is a <strong>palindrome</strong> — a word that reads the same forwards and backwards.</p>
+    <p>Examples of palindromes: "racecar", "level", "madam"</p>
+    <p>Your function should ignore uppercase/lowercase (so "Racecar" is still a palindrome).</p>
+    <p><strong>CS Concept:</strong> String manipulation is fundamental in programming. Learning to reverse strings and compare characters builds the foundation for more complex text processing.</p>`,
+    example:`isPalindrome("racecar") → true\nisPalindrome("hello")   → false\nisPalindrome("Level")   → true`,
+    hint:'Convert to lowercase first with .toLowerCase(). You can reverse a string by splitting it into an array, reversing, and joining: str.split("").reverse().join("")',
+    starter:`function isPalindrome(str) {\n  // Your code here\n  \n}`,
+    tests:[
+      {input:['racecar'],expected:true},{input:['hello'],expected:false},{input:['Level'],expected:true},
+      {input:['madam'],expected:true},{input:['python'],expected:false},{input:['A'],expected:true},
+      {input:['Noon'],expected:true}
+    ],
+    xp: 10
+  },
+  {
+    id:'fibonacci', cat:'Logic', title:'Fibonacci Sequence', difficulty:'medium',
+    concept:'Recursion & Sequences',
+    desc:`<p>The <strong>Fibonacci sequence</strong> is one of the most famous patterns in math and computer science. Each number is the sum of the two before it:</p>
+    <p><code>0, 1, 1, 2, 3, 5, 8, 13, 21, 34, ...</code></p>
+    <p>Write a function that returns the nth Fibonacci number (starting from index 0).</p>
+    <p><strong>CS Concept:</strong> This introduces you to <strong>sequences</strong> and iterative thinking. The Fibonacci sequence appears everywhere — in nature (sunflower spirals), engineering (data structures), and even art!</p>`,
+    example:`fibonacci(0) → 0\nfibonacci(1) → 1\nfibonacci(6) → 8\nfibonacci(10) → 55`,
+    hint:'Start with two variables: a = 0 and b = 1. In a loop, compute the next value as a + b, then shift: a becomes b, b becomes the new value.',
+    starter:`function fibonacci(n) {\n  // Your code here\n  \n}`,
+    tests:[
+      {input:[0],expected:0},{input:[1],expected:1},{input:[2],expected:1},
+      {input:[6],expected:8},{input:[10],expected:55},{input:[15],expected:610}
+    ],
+    xp: 20
+  },
+  {
+    id:'caesar', cat:'Logic', title:'Caesar Cipher', difficulty:'medium',
+    concept:'Encryption & Character Codes',
+    desc:`<p>The <strong>Caesar cipher</strong> is one of the oldest encryption methods, used by Julius Caesar to send secret messages! It works by shifting each letter in the alphabet by a fixed number of positions.</p>
+    <p>Write a function that takes a string and a shift amount, and returns the encrypted text. Only shift letters (a-z, A-Z) — leave spaces, numbers, and punctuation unchanged. Wrap around: shifting 'z' by 1 gives 'a'.</p>
+    <p><strong>CS Concept:</strong> This is the foundation of <strong>cryptography</strong> — the science of keeping information secret. Modern encryption is far more complex, but the core idea is the same!</p>`,
+    example:`caesar("abc", 1)      → "bcd"\ncaesar("xyz", 3)      → "abc"\ncaesar("Hello!", 5)   → "Mjqqt!"`,
+    hint:'Use charCodeAt() to get a character\'s number code, and String.fromCharCode() to convert back. Lowercase a-z are codes 97-122. Uppercase A-Z are 65-90. Use modulo (%) to wrap around.',
+    starter:`function caesar(text, shift) {\n  // Your code here\n  \n}`,
+    tests:[
+      {input:['abc',1],expected:'bcd'},{input:['xyz',3],expected:'abc'},
+      {input:['Hello!',5],expected:'Mjqqt!'},{input:['A B C',1],expected:'B C D'},
+      {input:['Zoo',1],expected:'App'}
+    ],
+    xp: 25
+  },
+
+  // ─── ALGORITHMS ───
+  {
+    id:'max_finder', cat:'Algorithms', title:'Find the Maximum', difficulty:'easy',
+    concept:'Array Traversal',
+    desc:`<p>Write a function that finds the <strong>largest number</strong> in an array. Don't use the built-in Math.max — implement it yourself!</p>
+    <p><strong>CS Concept:</strong> This is your first <strong>algorithm</strong> — a step-by-step process to solve a problem. Scanning through a list to find something is called <strong>linear search</strong>, and it's one of the most fundamental algorithms in CS.</p>`,
+    example:`findMax([3, 7, 2, 9, 1]) → 9\nfindMax([-5, -1, -8])   → -1\nfindMax([42])           → 42`,
+    hint:'Start by assuming the first element is the max. Loop through the rest — if any element is bigger, update your max.',
+    starter:`function findMax(arr) {\n  // Your code here\n  // Don't use Math.max!\n  \n}`,
+    tests:[
+      {input:[[3,7,2,9,1]],expected:9},{input:[[-5,-1,-8]],expected:-1},
+      {input:[[42]],expected:42},{input:[[1,2,3,4,5]],expected:5},{input:[[100,99,98]],expected:100}
+    ],
+    xp: 10
+  },
+  {
+    id:'bubble_sort', cat:'Algorithms', title:'Bubble Sort', difficulty:'medium',
+    concept:'Sorting Algorithms',
+    desc:`<p>Implement <strong>Bubble Sort</strong> — one of the simplest sorting algorithms. It works by repeatedly stepping through the list, comparing adjacent elements, and swapping them if they're in the wrong order.</p>
+    <p>The algorithm gets its name because smaller elements "bubble" to the top!</p>
+    <p><strong>CS Concept:</strong> Sorting is everywhere in computing. Understanding how sorting works helps you think about <strong>algorithm efficiency</strong>. Bubble sort is O(n²) — can you figure out why?</p>`,
+    example:`bubbleSort([5, 3, 8, 1, 2]) → [1, 2, 3, 5, 8]\nbubbleSort([9, 1])          → [1, 9]`,
+    hint:'Use two nested loops. The outer loop runs n times. The inner loop compares each pair of adjacent elements. If arr[j] > arr[j+1], swap them using a temp variable.',
+    starter:`function bubbleSort(arr) {\n  // Make a copy so we don't modify the original\n  let result = [...arr];\n  \n  // Your sorting code here\n  \n  return result;\n}`,
+    tests:[
+      {input:[[5,3,8,1,2]],expected:[1,2,3,5,8]},
+      {input:[[9,1]],expected:[1,9]},
+      {input:[[1]],expected:[1]},
+      {input:[[3,3,1,2]],expected:[1,2,3,3]},
+      {input:[[10,9,8,7,6]],expected:[6,7,8,9,10]}
+    ],
+    xp: 25
+  },
+  {
+    id:'binary_search', cat:'Algorithms', title:'Binary Search', difficulty:'hard',
+    concept:'Divide & Conquer',
+    desc:`<p>Implement <strong>Binary Search</strong> — a much faster way to find a value in a <em>sorted</em> array. Instead of checking every element, you repeatedly cut the search space in half!</p>
+    <p>Return the index of the target value, or -1 if it's not found.</p>
+    <p><strong>CS Concept:</strong> Binary search is O(log n) — searching 1 million items takes only ~20 steps instead of 1 million! This <strong>divide and conquer</strong> strategy is used everywhere in CS, from databases to game engines.</p>`,
+    example:`binarySearch([1,3,5,7,9,11], 7) → 3\nbinarySearch([1,3,5,7,9,11], 4) → -1\nbinarySearch([2,4,6], 2)        → 0`,
+    hint:'Keep track of "low" and "high" indices. Calculate mid = Math.floor((low + high) / 2). If arr[mid] === target, return mid. If arr[mid] < target, search the right half (low = mid + 1). If arr[mid] > target, search the left half (high = mid - 1).',
+    starter:`function binarySearch(arr, target) {\n  // Your code here\n  \n}`,
+    tests:[
+      {input:[[1,3,5,7,9,11],7],expected:3},
+      {input:[[1,3,5,7,9,11],4],expected:-1},
+      {input:[[2,4,6],2],expected:0},
+      {input:[[2,4,6],6],expected:2},
+      {input:[[10],10],expected:0},
+      {input:[[10],5],expected:-1}
+    ],
+    xp: 30
+  },
+
+  // ─── ENGINEERING ───
+  {
+    id:'temp_converter', cat:'Engineering', title:'Temperature Converter', difficulty:'easy',
+    concept:'Functions & Formulas',
+    desc:`<p>Build a temperature converter! Write a function that takes a temperature value and a unit ("C", "F", or "K") and returns an object with the temperature in all three units, rounded to 1 decimal place.</p>
+    <p><strong>Engineering Concept:</strong> Unit conversion is a daily task in engineering. Whether you're working with measurements, currencies, or data formats, converting between systems accurately is crucial.</p>`,
+    example:`convert(100, "C")\n→ { C: 100.0, F: 212.0, K: 373.1 }\n\nconvert(32, "F")\n→ { C: 0.0, F: 32.0, K: 273.1 }`,
+    hint:'Formulas: C to F: (C × 9/5) + 32. C to K: C + 273.15. Convert to Celsius first, then calculate the others. Use .toFixed(1) and parseFloat() to round.',
+    starter:`function convert(temp, unit) {\n  // Your code here\n  // Return an object: { C: ..., F: ..., K: ... }\n  \n}`,
+    tests:[
+      {input:[100,'C'],expected:{C:100.0,F:212.0,K:373.1}},
+      {input:[32,'F'],expected:{C:0.0,F:32.0,K:273.1}},
+      {input:[0,'K'],expected:{C:-273.1,F:-459.7,K:0.0}},
+      {input:[0,'C'],expected:{C:0.0,F:32.0,K:273.1}}
+    ],
+    xp: 10
+  },
+  {
+    id:'pixel_art', cat:'Engineering', title:'Pixel Art Encoder', difficulty:'medium',
+    concept:'Data Compression (Run-Length Encoding)',
+    desc:`<p>Implement <strong>Run-Length Encoding (RLE)</strong> — a simple but real compression algorithm used in image formats!</p>
+    <p>Take a string of pixel colors and compress it by counting consecutive repeats. For example, "AAABBC" becomes "3A2B1C".</p>
+    <p><strong>Engineering Concept:</strong> Data compression makes files smaller for storage and transmission. RLE is used in BMP images, fax machines, and as a building block in more complex algorithms like those in PNG and ZIP files.</p>`,
+    example:`encode("AAABBC")     → "3A2B1C"\nencode("WWWWBWWW")   → "4W1B3W"\nencode("ABC")        → "1A1B1C"`,
+    hint:'Loop through the string. Keep a counter for the current character. When the character changes (or you reach the end), add the count + character to your result, then reset the counter.',
+    starter:`function encode(pixels) {\n  // Your code here\n  \n}`,
+    tests:[
+      {input:['AAABBC'],expected:'3A2B1C'},
+      {input:['WWWWBWWW'],expected:'4W1B3W'},
+      {input:['ABC'],expected:'1A1B1C'},
+      {input:['AAAAAA'],expected:'6A'},
+      {input:['AABBCC'],expected:'2A2B2C'}
+    ],
+    xp: 20
+  },
+  {
+    id:'robot_moves', cat:'Engineering', title:'Robot Navigator', difficulty:'medium',
+    concept:'Coordinate Systems & State Machines',
+    desc:`<p>A robot starts at position (0, 0) on a grid facing North. Write a function that takes a string of commands and returns the robot's final [x, y] position.</p>
+    <p>Commands: <code>F</code> = move forward 1 step, <code>L</code> = turn left 90°, <code>R</code> = turn right 90°</p>
+    <p><strong>Engineering Concept:</strong> This simulates how real robots navigate! GPS systems, self-driving cars, and drones all use coordinate systems and direction tracking to move through space.</p>`,
+    example:`navigate("FFF")  → [0, 3]   (moved north 3)\nnavigate("FFRF") → [1, 2]   (north 2, turn right, east 1)\nnavigate("FFLFF") → [-2, 2]`,
+    hint:'Track direction as an index into an array of [dx, dy] pairs: N=[0,1], E=[1,0], S=[0,-1], W=[-1,0]. L decreases direction index, R increases it. Use modulo to wrap around.',
+    starter:`function navigate(commands) {\n  // Your code here\n  // Return [x, y]\n  \n}`,
+    tests:[
+      {input:['FFF'],expected:[0,3]},
+      {input:['FFRF'],expected:[1,2]},
+      {input:['FFLFF'],expected:[-2,2]},
+      {input:['FRFRFRFR'],expected:[0,0]},
+      {input:['FFRFFLFF'],expected:[0,4]}
+    ],
+    xp: 25
+  },
+  {
+    id:'stack_calc', cat:'Engineering', title:'Stack Calculator', difficulty:'hard',
+    concept:'Stack Data Structure',
+    desc:`<p>Build a calculator that uses a <strong>stack</strong> (one of the most important data structures in CS!) to evaluate expressions in Reverse Polish Notation (RPN).</p>
+    <p>In RPN, operators come <em>after</em> their operands: instead of "3 + 4", you write "3 4 +".</p>
+    <p>Your function takes a string of space-separated tokens and returns the result.</p>
+    <p><strong>CS Concept:</strong> Stacks follow "Last In, First Out" (LIFO). They're used in function call management, undo systems, browser back buttons, and expression evaluation. Many CPUs use stack-based architecture!</p>`,
+    example:`calc("3 4 +")     → 7\ncalc("5 3 - 2 *") → 4   ((5-3) × 2)\ncalc("2 3 + 4 *") → 20  ((2+3) × 4)`,
+    hint:'Use an array as a stack (push/pop). Loop through tokens: if it\'s a number, push it. If it\'s an operator, pop two numbers, apply the operator, push the result. The final item on the stack is your answer.',
+    starter:`function calc(expression) {\n  // Your code here\n  \n}`,
+    tests:[
+      {input:['3 4 +'],expected:7},
+      {input:['5 3 - 2 *'],expected:4},
+      {input:['2 3 + 4 *'],expected:20},
+      {input:['10 2 /'],expected:5},
+      {input:['3 4 + 2 * 1 +'],expected:15}
+    ],
+    xp: 35
+  }
+];
+
+// ─── Build sidebar ───
+function buildSidebar() {
+  const sb = document.getElementById('sidebar');
+  let html = '';
+  let lastCat = '';
+  CHALLENGES.forEach(ch => {
+    if (ch.cat !== lastCat) {
+      lastCat = ch.cat;
+      const icons = {Logic:'🧩', Algorithms:'⚙️', Engineering:'🏗️'};
+      html += `<div class="cat-header">${icons[ch.cat]||''} ${ch.cat}</div>`;
+    }
+    const isSolved = solved.has(ch.id);
+    const isActive = currentChallenge && currentChallenge.id === ch.id;
+    html += `<div class="challenge-item${isSolved?' solved':''}${isActive?' active':''}" onclick="loadChallenge('${ch.id}')">
+      <span class="ci-status">${isSolved ? '✅' : '○'}</span>
+      <div class="ci-info">
+        <div class="ci-title">${ch.title}</div>
+        <div class="ci-diff ${ch.difficulty}">${ch.difficulty.toUpperCase()} · ${ch.xp} XP</div>
+      </div>
+    </div>`;
+  });
+  sb.innerHTML = html;
+  document.getElementById('totalCount').textContent = CHALLENGES.length;
+  document.getElementById('solvedCount').textContent = solved.size;
+  document.getElementById('streak').textContent = streakCount;
+  document.getElementById('xp').textContent = xpTotal;
+}
+
+// ─── Load challenge ───
+function loadChallenge(id) {
+  const ch = CHALLENGES.find(c => c.id === id);
+  if (!ch) return;
+  currentChallenge = ch;
+  buildSidebar();
+
+  const content = document.getElementById('content');
+  content.innerHTML = `
+    <div class="problem-area">
+      <h2>${ch.title} <span class="badge ${ch.difficulty}">${ch.difficulty}</span></h2>
+      <div class="concept">📘 Concept: ${ch.concept}</div>
+      ${ch.desc}
+      <div class="example-box">${ch.example}</div>
+      <button class="hint-toggle" onclick="toggleHint()">💡 Show Hint</button>
+      <div class="hint-box" id="hintBox">💡 ${ch.hint}</div>
+    </div>
+    <div class="editor-area">
+      <div class="editor-tabs">
+        <div class="editor-tab active">solution.js</div>
+        <button class="reset-btn" onclick="resetCode()">↺ Reset</button>
+        <button class="run-btn" onclick="runTests()">▶ Run Tests</button>
+      </div>
+      <div class="editor-wrapper">
+        <textarea class="code-editor" id="codeEditor" spellcheck="false">${ch.starter}</textarea>
+      </div>
+      <div class="success-banner" id="successBanner">
+        <h3>🎉 All Tests Passed!</h3>
+        <p>+${ch.xp} XP earned! Great job understanding ${ch.concept}.</p>
+      </div>
+      <div class="output-panel" id="outputPanel">
+        <div class="output-label">Test Results</div>
+        <div class="output-line info">Click "Run Tests" to check your solution</div>
+      </div>
+    </div>`;
+
+  // Tab key support
+  const editor = document.getElementById('codeEditor');
+  editor.addEventListener('keydown', e => {
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      const start = editor.selectionStart, end = editor.selectionEnd;
+      editor.value = editor.value.substring(0, start) + '  ' + editor.value.substring(end);
+      editor.selectionStart = editor.selectionEnd = start + 2;
+    }
+  });
+}
+
+function toggleHint() {
+  const box = document.getElementById('hintBox');
+  box.style.display = box.style.display === 'block' ? 'none' : 'block';
+}
+
+function resetCode() {
+  if (currentChallenge) {
+    document.getElementById('codeEditor').value = currentChallenge.starter;
+    document.getElementById('outputPanel').innerHTML = '<div class="output-label">Test Results</div><div class="output-line info">Code reset. Click "Run Tests" to check your solution.</div>';
+    document.getElementById('successBanner').classList.remove('show');
+  }
+}
+
+// ─── Run tests ───
+function runTests() {
+  const ch = currentChallenge;
+  if (!ch) return;
+  const code = document.getElementById('codeEditor').value;
+  const output = document.getElementById('outputPanel');
+  const banner = document.getElementById('successBanner');
+  banner.classList.remove('show');
+
+  let html = '<div class="output-label">Test Results</div>';
+  let allPass = true;
+  let logs = [];
+
+  // Create a sandboxed function
+  const origLog = console.log;
+  console.log = (...args) => { logs.push(args.map(a => JSON.stringify(a)).join(' ')); };
+
+  try {
+    const fn = new Function(code + `\nreturn ${ch.id === 'fizzbuzz' ? 'fizzbuzz' : ch.id === 'palindrome' ? 'isPalindrome' : ch.id === 'fibonacci' ? 'fibonacci' : ch.id === 'caesar' ? 'caesar' : ch.id === 'max_finder' ? 'findMax' : ch.id === 'bubble_sort' ? 'bubbleSort' : ch.id === 'binary_search' ? 'binarySearch' : ch.id === 'temp_converter' ? 'convert' : ch.id === 'pixel_art' ? 'encode' : ch.id === 'robot_moves' ? 'navigate' : ch.id === 'stack_calc' ? 'calc' : ''};`)();
+
+    if (typeof fn !== 'function') {
+      html += '<div class="output-line fail">✗ Error: No function found. Make sure your function is defined correctly.</div>';
+      output.innerHTML = html;
+      console.log = origLog;
+      return;
+    }
+
+    ch.tests.forEach((test, i) => {
+      try {
+        const result = fn(...JSON.parse(JSON.stringify(test.input)));
+        const expected = test.expected;
+        const pass = JSON.stringify(result) === JSON.stringify(expected);
+        if (!pass) allPass = false;
+        const inputStr = test.input.map(a => JSON.stringify(a)).join(', ');
+        html += `<div class="output-line ${pass?'pass':'fail'}">${pass?'✓':'✗'} Test ${i+1}: (${inputStr}) → ${JSON.stringify(result)} ${pass ? '' : `(expected ${JSON.stringify(expected)})`}</div>`;
+      } catch(err) {
+        allPass = false;
+        html += `<div class="output-line fail">✗ Test ${i+1}: Runtime error — ${err.message}</div>`;
+      }
+    });
+  } catch(err) {
+    allPass = false;
+    html += `<div class="output-line fail">✗ Syntax error: ${err.message}</div>`;
+  }
+
+  console.log = origLog;
+  if (logs.length > 0) {
+    html += '<div style="margin-top:8px;"><div class="output-label">Console Output</div>';
+    logs.forEach(l => html += `<div class="output-line log">› ${l}</div>`);
+    html += '</div>';
+  }
+
+  if (allPass) {
+    html += `<div class="output-line pass" style="margin-top:8px;font-weight:600;">🎉 All ${ch.tests.length} tests passed!</div>`;
+    if (!solved.has(ch.id)) {
+      solved.add(ch.id);
+      streakCount++;
+      xpTotal += ch.xp;
+    }
+    banner.classList.add('show');
+    buildSidebar();
+  } else {
+    streakCount = 0;
+    buildSidebar();
+  }
+
+  output.innerHTML = html;
+}
+
+// ─── Init ───
+buildSidebar();
+</script>
+</body>
+</html>
