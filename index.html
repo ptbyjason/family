@@ -2,154 +2,93 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#2d6a4f">
+<meta name="application-name" content="Hodge Family Hub">
 <title>Hodge Family Hub</title>
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f0; color: #1a1a2e; min-height: 100vh; padding: 24px 16px; }
-.container { max-width: 680px; margin: 0 auto; }
-.header { text-align: center; margin-bottom: 32px; }
-.header h1 { font-size: 30px; font-weight: 700; margin-bottom: 2px; letter-spacing: -0.5px; }
-.header p { font-size: 14px; color: #888; }
-.section { margin-bottom: 28px; }
-.section-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 2px solid #e8e8e4; }
-.section-icon { font-size: 22px; }
-.section-title { font-size: 18px; font-weight: 700; color: #1a1a2e; }
-.section-subtitle { font-size: 12px; color: #999; margin-left: auto; font-weight: 500; }
-.card-grid { display: flex; flex-direction: column; gap: 10px; }
-.card { background: #fff; border-radius: 14px; padding: 16px 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); border: 1.5px solid #e8e8e4; text-decoration: none; color: inherit; transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s; display: flex; align-items: center; gap: 14px; }
-.card:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.08); border-color: #ccc; }
-.card:active { transform: scale(0.99); }
-.card-icon { font-size: 28px; flex-shrink: 0; width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; }
-.card-content { flex: 1; min-width: 0; }
-.card-content h2 { font-size: 15px; font-weight: 600; margin-bottom: 2px; }
-.card-content p { font-size: 12px; color: #777; line-height: 1.4; }
-.card-badge { font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 6px; flex-shrink: 0; text-transform: uppercase; letter-spacing: 0.5px; }
-.badge-math { background: #E6F1FB; color: #0C447C; }
-.badge-reading { background: #F3E8FF; color: #6B21A8; }
-.badge-science { background: #ECFDF5; color: #065F46; }
-.badge-game { background: #FEF3C7; color: #92400E; }
-.badge-code { background: #FFF1F2; color: #9F1239; }
-.badge-training { background: #EAF3DE; color: #27500A; }
-.badge-writing { background: #FDE8E8; color: #991B1B; }
-.badge-geo { background: #E0F2FE; color: #075985; }
-.icon-pink { background: #FFF0F6; }
-.icon-blue { background: #E6F1FB; }
-.icon-green { background: #EAF3DE; }
-.icon-yellow { background: #FAEEDA; }
-.icon-purple { background: #F3E8FF; }
-.icon-red { background: #FFF1F2; }
-.icon-teal { background: #ECFDF5; }
-.icon-sky { background: #E0F2FE; }
-.footer { text-align: center; margin-top: 36px; font-size: 11px; color: #bbb; }
-@media (max-width: 480px) {
-  .header h1 { font-size: 26px; }
-  .card { padding: 14px 16px; gap: 12px; }
-  .card-badge { display: none; }
-  .section-subtitle { display: none; }
-}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f8f9fa;color:#1a1a2e;line-height:1.5;padding:24px 16px;padding-top:max(24px,env(safe-area-inset-top));-webkit-text-size-adjust:100%}
+.header{text-align:center;margin-bottom:24px}
+.header h1{font-size:26px;font-weight:800;color:#2d6a4f}
+.header .subtitle{font-size:14px;color:#666;margin-top:4px}
+.wrap{max-width:880px;margin:0 auto}
+.section-label{font-size:12px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#888;margin:18px 4px 10px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+.card{display:block;text-decoration:none;color:inherit;background:#fff;border-radius:14px;padding:18px;box-shadow:0 1px 3px rgba(0,0,0,.08);border-left:5px solid #2d6a4f;transition:transform .15s,box-shadow .15s}
+.card:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.12)}
+.card:active{transform:translateY(0)}
+.card .icon{font-size:30px;margin-bottom:8px;display:block}
+.card .title{font-size:16px;font-weight:700;margin-bottom:4px}
+.card .desc{font-size:13px;color:#555}
+.card.isaiah{border-left-color:#2d6a4f}
+.card.siena{border-left-color:#7c3aed}
+.footer{text-align:center;font-size:12px;color:#aaa;margin-top:28px}
+@media(max-width:480px){.grid{grid-template-columns:1fr}.header h1{font-size:22px}}
 </style>
 </head>
 <body>
-<div class="container">
+<div class="wrap">
   <div class="header">
-    <h1>Hodge Family Hub</h1>
-    <p>Learning, games, and training — all in one place</p>
+    <h1>🏡 Hodge Family Hub</h1>
+    <div class="subtitle">All our learning &amp; training apps in one place</div>
   </div>
 
-  <div class="section">
-    <div class="section-header">
-      <span class="section-icon">🌸</span>
-      <span class="section-title">Daughter</span>
-      <span class="section-subtitle">Rising 3rd Grade</span>
-    </div>
-    <div class="card-grid">
-      <a class="card" href="word-problem-game.html">
-        <div class="card-icon icon-blue">📐</div>
-        <div class="card-content">
-          <h2>Math Word Problems</h2>
-          <p>Addition, subtraction &amp; fractions with step-by-step teaching when she's stuck</p>
-        </div>
-        <span class="card-badge badge-math">Math</span>
-      </a>
-      <a class="card" href="coin-counting-game.html">
-        <div class="card-icon icon-yellow">🪙</div>
-        <div class="card-content">
-          <h2>Coin Counting Game</h2>
-          <p>Count coins, make change, and compare amounts — unlocks new coins as you go</p>
-        </div>
-        <span class="card-badge badge-math">Math</span>
-      </a>
-      <a class="card" href="multiplication-quest.html">
-        <div class="card-icon icon-red">⚔️</div>
-        <div class="card-content">
-          <h2>Multiplication Quest</h2>
-          <p>RPG adventure — pick a hero, battle through 4 worlds, master times tables</p>
-        </div>
-        <span class="card-badge badge-game">RPG</span>
-      </a>
-      <a class="card" href="story-adventure.html">
-        <div class="card-icon icon-purple">📖</div>
-        <div class="card-content">
-          <h2>Story Adventure Creator</h2>
-          <p>Choose-your-own-adventure stories with vocabulary, quizzes &amp; an inventory system</p>
-        </div>
-        <span class="card-badge badge-reading">Reading</span>
-      </a>
-      <a class="card" href="science-lab.html">
-        <div class="card-icon icon-teal">🧪</div>
-        <div class="card-content">
-          <h2>Science Lab Simulator</h2>
-          <p>Six virtual experiments — predict, test, observe, and learn the real science</p>
-        </div>
-        <span class="card-badge badge-science">Science</span>
-      </a>
-    </div>
+  <div class="section-label">Isaiah</div>
+  <div class="grid">
+    <a class="card isaiah" href="Summer-Training-Dashboard.html">
+      <span class="icon">🏃</span>
+      <div class="title">Summer Training Dashboard</div>
+      <div class="desc">Soccer &amp; cross-country training — daily workouts, fitness tests, progress, and mindset.</div>
+    </a>
+    <a class="card isaiah" href="code-challenge-arena.html">
+      <span class="icon">⚡</span>
+      <div class="title">Code Challenge Arena</div>
+      <div class="desc">Solve coding challenges, learn computer-science concepts, and level up.</div>
+    </a>
+    <a class="card isaiah" href="article-analyst.html">
+      <span class="icon">📰</span>
+      <div class="title">Article Analyst</div>
+      <div class="desc">Read science &amp; tech articles, then practice writing about what you read.</div>
+    </a>
+    <a class="card isaiah" href="geometry-visualizer.html">
+      <span class="icon">📐</span>
+      <div class="title">Geometry Visualizer</div>
+      <div class="desc">Create, transform, and measure shapes — drag vertices to explore figures.</div>
+    </a>
   </div>
 
-  <div class="section">
-    <div class="section-header">
-      <span class="section-icon">⚡</span>
-      <span class="section-title">Son</span>
-      <span class="section-subtitle">Rising 8th Grade</span>
-    </div>
-    <div class="card-grid">
-      <a class="card" href="summer-training-dashboard.html">
-        <div class="card-icon icon-green">⚽</div>
-        <div class="card-content">
-          <h2>Summer Training Dashboard</h2>
-          <p>11-week plan — soccer, XC, speed, strength. Track workouts &amp; fitness tests</p>
-        </div>
-        <span class="card-badge badge-training">Training</span>
-      </a>
-      <a class="card" href="geometry-visualizer.html">
-        <div class="card-icon icon-sky">📐</div>
-        <div class="card-content">
-          <h2>Geometry Visualizer</h2>
-          <p>Interactive sandbox — build shapes, drag vertices, see measurements update live</p>
-        </div>
-        <span class="card-badge badge-geo">Geometry</span>
-      </a>
-      <a class="card" href="code-challenge-arena.html">
-        <div class="card-icon icon-red">💻</div>
-        <div class="card-content">
-          <h2>Code Challenge Arena</h2>
-          <p>11 coding challenges with a real editor, test suites, and instant feedback</p>
-        </div>
-        <span class="card-badge badge-code">Coding</span>
-      </a>
-      <a class="card" href="article-analyst.html">
-        <div class="card-icon icon-pink">📝</div>
-        <div class="card-content">
-          <h2>Article Analyst</h2>
-          <p>Read engaging articles and practice analytical writing with guided responses</p>
-        </div>
-        <span class="card-badge badge-writing">Writing</span>
-      </a>
-    </div>
+  <div class="section-label">Siena</div>
+  <div class="grid">
+    <a class="card siena" href="multiplication-quest.html">
+      <span class="icon">⚔️</span>
+      <div class="title">Multiplication Quest</div>
+      <div class="desc">Choose your hero and battle creatures with the power of multiplication.</div>
+    </a>
+    <a class="card siena" href="science-lab-simulator.html">
+      <span class="icon">🔬</span>
+      <div class="title">Science Lab Simulator</div>
+      <div class="desc">Run virtual experiments, make predictions, and discover how science works.</div>
+    </a>
+    <a class="card siena" href="story-adventure-creator.html">
+      <span class="icon">✨</span>
+      <div class="title">Story Adventure Creator</div>
+      <div class="desc">Read, choose, and learn your way through interactive tales.</div>
+    </a>
+    <a class="card siena" href="coin-counting-game.html">
+      <span class="icon">💰</span>
+      <div class="title">Coin Counting Game</div>
+      <div class="desc">Count coins, make change, and compare amounts — and level up.</div>
+    </a>
+    <a class="card siena" href="word-problem-game.html">
+      <span class="icon">🧮</span>
+      <div class="title">Math Word Problems</div>
+      <div class="desc">Read, think, and solve — addition, subtraction, and fractions.</div>
+    </a>
   </div>
 
-  <div class="footer">Hodge Family &bull; Summer 2026</div>
+  <div class="footer">Hodge Family Hub</div>
 </div>
 </body>
 </html>
