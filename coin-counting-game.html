@@ -178,20 +178,79 @@ var LEVELS = [
   { name: 'All coins',         coins: [0, 1, 2, 3, 4, 5], maxTotal: 200, minCoins: 2, maxCoins: 7,  unlockScore: 200 },
 ];
 
-var SAVE_KEY = 'coin-game-save';
+var SAVE_KEY = 'coin-game-save-v2';
+var OLD_SAVE_KEY = 'coin-game-save';
 var teachLevel = 0;
 var currentTeach = null;
 var state = loadState();
 
 function defaultState() {
-  return { score: 0, streak: 0, mode: 'count', answer: 0, coins: [], hintUsed: false, answered: false, diff: 0, highestUnlocked: 0, selectedCoins: [], g1: null, g2: null };
+  return { score: 0, streak: 0, mode: 'count', answer: 0, coins: [], hintUsed: false, answered: false, diff: 0, highestUnlocked: 0, selectedCoins: [], g1: null, g2: null, round: null, activity: null };
 }
 function loadState() {
-  try { var s = localStorage.getItem(SAVE_KEY); if (s) return Object.assign(defaultState(), JSON.parse(s)); } catch(e) {}
+  try {
+    var s = localStorage.getItem(SAVE_KEY);
+    if (!s) {
+      s = localStorage.getItem(OLD_SAVE_KEY);
+      if (s) { localStorage.setItem(SAVE_KEY, s); localStorage.removeItem(OLD_SAVE_KEY); }
+    }
+    if (s) return Object.assign(defaultState(), JSON.parse(s));
+  } catch(e) {}
   return defaultState();
 }
+function reviveCoins(names) {
+  return (names || []).map(function(n) { return COINS.find(function(c) { return c.name === n; }); }).filter(Boolean);
+}
+function serializeRound() {
+  if (state.answered) return null;
+  return {
+    mode: state.mode, diff: state.diff, answer: state.answer,
+    coins: (state.coins || []).map(function(c) { return c.name; }),
+    selectedCoins: (state.selectedCoins || []).slice(),
+    g1: state.g1 ? { coins: state.g1.coins.map(function(c) { return c.name; }), total: state.g1.total } : null,
+    g2: state.g2 ? { coins: state.g2.coins.map(function(c) { return c.name; }), total: state.g2.total } : null,
+    hintUsed: state.hintUsed, teachLevel: teachLevel
+  };
+}
 function saveState() {
-  try { localStorage.setItem(SAVE_KEY, JSON.stringify({ score: state.score, streak: state.streak, mode: state.mode, diff: state.diff, highestUnlocked: state.highestUnlocked })); } catch(e) {}
+  try {
+    localStorage.setItem(SAVE_KEY, JSON.stringify({ score: state.score, streak: state.streak, mode: state.mode, diff: state.diff, highestUnlocked: state.highestUnlocked, round: serializeRound(), activity: state.activity }));
+  } catch(e) {}
+  saveHubSummary();
+}
+function saveHubSummary() {
+  try {
+    var act = (state.activity && typeof state.activity === 'object') ? state.activity : {};
+    var today = localDateStr();
+    localStorage.setItem('hubSummary_coin-counting-game', JSON.stringify({
+      app: 'coin-counting-game', kid: 'siena', icon: '💰',
+      label: 'Level ' + (state.highestUnlocked + 1) + '/' + LEVELS.length + ' • ' + state.score + ' pts',
+      pct: Math.round(((state.highestUnlocked + 1) / LEVELS.length) * 100),
+      streak: state.streak, stars: null, lastPlayed: new Date().toISOString(),
+      actionsToday: (act.date === today && typeof act.actions === 'number') ? act.actions : 0,
+      actionsDate: today,
+      earnedDates: Array.isArray(act.earnedDates) ? act.earnedDates : []
+    }));
+  } catch(e) {}
+}
+function localDateStr() {
+  var d = new Date();
+  return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+}
+function bumpActivity(weight) {
+  try {
+    var t = localDateStr();
+    if (!state.activity || typeof state.activity !== 'object') state.activity = { date: t, actions: 0, earnedDates: [] };
+    var a = state.activity;
+    if (!Array.isArray(a.earnedDates)) a.earnedDates = [];
+    if (a.date !== t) { a.date = t; a.actions = 0; }
+    a.actions = (typeof a.actions === 'number' ? a.actions : 0) + weight;
+    if (a.actions >= 20 && a.earnedDates.indexOf(t) === -1) {
+      a.earnedDates.push(t);
+      if (a.earnedDates.length > 30) a.earnedDates = a.earnedDates.slice(-30);
+    }
+  } catch(e) {}
+  saveState();
 }
 function rand(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
 function pick(arr) { return arr[rand(0, arr.length - 1)]; }
@@ -222,9 +281,15 @@ function checkUnlocks() {
     if (state.score >= LEVELS[i].unlockScore) state.highestUnlocked = i;
   }
   if (state.highestUnlocked > prev) {
-    document.getElementById('levelup').innerHTML = '<div class="levelup-msg">⭐ New level unlocked: ' + LEVELS[state.highestUnlocked].name + '!</div>';
-    setTimeout(function() { document.getElementById('levelup').innerHTML = ''; }, 3500);
+    if (state.highestUnlocked === LEVELS.length - 1) {
+      document.getElementById('levelup').innerHTML = '<div class="levelup-msg">👑 WOW, Siena! Level 5 unlocked — you\'re a coin-counting MASTER! 🏆✨🎉</div>';
+      setTimeout(function() { document.getElementById('levelup').innerHTML = ''; }, 7000);
+    } else {
+      document.getElementById('levelup').innerHTML = '<div class="levelup-msg">⭐ New level unlocked: ' + LEVELS[state.highestUnlocked].name + '!</div>';
+      setTimeout(function() { document.getElementById('levelup').innerHTML = ''; }, 3500);
+    }
     state.diff = state.highestUnlocked;
+    bumpActivity(4 * (state.highestUnlocked - prev));
   }
   renderDiffBar();
   saveState();
@@ -348,8 +413,8 @@ function buildTeachContent() {
   html += '</div>';
   return html;
 }
-function showTeach() { if (teachLevel === 0) teachLevel = 1; state.hintUsed = true; document.getElementById('teach-container').innerHTML = buildTeachContent(); }
-function nextTeachLevel() { if (teachLevel < 3) teachLevel++; document.getElementById('teach-container').innerHTML = buildTeachContent(); }
+function showTeach() { if (teachLevel > 0) return; teachLevel = 1; state.hintUsed = true; document.getElementById('teach-container').innerHTML = buildTeachContent(); saveState(); }
+function nextTeachLevel() { if (teachLevel < 3) teachLevel++; document.getElementById('teach-container').innerHTML = buildTeachContent(); saveState(); }
 
 function tryEasier() {
   var prevDiff = state.diff;
@@ -368,25 +433,36 @@ function setMode(mode) {
   newRound(); saveState();
 }
 
-function newRound(keepLevelup) {
-  state.hintUsed = false; state.answered = false; teachLevel = 0; currentTeach = null;
+function newRound(keepLevelup, saved) {
+  state.hintUsed = saved ? !!saved.hintUsed : false;
+  state.answered = false;
+  teachLevel = saved ? (saved.teachLevel || 0) : 0;
+  currentTeach = null;
+  state.coins = []; state.selectedCoins = []; state.g1 = null; state.g2 = null;
   document.getElementById('feedback').innerHTML = '';
   document.getElementById('teach-container').innerHTML = '';
   if (!keepLevelup) document.getElementById('levelup').innerHTML = '';
   updateLevelLabel();
-  if (state.mode === 'count') setupCount();
-  else if (state.mode === 'make') setupMake();
-  else setupCompare();
+  if (state.mode === 'count') setupCount(saved);
+  else if (state.mode === 'make') setupMake(saved);
+  else setupCompare(saved);
+  if (teachLevel > 0 && currentTeach) document.getElementById('teach-container').innerHTML = buildTeachContent();
+  saveState();
 }
 
-function setupCount() {
-  var r = pickCoinsForLevel();
-  state.answer = r.total;
-  state.coins = r.coins;
-  r.coins.sort(function(a, b) { return b.value - a.value; });
-  currentTeach = buildCountTeach(r.coins, r.total);
+function setupCount(saved) {
+  var coins = saved ? reviveCoins(saved.coins) : [];
+  var total = saved && typeof saved.answer === 'number' ? saved.answer : 0;
+  if (!coins.length || !total) {
+    var r = pickCoinsForLevel();
+    coins = r.coins; total = r.total;
+  }
+  state.answer = total;
+  state.coins = coins;
+  coins.sort(function(a, b) { return b.value - a.value; });
+  currentTeach = buildCountTeach(coins, total);
   document.getElementById('prompt').textContent = '💰 How much money is this?';
-  document.getElementById('coins').innerHTML = r.coins.map(function(c) { return makeCoinEl(c); }).join('');
+  document.getElementById('coins').innerHTML = coins.map(function(c) { return makeCoinEl(c); }).join('');
   var inputHtml;
   if (useCentsInput()) {
     inputHtml = '<div class="answer-row"><input class="answer-input" id="ans" type="number" placeholder="0" autocomplete="off" min="0" style="width:100px"><span class="cents-label">¢</span></div>';
@@ -396,18 +472,20 @@ function setupCount() {
   document.getElementById('game-content').innerHTML =
     '<div class="answer-section">' + inputHtml +
     '<div class="btn-row"><button class="btn btn-check" onclick="checkAnswer()">Check</button>' +
-    '<button class="btn btn-teach" onclick="showTeach()">Teach me</button></div></div>';
+    '<button class="btn btn-teach" onclick="showTeach()">Show me how 🤔</button></div></div>';
   var inp = document.getElementById('ans');
   inp.addEventListener('keydown', function(e) { if (e.key === 'Enter') checkAnswer(); });
   inp.focus();
 }
 
-function setupMake() {
+function setupMake(saved) {
   var lv = LEVELS[state.diff];
   var target;
-  if (state.diff === 0) target = rand(2, 10);
+  if (saved && typeof saved.answer === 'number' && saved.answer > 0) target = saved.answer;
+  else if (state.diff === 0) target = rand(2, 10);
   else target = rand(Math.max(1, Math.round(lv.maxTotal * 0.15)), lv.maxTotal);
-  state.answer = target; state.selectedCoins = [];
+  state.answer = target;
+  state.selectedCoins = (saved && saved.selectedCoins) ? saved.selectedCoins.slice() : [];
   currentTeach = buildMakeTeach(target);
   var label = useCentsInput() ? fmtCents(target) : '$' + fmt(target);
   document.getElementById('prompt').textContent = '🪙 Tap coins to make ' + label;
@@ -420,9 +498,10 @@ function setupMake() {
     html += '<div class="' + cls + '" onclick="tapCoin(' + i + ',' + c.value + ')"><span class="coin-value">' + val + '</span><span class="coin-name">' + c.name + '</span></div>';
   });
   html += '</div>';
-  var runLabel = useCentsInput() ? '<span id="running">0</span>¢' : '$<span id="running">0.00</span>';
+  var runningStart = state.selectedCoins.reduce(function(a, b) { return a + b; }, 0);
+  var runLabel = useCentsInput() ? '<span id="running">' + runningStart + '</span>¢' : '$<span id="running">' + fmt(runningStart) + '</span>';
   html += '<div class="running-total">Your total: ' + runLabel + '</div>';
-  html += '<div class="btn-row"><button class="btn btn-check" onclick="checkMake()">Check</button><button class="btn btn-hint" onclick="resetMake()">Start over</button><button class="btn btn-teach" onclick="showTeach()">Teach me</button></div></div>';
+  html += '<div class="btn-row"><button class="btn btn-check" onclick="checkMake()">Check</button><button class="btn btn-hint" onclick="resetMake()">Start over</button><button class="btn btn-teach" onclick="showTeach()">Show me how 🤔</button></div></div>';
   document.getElementById('game-content').innerHTML = html;
 }
 
@@ -433,12 +512,14 @@ function tapCoin(idx, value) {
   document.getElementById('running').textContent = useCentsInput() ? total : fmt(total);
   var coinEls = document.querySelectorAll('#game-content .coin');
   if (coinEls[idx]) { coinEls[idx].classList.remove('coin-bounce'); void coinEls[idx].offsetWidth; coinEls[idx].classList.add('coin-bounce'); }
+  saveState();
 }
 
 function resetMake() {
   state.selectedCoins = [];
   document.getElementById('running').textContent = useCentsInput() ? '0' : '0.00';
   document.getElementById('feedback').innerHTML = '';
+  saveState();
 }
 
 function checkMake() {
@@ -449,10 +530,17 @@ function checkMake() {
   else { document.getElementById('feedback').innerHTML = '<span class="feedback-wrong">Not enough yet! Keep adding coins.</span>'; }
 }
 
-function setupCompare() {
-  var g1 = pickCoinsForLevel(), g2 = pickCoinsForLevel(), tries = 0;
-  while (g1.total === g2.total && tries < 20) { g2 = pickCoinsForLevel(); tries++; }
-  if (g1.total === g2.total) { g2.coins.push(COINS[0]); g2.total += 1; }
+function setupCompare(saved) {
+  var g1, g2;
+  if (saved && saved.g1 && saved.g2 && saved.g1.coins.length && saved.g2.coins.length) {
+    g1 = { coins: reviveCoins(saved.g1.coins), total: saved.g1.total };
+    g2 = { coins: reviveCoins(saved.g2.coins), total: saved.g2.total };
+  } else {
+    g1 = pickCoinsForLevel(); g2 = pickCoinsForLevel();
+    var tries = 0;
+    while (g1.total === g2.total && tries < 20) { g2 = pickCoinsForLevel(); tries++; }
+    if (g1.total === g2.total) { g2.coins.push(COINS[0]); g2.total += 1; }
+  }
   state.answer = g1.total > g2.total ? 'A' : 'B';
   state.g1 = g1; state.g2 = g2;
   currentTeach = buildCompareTeach(g1, g2);
@@ -463,7 +551,7 @@ function setupCompare() {
   var html = '<div class="answer-section"><div class="compare-grid">' +
     '<div class="group-card" onclick="pickGroup(\'A\')" id="groupA"><div class="group-label">Group A</div><div class="coins-display" style="min-height:auto;margin-bottom:0">' + g1s.map(function(c) { return makeCoinEl(c); }).join('') + '</div></div>' +
     '<div class="group-card" onclick="pickGroup(\'B\')" id="groupB"><div class="group-label">Group B</div><div class="coins-display" style="min-height:auto;margin-bottom:0">' + g2s.map(function(c) { return makeCoinEl(c); }).join('') + '</div></div></div>' +
-    '<div class="btn-row"><button class="btn btn-teach" onclick="showTeach()">Teach me</button></div></div>';
+    '<div class="btn-row"><button class="btn btn-teach" onclick="showTeach()">Show me how 🤔</button></div></div>';
   document.getElementById('game-content').innerHTML = html;
 }
 
@@ -473,7 +561,7 @@ function pickGroup(choice) {
     document.getElementById('group' + choice).classList.add('selected-correct');
     correct();
   } else {
-    state.answered = true; state.streak = 0; updateScoreUI();
+    state.answered = true; state.streak = 0; bumpActivity(2); updateScoreUI();
     document.getElementById('group' + choice).classList.add('selected-wrong');
     document.getElementById('group' + state.answer).classList.add('selected-correct');
     teachLevel = 3;
@@ -487,14 +575,16 @@ function pickGroup(choice) {
 
 function checkAnswer() {
   if (state.answered) return;
-  var input = document.getElementById('ans').value.trim().replace('$', '');
+  var ansEl = document.getElementById('ans');
+  if (!ansEl) return;
+  var input = ansEl.value.trim().replace('$', '');
   var val;
   if (useCentsInput()) { val = Math.round(parseFloat(input)); }
   else { val = Math.round(parseFloat(input) * 100); }
   if (isNaN(val)) { document.getElementById('feedback').innerHTML = '<span class="feedback-wrong">' + (useCentsInput() ? 'Type a number like 7' : 'Type a number like 0.75') + '</span>'; return; }
   if (val === state.answer) { correct(); }
   else {
-    state.answered = true; state.streak = 0; updateScoreUI();
+    state.answered = true; state.streak = 0; bumpActivity(2); updateScoreUI();
     teachLevel = 3;
     document.getElementById('teach-container').innerHTML = buildTeachContent();
     var ans = useCentsInput() ? fmtCents(state.answer) : '$' + fmt(state.answer);
@@ -507,6 +597,7 @@ function correct() {
   state.answered = true;
   var pts = state.hintUsed ? 5 : 10;
   state.score += pts; state.streak++;
+  bumpActivity(2);
   updateScoreUI(); checkUnlocks();
   var msgs = ['Great job! ⭐','You got it! 🎉','Amazing! 💫','Super star! 🌟','Awesome! 🔥','Nailed it! 💰','Perfect! ✨','Way to go! 🚀','So smart! 🧠','Fantastic! 🎊'];
   var msg = pick(msgs);
@@ -520,7 +611,8 @@ updateScoreUI(); renderDiffBar();
 document.querySelectorAll('.mode-btn').forEach(function(b, i) {
   b.classList.toggle('active', (i === 0 && state.mode === 'count') || (i === 1 && state.mode === 'make') || (i === 2 && state.mode === 'compare'));
 });
-newRound();
+var savedRound = (state.round && state.round.mode === state.mode && state.round.diff === state.diff) ? state.round : null;
+newRound(false, savedRound);
 </script>
 </body>
 </html>

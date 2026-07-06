@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Typing Speed Arena</title>
+<style>
+  :root{
+    --bg:#0d1117;
+    --bg2:#161b22;
+    --bg3:#1c2430;
+    --border:#2b3442;
+    --green:#2d6a4f;
+    --green-bright:#40c057;
+    --green-glow:#52e07c;
+    --red:#e5484d;
+    --amber:#f5a524;
+    --text:#e6edf3;
+    --dim:#8b949e;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,'Liberation Mono',monospace;
+    --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--sans);
+    min-height:100vh;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -10%, rgba(45,106,79,.25), transparent),
+      radial-gradient(ellipse 60% 40% at 90% 110%, rgba(45,106,79,.12), transparent);
+  }
+  .wrap{max-width:880px;margin:0 auto;padding:18px 16px 40px;}
+
+  /* ===== header ===== */
+  header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px;flex-wrap:wrap;}
+  .logo{display:flex;align-items:center;gap:10px;}
+  .logo .badge{
+    width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+    font-size:24px;background:linear-gradient(135deg,var(--green),#1b4332);
+    box-shadow:0 0 18px rgba(45,106,79,.55);
+  }
+  .logo h1{font-size:20px;letter-spacing:1px;text-transform:uppercase;font-weight:800;}
+  .logo h1 span{color:var(--green-bright);}
+  .logo .sub{font-size:11px;color:var(--dim);letter-spacing:2px;text-transform:uppercase;}
+  .pill{
+    font-family:var(--mono);font-size:12px;color:var(--dim);
+    background:var(--bg2);border:1px solid var(--border);border-radius:999px;padding:6px 12px;
+  }
+  .pill b{color:var(--green-bright);}
+
+  /* ===== cards ===== */
+  .card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:18px;}
+
+  /* ===== home screen ===== */
+  #homeScreen .hero{text-align:center;padding:28px 18px;}
+  #homeScreen .hero h2{font-size:26px;font-weight:800;margin-bottom:6px;}
+  #homeScreen .hero p{color:var(--dim);font-size:14px;max-width:520px;margin:0 auto 20px;}
+  .modeRow{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:16px;}
+  .modeBtn{
+    font-family:var(--mono);font-size:14px;font-weight:700;color:var(--dim);
+    background:var(--bg3);border:1px solid var(--border);border-radius:10px;
+    padding:10px 20px;cursor:pointer;transition:all .15s;
+  }
+  .modeBtn.active{color:#fff;border-color:var(--green-bright);background:var(--green);box-shadow:0 0 14px rgba(64,192,87,.35);}
+  .bigBtn{
+    display:inline-block;font-size:17px;font-weight:800;letter-spacing:1px;text-transform:uppercase;
+    color:#fff;background:linear-gradient(135deg,var(--green-bright),var(--green));
+    border:none;border-radius:12px;padding:15px 42px;cursor:pointer;
+    box-shadow:0 4px 22px rgba(64,192,87,.4);transition:transform .1s;
+  }
+  .bigBtn:active{transform:scale(.96);}
+  .dailyBtn{
+    display:inline-flex;align-items:center;gap:8px;margin-left:10px;
+    font-size:14px;font-weight:700;color:var(--amber);
+    background:rgba(245,165,36,.08);border:1px solid rgba(245,165,36,.4);
+    border-radius:12px;padding:15px 22px;cursor:pointer;transition:transform .1s;
+  }
+  .dailyBtn:active{transform:scale(.96);}
+  .dailyBtn.done{opacity:.45;cursor:default;}
+  .startRow{display:flex;justify-content:center;flex-wrap:wrap;gap:10px;}
+
+  .statGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-top:18px;}
+  .statBox{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;}
+  .statBox .v{font-family:var(--mono);font-size:22px;font-weight:800;color:var(--green-bright);}
+  .statBox .l{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);margin-top:3px;}
+
+  .trend{margin-top:18px;}
+  .trend h3{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--dim);margin-bottom:10px;}
+  .bars{display:flex;align-items:flex-end;gap:4px;height:64px;}
+  .bar{flex:1;min-width:6px;background:linear-gradient(180deg,var(--green-bright),var(--green));border-radius:3px 3px 0 0;opacity:.85;position:relative;}
+  .bar.best{background:linear-gradient(180deg,var(--amber),#b97b12);}
+  .bars .empty{color:var(--dim);font-size:13px;align-self:center;width:100%;text-align:center;}
+
+  /* ===== game screen ===== */
+  #gameScreen{display:none;}
+  .hud{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;margin-bottom:14px;}
+  .hudSide{display:flex;gap:10px;flex-wrap:wrap;}
+  .hudSide.right{justify-content:flex-end;}
+  .hudItem{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:8px 14px;text-align:center;min-width:78px;}
+  .hudItem .v{font-family:var(--mono);font-size:20px;font-weight:800;}
+  .hudItem .l{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);}
+  #hudTime.low .v{color:var(--red);animation:pulse .5s infinite alternate;}
+  @keyframes pulse{from{opacity:1;}to{opacity:.45;}}
+
+  .multBox{
+    text-align:center;background:var(--bg2);border:1px solid var(--border);border-radius:14px;
+    padding:8px 26px;transition:border-color .2s, box-shadow .2s;
+  }
+  .multBox .v{
+    font-family:var(--mono);font-size:38px;font-weight:900;line-height:1;
+    color:var(--dim);transition:color .2s, transform .12s;display:inline-block;
+  }
+  .multBox .l{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--dim);}
+  .multBox.m1 .v{color:var(--text);}
+  .multBox.m2 .v{color:var(--green-bright);}
+  .multBox.m2{border-color:var(--green);box-shadow:0 0 14px rgba(64,192,87,.25);}
+  .multBox.m3 .v{color:var(--green-glow);text-shadow:0 0 16px rgba(82,224,124,.8);}
+  .multBox.m3{border-color:var(--green-bright);box-shadow:0 0 24px rgba(82,224,124,.4);}
+  .multBox .v.pop{transform:scale(1.25);}
+  .multBox .v.drop{transform:scale(.8);color:var(--red)!important;}
+
+  .arena{
+    position:relative;border:1px solid var(--border);border-radius:14px;background:var(--bg2);
+    padding:26px 26px 22px;cursor:text;min-height:170px;
+  }
+  .arena.focused{border-color:var(--green);box-shadow:0 0 0 1px var(--green), 0 0 30px rgba(45,106,79,.25);}
+  .tierTag{
+    position:absolute;top:-10px;left:18px;font-family:var(--mono);font-size:10px;letter-spacing:2px;
+    text-transform:uppercase;color:var(--green-bright);background:var(--bg);padding:2px 10px;
+    border:1px solid var(--green);border-radius:999px;
+  }
+  #text{
+    font-family:var(--mono);font-size:clamp(17px,2.6vw,23px);line-height:1.9;letter-spacing:.5px;
+    word-break:break-word;user-select:none;
+  }
+  #text span{border-radius:3px;padding:1px 0;}
+  #text .ok{color:var(--green-bright);}
+  #text .bad{color:#fff;background:rgba(229,72,77,.45);text-decoration:underline;text-decoration-color:var(--red);}
+  #text .cur{background:var(--green);color:#fff;animation:blink 1s steps(2) infinite;}
+  @keyframes blink{50%{background:transparent;color:var(--dim);}}
+  #text .todo{color:var(--dim);}
+  .hint{margin-top:14px;font-size:12px;color:var(--dim);text-align:center;font-family:var(--mono);}
+  #hiddenInput{position:absolute;opacity:0;left:-9999px;top:0;height:1px;width:1px;}
+  #quitBtn{
+    margin-top:14px;background:none;border:1px solid var(--border);color:var(--dim);
+    border-radius:8px;padding:7px 16px;font-size:12px;cursor:pointer;
+  }
+  .dailyFlag{
+    display:none;text-align:center;margin-bottom:10px;font-family:var(--mono);font-size:12px;
+    color:var(--amber);letter-spacing:1px;
+  }
+
+  .scorePopWrap{position:absolute;right:14px;top:8px;pointer-events:none;font-family:var(--mono);}
+  .scorePop{position:absolute;right:0;font-weight:800;font-size:14px;color:var(--green-glow);animation:rise .7s ease-out forwards;white-space:nowrap;}
+  @keyframes rise{from{opacity:1;transform:translateY(0);}to{opacity:0;transform:translateY(-34px);}}
+
+  /* ===== end screen ===== */
+  #endScreen{display:none;text-align:center;padding:30px 20px;position:relative;overflow:hidden;}
+  #endScreen h2{font-size:15px;letter-spacing:3px;text-transform:uppercase;color:var(--dim);}
+  #finalScore{font-family:var(--mono);font-size:56px;font-weight:900;color:var(--green-glow);text-shadow:0 0 26px rgba(82,224,124,.5);margin:6px 0 4px;}
+  #dailyBonusLine{display:none;color:var(--amber);font-family:var(--mono);font-size:13px;margin-bottom:6px;}
+  .prBanner{
+    display:none;margin:10px auto 4px;font-weight:900;font-size:22px;letter-spacing:2px;color:#0d1117;
+    background:linear-gradient(90deg,var(--amber),var(--green-glow));
+    border-radius:999px;padding:8px 26px;width:max-content;max-width:100%;
+    animation:prPop .5s cubic-bezier(.2,1.6,.4,1);
+  }
+  @keyframes prPop{from{transform:scale(.3);opacity:0;}to{transform:scale(1);opacity:1;}}
+  .endGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin:20px 0;}
+  .endGrid .statBox .v.pr{color:var(--amber);}
+  .endGrid .prTag{font-size:9px;font-weight:800;color:var(--amber);letter-spacing:1px;}
+  .confetti{position:absolute;top:-12px;width:9px;height:9px;border-radius:2px;animation:fall linear forwards;pointer-events:none;}
+  @keyframes fall{to{transform:translateY(560px) rotate(720deg);opacity:0;}}
+
+  @media(max-width:620px){
+    .hud{grid-template-columns:1fr;justify-items:center;}
+    .hudSide,.hudSide.right{justify-content:center;}
+    .arena{padding:20px 14px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo">
+      <div class="badge">⌨️</div>
+      <div>
+        <h1>Typing <span>Speed</span> Arena</h1>
+        <div class="sub">Isaiah &middot; Chase the PR</div>
+      </div>
+    </div>
+    <div class="pill">DAILY STREAK <b id="pillStreak">0</b> 🔥</div>
+  </header>
+
+  <!-- HOME -->
+  <div id="homeScreen" class="card">
+    <div class="hero">
+      <h2>Warm up. Lock in. <span style="color:var(--green-bright)">Beat your PR.</span></h2>
+      <p>Type the sentences as fast and clean as you can. The faster you go, the higher your score multiplier climbs — mistakes knock it back down. Like finishing on the counter-attack: speed wins, but only if you keep control.</p>
+      <div class="modeRow">
+        <button class="modeBtn active" id="mode60" type="button">60s MATCH</button>
+        <button class="modeBtn" id="mode30" type="button">30s SPRINT</button>
+      </div>
+      <div class="startRow">
+        <button class="bigBtn" id="startBtn" type="button">Kick Off ▸</button>
+        <button class="dailyBtn" id="dailyBtn" type="button">⭐ Daily Test <span id="dailyState">+50% pts</span></button>
+      </div>
+    </div>
+    <div class="statGrid">
+      <div class="statBox"><div class="v" id="hHigh">0</div><div class="l">High Score</div></div>
+      <div class="statBox"><div class="v" id="hWPM">0</div><div class="l">Best WPM</div></div>
+      <div class="statBox"><div class="v" id="hAcc">0%</div><div class="l">Best Accuracy</div></div>
+      <div class="statBox"><div class="v" id="hStreak">0</div><div class="l">Best Char Streak</div></div>
+      <div class="statBox"><div class="v" id="hTests">0</div><div class="l">Tests Played</div></div>
+    </div>
+    <div class="trend">
+      <h3>Last 20 tests &middot; WPM trend</h3>
+      <div class="bars" id="trendBars"><div class="empty">Play your first match to start the trend line.</div></div>
+    </div>
+  </div>
+
+  <!-- GAME -->
+  <div id="gameScreen">
+    <div class="dailyFlag" id="dailyFlag">⭐ DAILY TEST — 1.5&times; FINAL SCORE ⭐</div>
+    <div class="hud">
+      <div class="hudSide">
+        <div class="hudItem" id="hudTime"><div class="v" id="gTime">60</div><div class="l">Seconds</div></div>
+        <div class="hudItem"><div class="v" id="gWPM" style="color:var(--green-bright)">0</div><div class="l">Live WPM</div></div>
+      </div>
+      <div class="multBox" id="multBox">
+        <div class="v" id="gMult">1.0x</div>
+        <div class="l">Speed Multiplier</div>
+      </div>
+      <div class="hudSide right">
+        <div class="hudItem"><div class="v" id="gScore" style="color:var(--green-glow)">0</div><div class="l">Score</div></div>
+        <div class="hudItem"><div class="v" id="gStreak">0</div><div class="l">Streak</div></div>
+      </div>
+    </div>
+    <div class="arena" id="arena">
+      <div class="tierTag" id="tierTag">TIER 1 · WARM-UP</div>
+      <div id="text"></div>
+      <div class="scorePopWrap" id="popWrap"></div>
+      <input id="hiddenInput" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="typing input">
+      <div class="hint" id="hint">Tap here, then start typing — the clock starts on your first key.</div>
+    </div>
+    <div style="text-align:center"><button id="quitBtn" type="button">Forfeit match</button></div>
+  </div>
+
+  <!-- END -->
+  <div id="endScreen" class="card">
+    <h2>Full Time</h2>
+    <div id="finalScore">0</div>
+    <div id="dailyBonusLine">⭐ Daily bonus applied: score &times;1.5</div>
+    <div class="prBanner" id="prBanner">🏆 NEW PR! 🏆</div>
+    <div id="prDetail" style="color:var(--amber);font-family:var(--mono);font-size:13px;margin-top:4px;"></div>
+    <div class="endGrid">
+      <div class="statBox"><div class="v" id="eWPM">0</div><div class="l">WPM</div><div class="prTag" id="prWPM"></div></div>
+      <div class="statBox"><div class="v" id="eAcc">0%</div><div class="l">Accuracy</div><div class="prTag" id="prAcc"></div></div>
+      <div class="statBox"><div class="v" id="eStreak">0</div><div class="l">Best Streak</div><div class="prTag" id="prStreak"></div></div>
+      <div class="statBox"><div class="v" id="eChars">0</div><div class="l">Chars Typed</div><div class="prTag"></div></div>
+    </div>
+    <button class="bigBtn" id="againBtn" type="button">Rematch ▸</button>
+    <button class="dailyBtn" id="homeBtn" type="button" style="color:var(--text);border-color:var(--border);background:var(--bg3);">Locker Room</button>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+/* ================= sentence bank ================= */
+/* tier 1: short + simple | tier 2: medium | tier 3: long, punctuation, numbers */
+var SENTENCES = [
+  /* tier 1 */
+  {t:1, s:'keep your eye on the ball'},
+  {t:1, s:'pass and move into space'},
+  {t:1, s:'the keeper dives to the left'},
+  {t:1, s:'first touch sets up the shot'},
+  {t:1, s:'win the ball and go forward'},
+  {t:1, s:'stay low and stay quick'},
+  {t:1, s:'the striker times the run'},
+  {t:1, s:'drills build muscle memory'},
+  {t:1, s:'defense wins the hard games'},
+  {t:1, s:'juggle with both feet daily'},
+  {t:1, s:'a bicycle kick takes courage'},
+  {t:1, s:'sharks never stop swimming'},
+  {t:1, s:'the crowd roars for the derby'},
+  {t:1, s:'trap the ball then look up'},
+  /* tier 2 */
+  {t:2, s:'A winger hugs the touchline to stretch the defense wide open.'},
+  {t:2, s:'The midfielder scans the field twice before the ball arrives.'},
+  {t:2, s:'Cool-down stretches help your muscles recover after practice.'},
+  {t:2, s:'A good captain talks constantly and keeps the back line organized.'},
+  {t:2, s:'Octopuses have three hearts and blue blood running through them.'},
+  {t:2, s:'Sprinting uses fast-twitch fibers while jogging trains endurance.'},
+  {t:2, s:'The wall jumps as the free kick curls over their heads.'},
+  {t:2, s:'Drink water before you feel thirsty on hot training days.'},
+  {t:2, s:'A nutmeg through the defender brought the whole bench to its feet.'},
+  {t:2, s:'Honey found in ancient tombs is still perfectly safe to eat.'},
+  {t:2, s:'The fullback overlaps at speed and whips in a low cross.'},
+  {t:2, s:'Your brain uses about twenty percent of your daily energy.'},
+  {t:2, s:'Press high as a team or drop back and defend as a block.'},
+  {t:2, s:'The playmaker splits two defenders with a perfect through ball.'},
+  {t:2, s:'Bananas are berries, but strawberries are not berries at all.'},
+  /* tier 3 */
+  {t:3, s:'In the 89th minute, down 2-1, the home side won a corner and sent the keeper forward.'},
+  {t:3, s:'A regulation match runs 90 minutes: two halves of 45, plus whatever stoppage time the referee adds.'},
+  {t:3, s:'Elite players cover 10 to 12 kilometers per match, mixing walks, jogs, and all-out sprints.'},
+  {t:3, s:'The coach shouted, "Shift right, squeeze the space, and force them onto their weak foot!"'},
+  {t:3, s:'A soccer pitch can be 100 to 130 yards long, and the goal stands 8 feet tall by 8 yards wide.'},
+  {t:3, s:'Reaction time improves with practice; top keepers decide on a penalty dive in under 0.3 seconds.'},
+  {t:3, s:'The giant stadium held 90,000 fans, and when the equalizer hit the net, the ground actually shook.'},
+  {t:3, s:'Muscles do not grow during the workout itself; they rebuild stronger while you sleep 8 to 10 hours.'},
+  {t:3, s:'With the score level at 3-3, the shootout came down to the 11th kick, low and hard into the corner.'},
+  {t:3, s:'A hat-trick means 3 goals in one game; a "perfect" one uses left foot, right foot, and a header.'},
+  {t:3, s:'Lightning is roughly 5 times hotter than the surface of the sun, which sits near 5,500 degrees Celsius.'},
+  {t:3, s:'Studies suggest young athletes need 60+ minutes of activity daily, plus real rest days to grow stronger.'},
+  {t:3, s:'The underdogs parked the bus for 85 minutes, then broke away twice and stunned the champions 2-0.'},
+  {t:3, s:'Your heart beats about 100,000 times a day; hard interval training teaches it to recover faster.'},
+  {t:3, s:'The scout wrote: "Great engine, two-footed, brave in the air — track his left-side deliveries."'},
+  {t:3, s:'By age 13, consistent touches matter more than raw speed; 1,000 quality touches a day adds up fast.'}
+];
+
+/* ================= persistence ================= */
+var SAVE_KEY = 'typing-speed-arena-save-v1';
+var HUB_KEY = 'hubSummary_typing-speed-arena';
+
+function defaultSave(){
+  return { highScore:0, bestWPM:0, bestAcc:0, bestStreak:0, testsCompleted:0,
+           dailyDate:'', dailyStreak:0, results:[],
+           activity:{date:todayStr(), actions:0, earnedDates:[]} };
+}
+function loadSave(){
+  try{
+    var raw = localStorage.getItem(SAVE_KEY);
+    if(raw){
+      var d = JSON.parse(raw);
+      var base = defaultSave();
+      for(var k in base){ if(Object.prototype.hasOwnProperty.call(d,k)) base[k]=d[k]; }
+      if(!Array.isArray(base.results)) base.results=[];
+      if(!base.activity || typeof base.activity !== 'object'){ base.activity = {date:todayStr(), actions:0, earnedDates:[]}; }
+      if(typeof base.activity.actions !== 'number') base.activity.actions = 0;
+      if(!Array.isArray(base.activity.earnedDates)) base.activity.earnedDates = [];
+      return base;
+    }
+  }catch(e){}
+  return defaultSave();
+}
+function persist(){
+  try{
+    localStorage.setItem(SAVE_KEY, JSON.stringify(save));
+    var hub = {
+      app:'typing-speed-arena',
+      kid:'isaiah',
+      icon:'⌨️',
+      label:'Best '+Math.round(save.bestWPM)+' WPM • high '+save.highScore.toLocaleString('en-US'),
+      pct:Math.min(100, Math.round(save.bestWPM)),
+      streak:save.dailyStreak,
+      stars:null,
+      lastPlayed:new Date().toISOString()
+    };
+    var act = save.activity;
+    var today = todayStr();
+    hub.actionsToday = (act && act.date === today && typeof act.actions === 'number') ? act.actions : 0;
+    hub.actionsDate = today;
+    hub.earnedDates = (act && Array.isArray(act.earnedDates)) ? act.earnedDates : [];
+    localStorage.setItem(HUB_KEY, JSON.stringify(hub));
+  }catch(e){}
+}
+
+function recordActivity(weight){
+  try{
+    var t = todayStr();
+    if(!save.activity || typeof save.activity !== 'object'){ save.activity = {date:t, actions:0, earnedDates:[]}; }
+    var a = save.activity;
+    if(!Array.isArray(a.earnedDates)) a.earnedDates = [];
+    if(typeof a.actions !== 'number') a.actions = 0;
+    if(a.date !== t){ a.date = t; a.actions = 0; }
+    a.actions += weight;
+    if(a.actions >= 20 && a.earnedDates.indexOf(t) === -1){
+      a.earnedDates.push(t);
+      if(a.earnedDates.length > 30) a.earnedDates = a.earnedDates.slice(-30);
+    }
+  }catch(e){}
+  persist();
+}
+
+var save = loadSave();
+
+/* ================= helpers ================= */
+function $(id){ return document.getElementById(id); }
+function todayStr(){
+  var d = new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function yesterdayStr(){
+  var d = new Date(); d.setDate(d.getDate()-1);
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function seededRandom(seed){
+  var s = seed % 2147483647; if(s<=0) s+=2147483646;
+  return function(){ s = s*16807 % 2147483647; return (s-1)/2147483646; };
+}
+function shuffled(arr, rnd){
+  var a = arr.slice();
+  for(var i=a.length-1;i>0;i--){
+    var j = Math.floor(rnd()*(i+1));
+    var tmp=a[i]; a[i]=a[j]; a[j]=tmp;
+  }
+  return a;
+}
+function buildQueue(daily){
+  var seed = daily ? hashStr(todayStr()) : Math.floor(Math.random()*1e9)+1;
+  var rnd = seededRandom(seed);
+  var t1 = shuffled(SENTENCES.filter(function(x){return x.t===1;}), rnd);
+  var t2 = shuffled(SENTENCES.filter(function(x){return x.t===2;}), rnd);
+  var t3 = shuffled(SENTENCES.filter(function(x){return x.t===3;}), rnd);
+  /* progressive: a couple warm-ups, then medium, then hard */
+  return t1.slice(0,3).concat(t2.slice(0,4), t3, t2.slice(4), t1.slice(3));
+}
+function hashStr(str){
+  var h = 0;
+  for(var i=0;i<str.length;i++){ h = (h*31 + str.charCodeAt(i)) % 2147483647; }
+  return h+1;
+}
+
+/* ================= game state ================= */
+var G = {
+  running:false, started:false, daily:false,
+  duration:60, timeLeft:60,
+  queue:[], qi:0, sentence:'', pos:0, marks:[],
+  score:0, correct:0, keystrokes:0, errors:0,
+  streak:0, bestStreak:0,
+  stamps:[], penalty:0,
+  timerId:null, tickId:null,
+  lastMultBand:0
+};
+var modeDuration = 60;
+
+/* ================= rendering ================= */
+function renderSentence(){
+  var html = '';
+  for(var i=0;i<G.sentence.length;i++){
+    var ch = G.sentence[i];
+    var cls = 'todo';
+    if(i < G.pos) cls = G.marks[i] ? 'ok' : 'bad';
+    else if(i === G.pos) cls = 'cur';
+    var safe = ch === '<' ? '&lt;' : ch === '>' ? '&gt;' : ch === '&' ? '&amp;' : ch;
+    if(ch === ' ') safe = '&nbsp;';
+    html += '<span class="'+cls+'">'+safe+'</span>';
+  }
+  $('text').innerHTML = html;
+  var tier = G.queue[G.qi] ? G.queue[G.qi].t : 1;
+  var names = {1:'TIER 1 · WARM-UP', 2:'TIER 2 · MIDFIELD', 3:'TIER 3 · FINAL THIRD'};
+  $('tierTag').textContent = names[tier];
+}
+
+function currentWPM(){
+  var now = Date.now();
+  while(G.stamps.length && now - G.stamps[0] > 4000) G.stamps.shift();
+  /* chars in last 4s -> chars/min -> words/min */
+  return (G.stamps.length * 15) / 5;
+}
+function currentMult(){
+  var wpm = currentWPM();
+  var m;
+  if(wpm < 20) m = 1;
+  else if(wpm >= 60) m = 3;
+  else m = 1 + (wpm-20) * (2/40);
+  m = m - G.penalty;
+  if(m < 1) m = 1;
+  return Math.round(m*10)/10;
+}
+function updateHUD(){
+  var wpm = Math.round(currentWPM());
+  var m = currentMult();
+  $('gWPM').textContent = wpm;
+  $('gScore').textContent = G.score.toLocaleString('en-US');
+  $('gStreak').textContent = G.streak;
+  var mv = $('gMult');
+  mv.textContent = m.toFixed(1)+'x';
+  var box = $('multBox');
+  var band = m >= 2.5 ? 3 : m >= 1.6 ? 2 : 1;
+  box.className = 'multBox m'+band;
+  if(band > G.lastMultBand){
+    mv.classList.remove('pop'); void mv.offsetWidth; mv.classList.add('pop');
+    setTimeout(function(){ mv.classList.remove('pop'); }, 150);
+  }
+  G.lastMultBand = band;
+}
+function scorePop(pts){
+  var el = document.createElement('div');
+  el.className = 'scorePop';
+  el.textContent = '+'+pts;
+  $('popWrap').appendChild(el);
+  setTimeout(function(){ if(el.parentNode) el.parentNode.removeChild(el); }, 700);
+}
+
+/* ================= game flow ================= */
+function startGame(daily){
+  G.running = true; G.started = false; G.daily = !!daily;
+  G.duration = daily ? 60 : modeDuration;
+  G.timeLeft = G.duration;
+  G.queue = buildQueue(G.daily); G.qi = 0;
+  G.sentence = G.queue[0].s; G.pos = 0; G.marks = [];
+  G.score = 0; G.correct = 0; G.keystrokes = 0; G.errors = 0;
+  G.streak = 0; G.bestStreak = 0;
+  G.stamps = []; G.penalty = 0; G.lastMultBand = 0;
+
+  $('homeScreen').style.display = 'none';
+  $('endScreen').style.display = 'none';
+  $('gameScreen').style.display = 'block';
+  $('dailyFlag').style.display = G.daily ? 'block' : 'none';
+  $('gTime').textContent = G.timeLeft;
+  $('hudTime').classList.remove('low');
+  $('hint').textContent = 'Tap here, then start typing — the clock starts on your first key.';
+  renderSentence();
+  updateHUD();
+  focusInput();
+}
+function focusInput(){
+  var inp = $('hiddenInput');
+  inp.value = '';
+  inp.focus({preventScroll:true});
+  $('arena').classList.add('focused');
+}
+function beginClock(){
+  if(G.started) return;
+  G.started = true;
+  $('hint').textContent = 'GO! Fast + clean = big multiplier.';
+  G.timerId = setInterval(function(){
+    G.timeLeft--;
+    $('gTime').textContent = G.timeLeft;
+    if(G.timeLeft <= 10) $('hudTime').classList.add('low');
+    if(G.timeLeft <= 0) endGame(false);
+  }, 1000);
+  G.tickId = setInterval(function(){
+    if(G.penalty > 0) G.penalty = Math.max(0, G.penalty - 0.05);
+    updateHUD();
+  }, 200);
+}
+function stopClocks(){
+  if(G.timerId){ clearInterval(G.timerId); G.timerId = null; }
+  if(G.tickId){ clearInterval(G.tickId); G.tickId = null; }
+}
+
+function handleChar(ch){
+  if(!G.running) return;
+  beginClock();
+  var expected = G.sentence[G.pos];
+  G.keystrokes++;
+  if(ch === expected){
+    G.marks[G.pos] = true;
+    G.correct++;
+    G.streak++;
+    if(G.streak > G.bestStreak) G.bestStreak = G.streak;
+    G.stamps.push(Date.now());
+    var pts = Math.round(1 * currentMult() * 10) / 10;
+    pts = Math.max(1, Math.round(pts));
+    G.score += pts;
+    if(G.correct % 10 === 0) scorePop(pts*10);
+  } else {
+    G.marks[G.pos] = false;
+    G.errors++;
+    G.streak = 0;
+    /* mistake knocks the multiplier down a notch */
+    G.penalty = Math.min(2, G.penalty + 0.5);
+    var mv = $('gMult');
+    mv.classList.remove('drop'); void mv.offsetWidth; mv.classList.add('drop');
+    setTimeout(function(){ mv.classList.remove('drop'); }, 180);
+  }
+  G.pos++;
+  if(G.pos >= G.sentence.length){
+    G.qi = (G.qi + 1) % G.queue.length;
+    G.sentence = G.queue[G.qi].s;
+    G.pos = 0; G.marks = [];
+  }
+  renderSentence();
+  updateHUD();
+}
+function handleBackspace(){
+  if(!G.running || G.pos === 0) return;
+  G.pos--;
+  G.marks.length = G.pos;
+  renderSentence();
+}
+
+function endGame(forfeit){
+  if(!G.running) return;
+  G.running = false;
+  stopClocks();
+  $('gameScreen').style.display = 'none';
+
+  if(forfeit){ showHome(); return; }
+
+  var minutes = G.duration / 60;
+  var wpm = Math.round((G.correct / 5) / minutes);
+  var acc = G.keystrokes > 0 ? Math.round((G.correct / G.keystrokes) * 100) : 0;
+  var finalScore = G.score;
+  var dailyApplied = false;
+
+  if(G.daily && save.dailyDate !== todayStr()){
+    finalScore = Math.round(finalScore * 1.5);
+    dailyApplied = true;
+    if(save.dailyDate === yesterdayStr()) save.dailyStreak++;
+    else save.dailyStreak = 1;
+    save.dailyDate = todayStr();
+  }
+
+  var prScore = finalScore > save.highScore;
+  var prWPM = wpm > save.bestWPM;
+  var prAcc = acc > save.bestAcc;
+  var prStreak = G.bestStreak > save.bestStreak;
+  var anyPR = prScore || prWPM || prAcc || prStreak;
+
+  if(prScore) save.highScore = finalScore;
+  if(prWPM) save.bestWPM = wpm;
+  if(prAcc) save.bestAcc = acc;
+  if(prStreak) save.bestStreak = G.bestStreak;
+  save.testsCompleted++;
+  save.results.push({d:todayStr(), wpm:wpm, acc:acc, score:finalScore, mode:G.duration, daily:G.daily});
+  if(save.results.length > 20) save.results = save.results.slice(-20);
+  recordActivity(10); /* completed test = 10 actions; saves + updates hub */
+
+  /* fill end screen */
+  $('finalScore').textContent = finalScore.toLocaleString('en-US');
+  $('dailyBonusLine').style.display = dailyApplied ? 'block' : 'none';
+  $('eWPM').textContent = wpm;
+  $('eAcc').textContent = acc + '%';
+  $('eStreak').textContent = G.bestStreak;
+  $('eChars').textContent = G.correct;
+  $('prWPM').textContent = prWPM ? '★ PR' : '';
+  $('prAcc').textContent = prAcc ? '★ PR' : '';
+  $('prStreak').textContent = prStreak ? '★ PR' : '';
+  $('eWPM').classList.toggle('pr', prWPM);
+  $('eAcc').classList.toggle('pr', prAcc);
+  $('eStreak').classList.toggle('pr', prStreak);
+
+  var details = [];
+  if(prScore) details.push('High Score');
+  if(prWPM) details.push('WPM');
+  if(prAcc) details.push('Accuracy');
+  if(prStreak) details.push('Streak');
+  $('prBanner').style.display = anyPR ? 'block' : 'none';
+  $('prDetail').textContent = anyPR ? 'Record broken: ' + details.join(' + ') : '';
+  $('endScreen').style.display = 'block';
+  $('pillStreak').textContent = save.dailyStreak;
+  if(anyPR) confetti();
+}
+
+function confetti(){
+  var host = $('endScreen');
+  var colors = ['#40c057','#52e07c','#f5a524','#e6edf3','#2d6a4f'];
+  for(var i=0;i<70;i++){
+    var c = document.createElement('div');
+    c.className = 'confetti';
+    c.style.left = (Math.random()*100)+'%';
+    c.style.background = colors[Math.floor(Math.random()*colors.length)];
+    c.style.animationDuration = (1.4 + Math.random()*1.6)+'s';
+    c.style.animationDelay = (Math.random()*0.6)+'s';
+    c.style.width = (5 + Math.random()*7)+'px';
+    c.style.height = (5 + Math.random()*7)+'px';
+    host.appendChild(c);
+    (function(el){ setTimeout(function(){ if(el.parentNode) el.parentNode.removeChild(el); }, 3800); })(c);
+  }
+}
+
+/* ================= home screen ================= */
+function showHome(){
+  $('gameScreen').style.display = 'none';
+  $('endScreen').style.display = 'none';
+  $('homeScreen').style.display = 'block';
+  $('hHigh').textContent = save.highScore.toLocaleString('en-US');
+  $('hWPM').textContent = Math.round(save.bestWPM);
+  $('hAcc').textContent = Math.round(save.bestAcc) + '%';
+  $('hStreak').textContent = save.bestStreak;
+  $('hTests').textContent = save.testsCompleted;
+  $('pillStreak').textContent = save.dailyStreak;
+
+  var dailyDone = save.dailyDate === todayStr();
+  var db = $('dailyBtn');
+  db.classList.toggle('done', dailyDone);
+  $('dailyState').textContent = dailyDone ? '✓ done today' : '+50% pts';
+
+  /* trend bars */
+  var bars = $('trendBars');
+  bars.innerHTML = '';
+  if(save.results.length === 0){
+    bars.innerHTML = '<div class="empty">Play your first match to start the trend line.</div>';
+  } else {
+    var max = 1;
+    save.results.forEach(function(r){ if(r.wpm > max) max = r.wpm; });
+    save.results.forEach(function(r){
+      var b = document.createElement('div');
+      b.className = 'bar' + (r.wpm === max ? ' best' : '');
+      b.style.height = Math.max(6, Math.round((r.wpm / max) * 64)) + 'px';
+      b.title = r.d + ' — ' + r.wpm + ' WPM, ' + r.acc + '% acc, score ' + r.score + (r.daily ? ' (daily)' : '');
+      bars.appendChild(b);
+    });
+  }
+}
+
+/* ================= input wiring ================= */
+$('hiddenInput').addEventListener('keydown', function(e){
+  if(!G.running) return;
+  if(e.key === 'Backspace'){ e.preventDefault(); handleBackspace(); return; }
+  if(e.key === 'Tab' || e.key === 'Escape'){ return; }
+  if(e.key.length === 1){
+    e.preventDefault();
+    handleChar(e.key);
+  }
+});
+/* mobile fallback: soft keyboards that only fire input events */
+$('hiddenInput').addEventListener('input', function(e){
+  if(!G.running) return;
+  var v = e.target.value;
+  if(v.length > 0){
+    var ch = v[v.length-1];
+    /* keydown already handled hardware keys; only use this if key events gave length!==1 */
+    if(!lastKeyHandled){ handleChar(ch); }
+  }
+  e.target.value = '';
+  lastKeyHandled = false;
+});
+var lastKeyHandled = false;
+$('hiddenInput').addEventListener('keydown', function(e){
+  if(e.key && e.key.length === 1) lastKeyHandled = true;
+});
+$('hiddenInput').addEventListener('blur', function(){ $('arena').classList.remove('focused'); });
+$('arena').addEventListener('click', focusInput);
+
+$('mode60').addEventListener('click', function(){
+  modeDuration = 60;
+  this.classList.add('active'); $('mode30').classList.remove('active');
+});
+$('mode30').addEventListener('click', function(){
+  modeDuration = 30;
+  this.classList.add('active'); $('mode60').classList.remove('active');
+});
+$('startBtn').addEventListener('click', function(){ startGame(false); });
+$('dailyBtn').addEventListener('click', function(){
+  if(save.dailyDate === todayStr()) return;
+  startGame(true);
+});
+$('againBtn').addEventListener('click', function(){ startGame(G.daily && save.dailyDate !== todayStr()); });
+$('homeBtn').addEventListener('click', showHome);
+$('quitBtn').addEventListener('click', function(){ endGame(true); });
+
+/* keep space from scrolling the page during a match */
+window.addEventListener('keydown', function(e){
+  if(G.running && e.key === ' ' && e.target !== $('hiddenInput')){ e.preventDefault(); }
+});
+
+showHome();
+persist();
+</script>
+</body>
+</html>

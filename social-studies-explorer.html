@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Siena's Social Studies Explorer</title>
+<style>
+  :root{
+    --purple:#7c3aed; --purple-dark:#5b21b6; --purple-light:#ede9fe;
+    --sky:#38bdf8; --sky-light:#e0f2fe; --sky-mid:#bae6fd;
+    --sun:#fbbf24; --green:#22c55e; --red:#ef4444;
+    --ink:#1e293b; --card:#ffffff;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:-apple-system,"SF Pro Rounded",BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
+    background:linear-gradient(180deg,#bae6fd 0%, #e0f2fe 40%, #f5f3ff 100%);
+    min-height:100vh; color:var(--ink);
+  }
+  #app{max-width:520px;margin:0 auto;padding:14px 14px 60px;}
+  .topbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+  .backbtn{
+    background:#fff;border:none;border-radius:16px;padding:10px 16px;
+    font-size:17px;font-weight:800;color:var(--purple);box-shadow:0 3px 0 rgba(124,58,237,.25);
+    cursor:pointer;
+  }
+  .backbtn:active{transform:translateY(2px);box-shadow:none;}
+  .topstars{
+    margin-left:auto;background:#fff;border-radius:16px;padding:9px 14px;
+    font-weight:900;font-size:16px;color:#b45309;box-shadow:0 3px 0 rgba(180,83,9,.2);
+  }
+  h1{font-size:26px;margin:6px 0 2px;color:var(--purple-dark);}
+  .sub{color:#475569;font-size:15px;margin:0 0 16px;font-weight:600;}
+  .banner{
+    background:linear-gradient(135deg,var(--purple),#a78bfa);
+    border-radius:24px;padding:18px 20px;color:#fff;margin-bottom:16px;
+    box-shadow:0 6px 18px rgba(124,58,237,.35);
+    display:flex;align-items:center;gap:14px;
+  }
+  .banner .big{font-size:44px;line-height:1;}
+  .banner h1{color:#fff;margin:0;font-size:22px;}
+  .banner p{margin:4px 0 0;font-size:14px;opacity:.95;font-weight:600;}
+  .card{
+    background:var(--card);border-radius:22px;padding:16px;margin-bottom:14px;
+    box-shadow:0 4px 14px rgba(30,41,59,.10);border:3px solid transparent;
+  }
+  .region-card{display:flex;align-items:center;gap:14px;cursor:pointer;transition:transform .1s;}
+  .region-card:active{transform:scale(.98);}
+  .region-emoji{
+    font-size:40px;width:68px;height:68px;border-radius:20px;
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  }
+  .region-card h2{margin:0;font-size:19px;}
+  .region-card .meta{font-size:13px;color:#64748b;font-weight:700;margin-top:3px;}
+  .stampmini{margin-left:auto;font-size:30px;flex-shrink:0;}
+  .passbtn{
+    width:100%;border:none;border-radius:22px;padding:16px;font-size:18px;font-weight:900;
+    background:linear-gradient(135deg,#0ea5e9,var(--sky));color:#fff;cursor:pointer;
+    box-shadow:0 5px 0 rgba(14,165,233,.35);margin-top:4px;
+  }
+  .passbtn:active{transform:translateY(3px);box-shadow:none;}
+  .mission-card{display:flex;align-items:center;gap:12px;cursor:pointer;}
+  .mission-card:active{transform:scale(.98);}
+  .mission-num{
+    width:44px;height:44px;border-radius:14px;background:var(--purple-light);
+    color:var(--purple);font-weight:900;font-size:19px;
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  }
+  .mission-card h3{margin:0;font-size:16px;}
+  .mission-stars{margin-left:auto;font-size:15px;letter-spacing:1px;flex-shrink:0;}
+  /* lesson */
+  .lesson{text-align:center;padding:26px 18px;}
+  .lesson .le{font-size:64px;margin-bottom:8px;}
+  .lesson h2{color:var(--purple-dark);font-size:21px;margin:6px 0 10px;}
+  .lesson p{font-size:17px;line-height:1.55;margin:0;font-weight:500;}
+  .dots{display:flex;gap:7px;justify-content:center;margin:16px 0 6px;}
+  .dot{width:10px;height:10px;border-radius:50%;background:#cbd5e1;}
+  .dot.on{background:var(--purple);}
+  .bigbtn{
+    width:100%;border:none;border-radius:20px;padding:15px;font-size:18px;font-weight:900;
+    background:var(--purple);color:#fff;cursor:pointer;box-shadow:0 5px 0 var(--purple-dark);
+    margin-top:14px;
+  }
+  .bigbtn:active{transform:translateY(3px);box-shadow:none;}
+  .bigbtn.green{background:var(--green);box-shadow:0 5px 0 #15803d;}
+  .bigbtn.blue{background:#0ea5e9;box-shadow:0 5px 0 #0369a1;}
+  /* quiz */
+  .qbar{height:12px;border-radius:8px;background:#e2e8f0;overflow:hidden;margin-bottom:12px;}
+  .qbar>div{height:100%;background:linear-gradient(90deg,var(--sky),var(--purple));border-radius:8px;transition:width .3s;}
+  .qcount{font-size:13px;font-weight:800;color:#64748b;margin-bottom:8px;text-align:center;}
+  .qtext{font-size:19px;font-weight:800;text-align:center;margin:4px 0 6px;line-height:1.4;}
+  .qemoji{font-size:52px;text-align:center;margin:6px 0;}
+  .gridmap{
+    font-size:34px;line-height:1.35;text-align:center;letter-spacing:6px;
+    background:var(--sky-light);border-radius:16px;padding:12px 6px;margin:10px 0;
+  }
+  .choice{
+    display:block;width:100%;text-align:left;border:3px solid #e2e8f0;background:#fff;
+    border-radius:18px;padding:14px 16px;font-size:17px;font-weight:700;color:var(--ink);
+    margin-top:10px;cursor:pointer;transition:transform .08s;font-family:inherit;
+  }
+  .choice:active{transform:scale(.98);}
+  .choice.right{border-color:var(--green);background:#f0fdf4;}
+  .choice.wrong{border-color:var(--red);background:#fef2f2;animation:shake .3s;}
+  .choice.dim{opacity:.5;}
+  .choice:disabled{cursor:default;}
+  @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+  @keyframes pop{0%{transform:scale(0)}70%{transform:scale(1.25)}100%{transform:scale(1)}}
+  .feedback{
+    border-radius:16px;padding:12px 14px;margin-top:12px;font-weight:700;font-size:15px;line-height:1.45;
+  }
+  .feedback.good{background:#dcfce7;color:#166534;}
+  .feedback.bad{background:#fee2e2;color:#991b1b;}
+  /* match */
+  .matchwrap{display:flex;gap:10px;margin-top:10px;}
+  .matchcol{flex:1;display:flex;flex-direction:column;gap:9px;}
+  .mbtn{
+    border:3px solid #e2e8f0;background:#fff;border-radius:15px;padding:11px 8px;
+    font-size:14px;font-weight:700;cursor:pointer;min-height:58px;font-family:inherit;color:var(--ink);
+    line-height:1.3;
+  }
+  .mbtn.sel{border-color:var(--purple);background:var(--purple-light);}
+  .mbtn.done{border-color:var(--green);background:#f0fdf4;opacity:.55;cursor:default;}
+  .mbtn.err{animation:shake .3s;border-color:var(--red);}
+  /* order */
+  .slots{display:flex;flex-direction:column;gap:8px;margin:10px 0;}
+  .slot{
+    border:3px dashed #cbd5e1;border-radius:15px;padding:11px 12px;min-height:50px;
+    font-weight:800;font-size:16px;color:#94a3b8;display:flex;align-items:center;gap:10px;
+  }
+  .slot.filled{border-style:solid;border-color:var(--green);background:#f0fdf4;color:var(--ink);}
+  .pool{display:flex;flex-wrap:wrap;gap:9px;justify-content:center;margin-top:10px;}
+  .pbtn{
+    border:3px solid var(--sky-mid);background:#fff;border-radius:15px;padding:11px 13px;
+    font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;color:var(--ink);
+  }
+  .pbtn.err{animation:shake .3s;border-color:var(--red);}
+  .pbtn.gone{visibility:hidden;}
+  /* results */
+  .results{text-align:center;padding:24px 16px;}
+  .results .re{font-size:76px;animation:pop .5s;}
+  .results h2{color:var(--purple-dark);margin:8px 0;}
+  .starsbig{font-size:44px;letter-spacing:6px;margin:6px 0;animation:pop .6s;}
+  .accline{font-weight:800;color:#475569;}
+  .stampbanner{
+    background:linear-gradient(135deg,#f59e0b,#fbbf24);color:#fff;border-radius:18px;
+    padding:14px;margin-top:14px;font-weight:900;font-size:17px;animation:pop .6s;
+  }
+  /* passport */
+  .passport{
+    background:linear-gradient(160deg,var(--purple),#4c1d95);border-radius:26px;
+    padding:22px;color:#fff;box-shadow:0 8px 24px rgba(76,29,149,.4);
+  }
+  .passport h2{margin:0 0 4px;font-size:22px;}
+  .passport .psub{opacity:.9;font-size:13px;font-weight:700;margin-bottom:16px;}
+  .stampgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .stampslot{
+    background:rgba(255,255,255,.12);border:3px dashed rgba(255,255,255,.4);
+    border-radius:20px;padding:14px 8px;text-align:center;min-height:118px;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;
+  }
+  .stampslot.earned{border-style:solid;border-color:var(--sun);background:rgba(251,191,36,.2);}
+  .stampseal{
+    width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-size:34px;border:3px solid var(--sun);background:#fff;transform:rotate(-8deg);
+    animation:pop .5s;
+  }
+  .stampslot .sname{font-size:12px;font-weight:800;}
+  .stampslot .locked{font-size:30px;opacity:.65;}
+  .statrow{display:flex;gap:10px;margin-top:16px;}
+  .statbox{flex:1;background:rgba(255,255,255,.14);border-radius:16px;padding:10px;text-align:center;}
+  .statbox .v{font-size:20px;font-weight:900;}
+  .statbox .l{font-size:11px;font-weight:700;opacity:.85;}
+  .worldmap{width:100%;height:auto;display:block;margin:6px 0;}
+  .worldmap ellipse,.worldmap rect.land{cursor:pointer;}
+  .worldcap{
+    background:var(--sky-light);border-radius:14px;padding:10px 12px;font-weight:800;
+    font-size:15px;min-height:44px;display:flex;align-items:center;justify-content:center;text-align:center;
+  }
+  .confetti{position:fixed;top:-30px;font-size:26px;animation:fall 2.2s linear forwards;pointer-events:none;z-index:99;}
+  @keyframes fall{to{transform:translateY(110vh) rotate(360deg);opacity:.3;}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+"use strict";
+/* ============ DATA ============ */
+const DATA = [
+{
+  id:"community", name:"Our Community", emoji:"🏘️", tag:"Helpers, maps & more", bg:"#fef3c7",
+  stamp:"🚒", stampName:"Community Star",
+  missions:[
+  {
+    title:"Community Helpers", emoji:"🧑‍🚒",
+    lessons:[
+      {e:"🏘️",t:"Welcome to Your Community!",x:"A community is the place where people live, work, and play together. Your neighborhood, your school, and your town are all part of your community!"},
+      {e:"🧑‍🚒",t:"Helpers Are Everywhere",x:"Community helpers are people whose jobs help everyone. Firefighters put out fires. Doctors and nurses help sick people feel better. Police officers keep us safe."},
+      {e:"📬",t:"So Many Helpers!",x:"Mail carriers bring letters and packages. Teachers help kids learn. Farmers grow our food. Librarians help us find great books. Every helper matters!"}
+    ],
+    questions:[
+      {t:"mc",e:"🔥",q:"What does a firefighter do?",ch:["Puts out fires and helps in emergencies","Delivers the mail","Bakes yummy bread"],a:0,why:"Firefighters are brave helpers who put out fires and rescue people!"},
+      {t:"mc",e:"🤒",q:"Who helps you feel better when you are sick?",ch:["A doctor or nurse","A librarian","A chef"],a:0,why:"Doctors and nurses take care of us when we are sick or hurt."},
+      {t:"mc",e:"📦",q:"Who brings letters and packages to your home?",ch:["A mail carrier","A dentist","A farmer"],a:0,why:"Mail carriers deliver mail in sunshine, rain, or snow!"},
+      {t:"mc",e:"📚",q:"What does a librarian help you find?",ch:["Wonderful books to read","Lost puppies","Groceries"],a:0,why:"Librarians know where every book lives in the library!"},
+      {t:"match",q:"Match each helper to their job!",pairs:[["👮 Police officer","Keeps people safe"],["🧑‍🌾 Farmer","Grows our food"],["🦷 Dentist","Takes care of teeth"],["👩‍🏫 Teacher","Helps kids learn"]]},
+      {t:"mc",e:"🚰",q:"Who fixes leaky pipes and drips?",ch:["A plumber","A pilot","A painter"],a:0,why:"Plumbers fix pipes so clean water flows in our homes."},
+      {t:"mc",e:"💛",q:"Why are community helpers so important?",ch:["They work together to keep our town safe and happy","They only help on holidays","They just really like wearing uniforms"],a:0,why:"Helpers team up every day to make our community a great place!"}
+    ]
+  },
+  {
+    title:"Goods, Services, Needs & Wants", emoji:"🛒",
+    lessons:[
+      {e:"🧸",t:"What Is a Good?",x:"A GOOD is a thing you can touch and take home — like a teddy bear, an apple, or a book. Goods are things people make or grow."},
+      {e:"✂️",t:"What Is a Service?",x:"A SERVICE is work someone does to help you — like a haircut, a dentist checkup, or a bus ride. You cannot put a service in your backpack!"},
+      {e:"💧",t:"Needs and Wants",x:"A NEED is something you must have to live: food, water, clothes, and a safe home. A WANT is something fun to have, like ice cream or a new toy. Smart explorers take care of needs first!"}
+    ],
+    questions:[
+      {t:"mc",e:"🎁",q:"A GOOD is something you can...",ch:["Touch and take home","Only watch on TV","Never see"],a:0,why:"Goods are real things you can hold, like toys and apples!"},
+      {t:"mc",e:"🧸",q:"Which one is a GOOD?",ch:["A teddy bear","A haircut","A bus ride"],a:0,why:"You can hug a teddy bear and take it home — it is a good!"},
+      {t:"mc",e:"🦷",q:"Which one is a SERVICE?",ch:["A dentist checkup","An apple","A crayon"],a:0,why:"A checkup is work the dentist does for you — that is a service!"},
+      {t:"mc",e:"🏠",q:"A NEED is...",ch:["Something you must have to live","A toy you really really like","Anything shiny"],a:0,why:"Needs keep us healthy and safe: food, water, clothes, and shelter."},
+      {t:"mc",e:"💧",q:"Which one is a NEED?",ch:["Water to drink","A video game","Sparkly shoes"],a:0,why:"Everybody needs water every single day!"},
+      {t:"mc",e:"🍦",q:"Which one is a WANT?",ch:["An ice cream cone","A warm coat in winter","Healthy food"],a:0,why:"Ice cream is yummy but we do not need it to live — it is a want!"},
+      {t:"match",q:"Match each one to what it is!",pairs:[["🍞 A loaf of bread","A good you can hold"],["✂️ A haircut","A service someone does"],["🏠 A safe home","A need"],["🎠 A carousel ride","A want"]]},
+      {t:"mc",e:"💵",q:"You have 5 dollars. What is the smart first choice?",ch:["Take care of needs first, then wants","Buy everything you see","Spend it all on stickers before lunch"],a:0,why:"Smart spenders cover their needs first — then treats!"}
+    ]
+  },
+  {
+    title:"Map Skills", emoji:"🧭",
+    lessons:[
+      {e:"🗺️",t:"Maps Are Pictures of Places",x:"A map is a drawing of a place seen from above, like a bird flying over your town. Maps help us find our way!"},
+      {e:"🔑",t:"The Map Key",x:"A map key (also called a legend) is a little box that tells you what the symbols mean. A tiny tree 🌳 might mean a park. A cross might mean a hospital."},
+      {e:"🧭",t:"The Compass Rose",x:"The compass rose shows directions: N is North (up on most maps), S is South (down), E is East (right), and W is West (left). Never Eat Soggy Waffles helps you remember N, E, S, W around the circle!"}
+    ],
+    questions:[
+      {t:"mc",e:"🔑",q:"What does a map key (legend) tell you?",ch:["What the symbols on a map mean","How much the map costs","The mapmaker's favorite color"],a:0,why:"The key unlocks the map — it explains every little symbol!"},
+      {t:"mc",e:"🧭",q:"What is a compass rose for?",ch:["It shows directions: north, south, east, west","It smells like roses","It holds the map open"],a:0,why:"The compass rose points the way: N, S, E, W!"},
+      {t:"mc",e:"⬇️",q:"Which direction is the OPPOSITE of north?",ch:["South","East","West"],a:0,why:"North and south are opposites, just like up and down on a map."},
+      {t:"mc",e:"⬆️",q:"On most maps, which direction is UP?",ch:["North","South","West"],a:0,why:"Map tip: up is almost always north!"},
+      {t:"mc",e:"🅴",q:"On a compass rose, what does the letter E stand for?",ch:["East","Elephant","Everywhere"],a:0,why:"E is for East — the right side on most maps."},
+      {t:"match",q:"Match each letter to its direction!",pairs:[["N","North ⬆️"],["S","South ⬇️"],["E","East ➡️"],["W","West ⬅️"]]},
+      {t:"mc",e:"🌳",q:"Start at the 🏠 house. Move 2 squares EAST ➡️. Where do you land?",grid:["🏠⬜🌳"],ch:["At the park 🌳","At a pond","Back at home"],a:0,why:"Two hops east lands you right at the park!"},
+      {t:"mc",e:"🏥",q:"Start at the 🏠 house. Move 2 squares NORTH ⬆️. Where do you land?",grid:["⬜🏥⬜","⬜⬜⬜","⬜🏠⬜"],ch:["At the hospital 🏥","At the beach","In a forest"],a:0,why:"Two hops up (north) brings you to the hospital!"}
+    ]
+  }
+]},
+{
+  id:"country", name:"Our Country (USA)", emoji:"🇺🇸", tag:"States, symbols & landmarks", bg:"#dbeafe",
+  stamp:"🦅", stampName:"USA Explorer",
+  missions:[
+  {
+    title:"Regions of the USA", emoji:"🗺️",
+    lessons:[
+      {e:"🇺🇸",t:"Fifty Amazing States",x:"The United States of America is made of 50 states! Each state is special, with its own cities, foods, and fun places. Together they make one big country."},
+      {e:"🧩",t:"States Come in Groups",x:"To make the map easier, we group states into REGIONS. The Northeast has busy cities like New York. The South has warm beaches and swamps. The Midwest grows tons of corn and wheat. The West has huge mountains and the Pacific Ocean!"},
+      {e:"✈️",t:"Two Far-Away States",x:"Alaska and Hawaii do not touch the other 48 states! Alaska is way up north with glaciers and moose. Hawaii is a chain of islands out in the Pacific Ocean with volcanoes and beaches."}
+    ],
+    questions:[
+      {t:"mc",e:"⭐",q:"How many states are in the United States?",ch:["50","12","100"],a:0,why:"Fifty states — that is why the flag has 50 stars!"},
+      {t:"mc",e:"🏙️",q:"Which region has New York City with its tall buildings?",ch:["The Northeast","The West","The Midwest"],a:0,why:"The Northeast is home to New York City and lots of busy towns."},
+      {t:"mc",e:"🏖️",q:"Which region is known for warm beaches and states like Florida and Texas?",ch:["The South","The Northeast","The Midwest"],a:0,why:"The South is sunny and warm — perfect for beaches!"},
+      {t:"mc",e:"🌽",q:"The Midwest is famous for...",ch:["Big farms growing corn and wheat","Icebergs everywhere","Rainforests full of parrots"],a:0,why:"The Midwest grows so much food it is called the breadbasket!"},
+      {t:"mc",e:"🌊",q:"Which region touches the Pacific Ocean and has California?",ch:["The West","The South","The Northeast"],a:0,why:"The West stretches all the way to the Pacific Ocean."},
+      {t:"match",q:"Match each region to what it is known for!",pairs:[["Northeast","Busy cities like New York"],["South","Warm beaches and swamps"],["Midwest","Fields of corn and wheat"],["West","Mountains and the Pacific"]]},
+      {t:"mc",e:"🌋",q:"Why are Alaska and Hawaii special?",ch:["They do not touch the other 48 states","They are imaginary","They are the smallest states"],a:0,why:"Alaska is far north and Hawaii is out in the ocean — but both are part of the USA!"}
+    ]
+  },
+  {
+    title:"Landmarks & Symbols", emoji:"🗽",
+    lessons:[
+      {e:"🗽",t:"Famous American Landmarks",x:"A landmark is a special place people love to visit. The Statue of Liberty stands in New York Harbor holding her torch high. The Grand Canyon in Arizona is a giant canyon carved by a river over a very long time. The Golden Gate Bridge stretches across the water in San Francisco!"},
+      {e:"🇺🇸",t:"Our Flag",x:"The American flag has 50 stars — one for every state — and 13 stripes for the very first 13 colonies. Some people call it the Stars and Stripes!"},
+      {e:"🦅",t:"More Symbols",x:"The bald eagle is a symbol of the United States — strong and free! The White House in Washington, D.C. is where the President lives and works."}
+    ],
+    questions:[
+      {t:"mc",e:"🗽",q:"Which statue in New York Harbor holds a torch and welcomes visitors?",ch:["The Statue of Liberty","The Eiffel Tower","A giant snowman"],a:0,why:"Lady Liberty has welcomed travelers for a very long time!"},
+      {t:"mc",e:"🏞️",q:"The Grand Canyon is a giant...",ch:["Canyon carved by a river","Castle made of sand","Shopping mall"],a:0,why:"The Colorado River carved the Grand Canyon little by little!"},
+      {t:"mc",e:"🌉",q:"The Golden Gate Bridge is in which city?",ch:["San Francisco","Miami","Chicago"],a:0,why:"The big orange-red bridge is a San Francisco superstar!"},
+      {t:"mc",e:"⭐",q:"How many stars are on the American flag?",ch:["50 — one for each state","13","7"],a:0,why:"Fifty stars for fifty states!"},
+      {t:"mc",e:"📏",q:"How many stripes are on the flag?",ch:["13 — for the first 13 colonies","50","2"],a:0,why:"The 13 stripes remember the very first 13 colonies."},
+      {t:"mc",e:"🦅",q:"Which bird is a symbol of the United States?",ch:["The bald eagle","A penguin","A flamingo"],a:0,why:"The bald eagle stands for strength and freedom!"},
+      {t:"mc",e:"🏛️",q:"Where does the President of the United States live and work?",ch:["The White House","A lighthouse","A treehouse"],a:0,why:"The White House is in Washington, D.C."},
+      {t:"match",q:"Match each landmark to its place!",pairs:[["🗽 Statue of Liberty","New York"],["🌉 Golden Gate Bridge","San Francisco"],["🏞️ Grand Canyon","Arizona"],["🏛️ White House","Washington, D.C."]]}
+    ]
+  },
+  {
+    title:"State Match-Up Game", emoji:"⭐",
+    lessons:[
+      {e:"🎯",t:"State Match-Up!",x:"Time for a mini-game! You will match 10 famous states to their fun facts. Read each fact carefully — you have got this, explorer!"},
+      {e:"💡",t:"Explorer Hints",x:"Hint time! Texas and Alaska are BIG. Hawaii is islands. Florida is sunny. New York has Lady Liberty. Michigan looks like a mitten. Ready? Go!"}
+    ],
+    questions:[
+      {t:"match",q:"Round 1: Match the state to its fun fact!",pairs:[["Texas","Biggest state in the lower 48 — everything is big here!"],["California","Home of giant redwoods, the tallest trees on Earth"],["Florida","Sunny beaches and alligators in the swamps"],["New York","Home of the Statue of Liberty"]]},
+      {t:"match",q:"Round 2: Keep matching!",pairs:[["Alaska","The biggest state of all, with glaciers and moose"],["Hawaii","Islands with volcanoes in the Pacific Ocean"],["Arizona","Where the Grand Canyon is"]]},
+      {t:"match",q:"Round 3: Last matching round!",pairs:[["Colorado","Full of tall, snowy Rocky Mountains"],["Michigan","Shaped like a mitten by the Great Lakes"],["Kansas","Grows fields and fields of golden wheat"]]},
+      {t:"mc",e:"🌺",q:"Which state is made of islands with volcanoes?",ch:["Hawaii","Kansas","Michigan"],a:0,why:"Hawaii is a beautiful island chain in the Pacific!"},
+      {t:"mc",e:"🐻",q:"Which state is the biggest AND has glaciers and moose?",ch:["Alaska","Florida","New York"],a:0,why:"Alaska is huge — way bigger than Texas!"},
+      {t:"mc",e:"🏜️",q:"Which state would you visit to see the Grand Canyon?",ch:["Arizona","Michigan","Colorado"],a:0,why:"The Grand Canyon is in sunny Arizona!"}
+    ]
+  }
+]},
+{
+  id:"world", name:"Our World", emoji:"🌍", tag:"Continents, oceans & friends", bg:"#dcfce7",
+  stamp:"🌍", stampName:"World Traveler",
+  missions:[
+  {
+    title:"Continents & Oceans", emoji:"🌊",
+    lessons:[
+      {e:"🌍",t:"One Big Beautiful World",x:"Earth has 7 continents — giant pieces of land — and 5 huge oceans of salty water. Continents: North America, South America, Europe, Africa, Asia, Australia, and Antarctica!"},
+      {e:"🗺️",t:"Tap the World!",x:"Tap each continent on the map below to meet it!",world:true},
+      {e:"🌊",t:"The Five Oceans",x:"The oceans are: Pacific (the biggest!), Atlantic, Indian, Arctic (brrr, icy!), and Southern (around Antarctica). Oceans cover most of our planet!"}
+    ],
+    questions:[
+      {t:"mc",e:"🌍",q:"How many continents does Earth have?",ch:["7","3","20"],a:0,why:"Seven continents — can you name them all?"},
+      {t:"mc",e:"🌊",q:"How many big oceans does Earth have?",ch:["5","1","50"],a:0,why:"Five oceans: Pacific, Atlantic, Indian, Arctic, and Southern!"},
+      {t:"mc",e:"🏠",q:"If you live in the USA, which continent do you live on?",ch:["North America","Africa","Asia"],a:0,why:"The USA is in North America, along with Canada and Mexico."},
+      {t:"mc",e:"🐼",q:"Which continent is the BIGGEST?",ch:["Asia","Europe","Australia"],a:0,why:"Asia is the biggest continent with the most people!"},
+      {t:"mc",e:"🐧",q:"Which continent is frozen and full of penguins?",ch:["Antarctica","South America","Europe"],a:0,why:"Antarctica is the icy bottom of the world — penguin paradise!"},
+      {t:"mc",e:"💧",q:"Which ocean is the BIGGEST?",ch:["The Pacific","The Atlantic","The Indian"],a:0,why:"The Pacific Ocean is bigger than all the land put together!"},
+      {t:"match",q:"Match each continent to its clue!",pairs:[["Africa","Lions, elephants, and the Sahara Desert"],["Australia","Kangaroos hop here"],["Antarctica","Brrr! Ice and penguins"],["South America","The Amazon rainforest"]]},
+      {t:"mc",e:"🚢",q:"Which ocean is between North America and Europe?",ch:["The Atlantic","The Arctic","The Southern"],a:0,why:"Ships cross the Atlantic to travel between America and Europe."}
+    ]
+  },
+  {
+    title:"World Landmarks", emoji:"🗼",
+    lessons:[
+      {e:"🔺",t:"Wonders Around the World",x:"Long, long ago in Egypt, people built the pyramids — giant stone triangles that still stand today! In China, the Great Wall stretches so far you could walk on it for months."},
+      {e:"🗼",t:"Towers and Clocks",x:"The Eiffel Tower sparkles over Paris, France. Big Ben is a famous clock tower in London, England — bong, bong! In Australia, the Sydney Opera House looks like white sails on the water."}
+    ],
+    questions:[
+      {t:"mc",e:"🔺",q:"The pyramids in Egypt were built...",ch:["Long, long ago by ancient Egyptians","Last summer","By friendly robots"],a:0,why:"The pyramids are thousands of years old and still standing!"},
+      {t:"mc",e:"🗼",q:"The Eiffel Tower is in which city?",ch:["Paris, France","Tokyo, Japan","New York, USA"],a:0,why:"The Eiffel Tower lights up the city of Paris!"},
+      {t:"mc",e:"🧱",q:"The Great Wall of China is...",ch:["A very, very long wall you can walk on","A wall made of pillows","Hidden underwater"],a:0,why:"The Great Wall winds over mountains for a very long way!"},
+      {t:"mc",e:"🕰️",q:"Big Ben is a famous clock tower in...",ch:["London, England","Sydney, Australia","Cairo, Egypt"],a:0,why:"Big Ben chimes over London — bong, bong!"},
+      {t:"mc",e:"⛵",q:"The Sydney Opera House looks like...",ch:["White sails on the water","A giant pumpkin","A running shoe"],a:0,why:"Its roof looks like sailboats gliding in the harbor!"},
+      {t:"match",q:"Match each landmark to its country!",pairs:[["🗼 Eiffel Tower","France"],["🔺 Pyramids","Egypt"],["🧱 Great Wall","China"],["🕰️ Big Ben","England"]]},
+      {t:"mc",e:"💛",q:"Why are landmarks special?",ch:["They help us learn about places and people","They are all exactly the same","Nobody can ever visit them"],a:0,why:"Every landmark tells a story about its home!"}
+    ]
+  },
+  {
+    title:"Hello, World!", emoji:"👋",
+    lessons:[
+      {e:"👋",t:"Saying Hello",x:"Kids around the world speak many languages! In Spanish, hello is HOLA. In French, BONJOUR. In Japanese, KONNICHIWA. In Italian, CIAO. In Swahili, JAMBO!"},
+      {e:"🍱",t:"Kids Around the World",x:"Kids everywhere go to school, do chores, and play! In Japan, many kids eat lunch with chopsticks. In some places kids ride boats or bikes to school. Games like tag and hide-and-seek are played all over the world!"},
+      {e:"🤝",t:"Same and Different",x:"Kids may eat different foods and speak different languages, but everywhere kids love to play, learn, and make friends — just like you!"}
+    ],
+    questions:[
+      {t:"mc",e:"🇪🇸",q:"HOLA means hello in...",ch:["Spanish","French","Japanese"],a:0,why:"Hola! That is hello in Spanish."},
+      {t:"mc",e:"🥐",q:"BONJOUR is hello in...",ch:["French","Spanish","Swahili"],a:0,why:"Bonjour! People say it in France and other places too."},
+      {t:"mc",e:"🌸",q:"KONNICHIWA is hello in...",ch:["Japanese","Italian","German"],a:0,why:"Konnichiwa is a friendly Japanese hello!"},
+      {t:"match",q:"Match each hello to its language!",pairs:[["Hola","Spanish"],["Bonjour","French"],["Ciao","Italian"],["Jambo","Swahili"]]},
+      {t:"mc",e:"🥢",q:"In Japan, many kids eat lunch with...",ch:["Chopsticks","A shovel","Mittens"],a:0,why:"Chopsticks take practice — maybe you can try them!"},
+      {t:"mc",e:"🚲",q:"Around the world, kids get to school by...",ch:["Walking, biking, buses — even boats!","Rocket ship only","They teleport"],a:0,why:"In some river towns, kids really do ride boats to school!"},
+      {t:"mc",e:"😊",q:"What do kids EVERYWHERE love to do?",ch:["Play, learn, and make friends","Never smile","Stay inside forever"],a:0,why:"Kids all over the world love playing and making friends — just like you!"}
+    ]
+  }
+]},
+{
+  id:"longago", name:"Long Ago", emoji:"🕰️", tag:"Time travel adventures", bg:"#fce7f3",
+  stamp:"🏺", stampName:"Time Traveler",
+  missions:[
+  {
+    title:"Time Detective", emoji:"⏳",
+    lessons:[
+      {e:"⏳",t:"Past, Present, Future",x:"The PAST already happened — like yesterday or long ago. The PRESENT is right now, this very second! The FUTURE has not happened yet — like tomorrow or when you are grown up."},
+      {e:"📏",t:"Timelines",x:"A timeline is a line that shows events in the order they happened, from first to last. Baby you comes before kid you. Breakfast comes before bedtime!"}
+    ],
+    questions:[
+      {t:"mc",e:"⬅️",q:"Yesterday is in the...",ch:["Past","Future","Freezer"],a:0,why:"Yesterday already happened, so it is in the past!"},
+      {t:"mc",e:"➡️",q:"Tomorrow is in the...",ch:["Future","Past","Present"],a:0,why:"Tomorrow has not happened yet — it is in the future!"},
+      {t:"mc",e:"⭐",q:"Right now, this very second, is called the...",ch:["Present","Past","Future"],a:0,why:"The present is happening right now — like you playing this game!"},
+      {t:"order",e:"🐣",q:"Put these in order from FIRST to LAST!",items:["🥚 An egg","🐣 A chick hatches","🐔 A grown-up chicken"]},
+      {t:"order",e:"🚗",q:"Order these from LONG AGO to TODAY!",items:["🐎 Horse and wagon","🚂 Steam train","🚗 Car","✈️ Jet plane"]},
+      {t:"mc",e:"📏",q:"A timeline shows...",ch:["Events in the order they happened","Your favorite snacks","How tall you are"],a:0,why:"Timelines line up events from first to last!"},
+      {t:"mc",e:"🏰",q:"Which happened LONGEST ago?",ch:["Castles and knights","Your last birthday","Breakfast this morning"],a:0,why:"Knights and castles were hundreds and hundreds of years ago!"}
+    ]
+  },
+  {
+    title:"Then & Now", emoji:"🏫",
+    lessons:[
+      {e:"🏫",t:"School Long Ago",x:"Long ago, many kids of all ages learned together in ONE room — a one-room schoolhouse! They wrote with chalk on small slates instead of paper and pencils."},
+      {e:"🐎",t:"Getting Around",x:"Before cars, people traveled by horse and wagon, and long trips took days or weeks! Today we zoom in cars, trains, and airplanes."},
+      {e:"📜",t:"Staying in Touch",x:"Long ago, people wrote letters that took weeks to arrive. There were no phones! At night they used candles and oil lamps for light. Today we have electric lights, phones, and video calls."}
+    ],
+    questions:[
+      {t:"mc",e:"🏫",q:"Long ago, many kids learned in...",ch:["A one-room schoolhouse","A spaceship","A submarine"],a:0,why:"Kids of ALL ages shared one room and one teacher!"},
+      {t:"mc",e:"✍️",q:"Long ago, students wrote with...",ch:["Chalk on small slates","Laser pens","Touchscreens"],a:0,why:"Slates were like little chalkboards you could erase and reuse."},
+      {t:"mc",e:"🐎",q:"Before cars, many people traveled by...",ch:["Horse and wagon","Skateboard","Helicopter"],a:0,why:"Clip-clop! Horses pulled wagons down bumpy dirt roads."},
+      {t:"mc",e:"💌",q:"Long ago, to talk to faraway family, people...",ch:["Wrote letters that took weeks to arrive","Sent a quick text","Made a video call"],a:0,why:"Mail moved by horse and ship — super slow but exciting to receive!"},
+      {t:"mc",e:"💡",q:"What do we use today instead of candles for light?",ch:["Electric lights","Fireflies in jars","Indoor moonlight"],a:0,why:"Flip a switch — electric lights turn night into day!"},
+      {t:"match",q:"Match LONG AGO to TODAY!",pairs:[["🐎 Horse and wagon","🚗 Car"],["🕯️ Candle","💡 Electric light"],["📜 Letter","📱 Video call"],["🪣 Washboard","🧺 Washing machine"]]},
+      {t:"mc",e:"😄",q:"What is one thing that is the SAME then and now?",ch:["Kids loved to play and learn","Nothing at all","Everyone had robots"],a:0,why:"Kids have always loved games, stories, and friends!"}
+    ]
+  },
+  {
+    title:"Amazing People", emoji:"🌟",
+    lessons:[
+      {e:"🎩",t:"Leaders From Long Ago",x:"George Washington was the very FIRST president of the United States. Abraham Lincoln was known for being honest and working hard for fairness for everyone."},
+      {e:"💜",t:"Brave and Kind",x:"Rosa Parks bravely stood up for fairness. Martin Luther King Jr. had a famous dream that all people would be treated kindly and fairly. Their courage helped change the world."},
+      {e:"🚀",t:"Sky-High Dreamers",x:"Amelia Earhart was a brave pilot who flew across the ocean when flying was brand new. Neil Armstrong was the first person to ever walk on the moon. One small step!"}
+    ],
+    questions:[
+      {t:"mc",e:"🎩",q:"Who was the very FIRST president of the United States?",ch:["George Washington","Neil Armstrong","Amelia Earhart"],a:0,why:"George Washington led the country first — his face is on the dollar bill!"},
+      {t:"mc",e:"🤝",q:"Abraham Lincoln was famous for being...",ch:["Honest and working for fairness","A race car driver","A famous chef"],a:0,why:"People even called him Honest Abe!"},
+      {t:"mc",e:"💜",q:"Rosa Parks is remembered for...",ch:["Bravely standing up for fairness","Inventing pizza","Flying to the moon"],a:0,why:"Her quiet courage helped make things fairer for everyone."},
+      {t:"mc",e:"🕊️",q:"Martin Luther King Jr. had a famous dream that...",ch:["Everyone would be treated kindly and fairly","Everyone would nap all day","Dogs could talk"],a:0,why:"His famous speech shared a dream of kindness and fairness for all."},
+      {t:"mc",e:"✈️",q:"Amelia Earhart was a brave...",ch:["Airplane pilot","Deep-sea diver","Dentist"],a:0,why:"She flew across the Atlantic Ocean when planes were brand new!"},
+      {t:"mc",e:"🌕",q:"Neil Armstrong was the first person to...",ch:["Walk on the moon","Swim across the ocean","Climb the Eiffel Tower"],a:0,why:"In 1969 he took one small step onto the moon!"},
+      {t:"match",q:"Match each amazing person to their story!",pairs:[["George Washington","First president of the USA"],["Neil Armstrong","First to walk on the moon"],["Amelia Earhart","Brave ocean-crossing pilot"],["Rosa Parks","Stood up for fairness"]]}
+    ]
+  }
+]}
+];
+
+/* ============ SAVE / STATE ============ */
+const SAVE_KEY = "social-studies-explorer-save-v1";
+let S = loadSave();
+
+function loadSave(){
+  const empty = {v:1, stars:{}, stamps:[], stats:{answered:0, correct:0}};
+  try{
+    if (typeof localStorage === "undefined") return empty;
+    const raw = localStorage.getItem(SAVE_KEY);
+    if(!raw) return empty;
+    const s = JSON.parse(raw);
+    if(!s || typeof s !== "object") return empty;
+    s.stars = s.stars || {}; s.stamps = s.stamps || []; s.stats = s.stats || {answered:0, correct:0};
+    return s;
+  }catch(e){ return empty; }
+}
+
+function totalStars(){ let t=0; for(const k in S.stars) t += S.stars[k]; return t; }
+function missionsDone(){ return Object.keys(S.stars).filter(k => S.stars[k] > 0).length; }
+function regionDone(r){ return r.missions.every((m,i)=> (S.stars[r.id+"-"+i]||0) > 0); }
+
+function save(){
+  try{
+    if (typeof localStorage === "undefined") return;
+    localStorage.setItem(SAVE_KEY, JSON.stringify(S));
+    const stamps = S.stamps.length, stars = totalStars();
+    const hub = {
+      app:"social-studies-explorer", kid:"siena", icon:"🗺️",
+      label: stamps + " stamp" + (stamps===1?"":"s") + " • ⭐" + stars,
+      pct: Math.round(missionsDone()/12*100),
+      streak: null, stars: stars,
+      lastPlayed: new Date().toISOString(),
+      actionsToday: (S.activity && S.activity.date === todayStr()) ? (S.activity.actions | 0) : 0,
+      actionsDate: todayStr(),
+      earnedDates: (S.activity && Array.isArray(S.activity.earnedDates)) ? S.activity.earnedDates : []
+    };
+    localStorage.setItem("hubSummary_social-studies-explorer", JSON.stringify(hub));
+  }catch(e){ /* private mode etc. — keep playing */ }
+}
+
+/* ============ DAILY EFFORT TRACKING ============ */
+function todayStr(){
+  const d = new Date();
+  return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
+}
+function recordEffort(weight){
+  try{
+    if(!S.activity || typeof S.activity !== "object"){
+      S.activity = { date: todayStr(), actions: 0, earnedDates: [] };
+    }
+    if(!Array.isArray(S.activity.earnedDates)) S.activity.earnedDates = [];
+    const t = todayStr();
+    if(S.activity.date !== t){ S.activity.date = t; S.activity.actions = 0; }
+    S.activity.actions += weight;
+    if(S.activity.actions >= 20 && S.activity.earnedDates.indexOf(t) < 0){
+      S.activity.earnedDates.push(t);
+      if(S.activity.earnedDates.length > 30) S.activity.earnedDates = S.activity.earnedDates.slice(-30);
+    }
+    save();
+  }catch(e){ /* never block play */ }
+}
+
+/* ============ HELPERS ============ */
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){ const j = Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+  return a;
+}
+function $(id){ return document.getElementById(id); }
+function app(html){ $("app").innerHTML = html; window.scrollTo(0,0); }
+const CHEERS = ["Great job! 🎉","Amazing! 🌟","You got it! 🙌","Super explorer! 🧭","Wow, smart cookie! 🍪","Fantastic! ✨"];
+const OOPS = ["Good try! The answer is shown in green.","Almost! Check the green answer.","Nice try, explorer! See the green one."];
+function cheer(){ return CHEERS[Math.floor(Math.random()*CHEERS.length)]; }
+function starStr(n){ return "⭐".repeat(n) + "☆".repeat(3-n); }
+function ding(good){
+  try{
+    const AC = window.AudioContext || window.webkitAudioContext; if(!AC) return;
+    if(!ding.ctx) ding.ctx = new AC();
+    const c = ding.ctx, o = c.createOscillator(), g = c.createGain();
+    o.connect(g); g.connect(c.destination);
+    o.frequency.value = good ? 740 : 220; o.type = "sine";
+    g.gain.setValueAtTime(0.12, c.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + 0.25);
+    o.start(); o.stop(c.currentTime + 0.26);
+    if(good){
+      const o2 = c.createOscillator(), g2 = c.createGain();
+      o2.connect(g2); g2.connect(c.destination);
+      o2.frequency.value = 988; o2.type = "sine";
+      g2.gain.setValueAtTime(0.10, c.currentTime + 0.12);
+      g2.gain.exponentialRampToValueAtTime(0.001, c.currentTime + 0.4);
+      o2.start(c.currentTime + 0.12); o2.stop(c.currentTime + 0.41);
+    }
+  }catch(e){}
+}
+function confettiBurst(){
+  const bits = ["🎉","⭐","🌟","🎊","✨","💜"];
+  for(let i=0;i<16;i++){
+    const s = document.createElement("span");
+    s.className = "confetti";
+    s.textContent = bits[i % bits.length];
+    s.style.left = (5 + Math.random()*90) + "vw";
+    s.style.animationDelay = (Math.random()*0.5) + "s";
+    document.body.appendChild(s);
+    setTimeout(()=>s.remove(), 2800);
+  }
+}
+
+/* ============ SCREENS ============ */
+function goHome(){
+  let cards = "";
+  DATA.forEach(r=>{
+    const done = r.missions.filter((m,i)=>(S.stars[r.id+"-"+i]||0)>0).length;
+    const rstars = r.missions.reduce((t,m,i)=>t+(S.stars[r.id+"-"+i]||0),0);
+    cards += `
+    <div class="card region-card" onclick="goRegion('${r.id}')">
+      <div class="region-emoji" style="background:${r.bg}">${r.emoji}</div>
+      <div>
+        <h2>${r.name}</h2>
+        <div class="meta">${r.tag} • ${done}/3 missions • ⭐${rstars}</div>
+      </div>
+      <div class="stampmini">${regionDone(r) ? r.stamp : "🔓"}</div>
+    </div>`;
+  });
+  app(`
+    <div class="banner">
+      <div class="big">🗺️</div>
+      <div>
+        <h1>Siena's Explorer Passport</h1>
+        <p>Pick a place and start your adventure!</p>
+      </div>
+    </div>
+    ${cards}
+    <button class="passbtn" onclick="goPassport()">📖 Open My Passport &nbsp;•&nbsp; ⭐${totalStars()} &nbsp;•&nbsp; ${S.stamps.length} stamps</button>
+  `);
+}
+
+function goRegion(rid){
+  const r = DATA.find(x=>x.id===rid);
+  let list = "";
+  r.missions.forEach((m,i)=>{
+    const st = S.stars[r.id+"-"+i] || 0;
+    list += `
+    <div class="card mission-card" onclick="startMission('${r.id}',${i})">
+      <div class="mission-num">${m.emoji}</div>
+      <div><h3>Mission ${i+1}: ${m.title}</h3></div>
+      <div class="mission-stars">${st>0 ? starStr(st) : "☆☆☆"}</div>
+    </div>`;
+  });
+  app(`
+    <div class="topbar">
+      <button class="backbtn" onclick="goHome()">⬅ Home</button>
+      <div class="topstars">⭐ ${totalStars()}</div>
+    </div>
+    <div class="banner" style="background:linear-gradient(135deg,#0ea5e9,#38bdf8);box-shadow:0 6px 18px rgba(14,165,233,.35)">
+      <div class="big">${r.emoji}</div>
+      <div><h1>${r.name}</h1><p>Finish all 3 missions to earn the ${r.stamp} ${r.stampName} stamp!</p></div>
+    </div>
+    ${list}
+  `);
+}
+
+function goPassport(){
+  let slots = "";
+  DATA.forEach(r=>{
+    const earned = S.stamps.indexOf(r.id) >= 0;
+    slots += earned
+      ? `<div class="stampslot earned"><div class="stampseal">${r.stamp}</div><div class="sname">${r.stampName}</div></div>`
+      : `<div class="stampslot"><div class="locked">❔</div><div class="sname">${r.name}<br>Finish 3 missions!</div></div>`;
+  });
+  const acc = S.stats.answered ? Math.round(S.stats.correct/S.stats.answered*100) : 0;
+  app(`
+    <div class="topbar">
+      <button class="backbtn" onclick="goHome()">⬅ Home</button>
+    </div>
+    <div class="passport">
+      <h2>📖 Siena's Passport</h2>
+      <div class="psub">OFFICIAL WORLD EXPLORER • EST. TODAY</div>
+      <div class="stampgrid">${slots}</div>
+      <div class="statrow">
+        <div class="statbox"><div class="v">⭐${totalStars()}</div><div class="l">STARS</div></div>
+        <div class="statbox"><div class="v">${missionsDone()}/12</div><div class="l">MISSIONS</div></div>
+        <div class="statbox"><div class="v">${acc}%</div><div class="l">ACCURACY</div></div>
+      </div>
+    </div>
+    <button class="bigbtn blue" onclick="goHome()">Keep Exploring! 🧭</button>
+  `);
+}
+
+/* ============ MISSION FLOW ============ */
+let M = null; // runtime mission state
+
+function startMission(rid, mi){
+  const r = DATA.find(x=>x.id===rid);
+  M = {r:r, mi:mi, m:r.missions[mi], li:0, qi:0, firstTry:0, curClean:true};
+  renderLesson();
+}
+
+function worldTap(name, fact){
+  const cap = $("worldCap");
+  if(cap) cap.textContent = fact;
+}
+
+function worldSVG(){
+  return `
+  <svg class="worldmap" viewBox="0 0 360 224" xmlns="http://www.w3.org/2000/svg">
+    <rect x="0" y="0" width="360" height="224" rx="18" fill="#7dd3fc"
+      onclick="worldTap('Ocean','🌊 Splash! That is the big blue ocean. Earth has 5 oceans!')"/>
+    <ellipse cx="62" cy="62" rx="44" ry="33" fill="#86efac" stroke="#16a34a" stroke-width="2"
+      onclick="worldTap('North America','🦅 North America — where the USA is!')"/>
+    <text x="62" y="70" font-size="22" text-anchor="middle" pointer-events="none">🦅</text>
+    <ellipse cx="96" cy="146" rx="23" ry="35" fill="#fde047" stroke="#ca8a04" stroke-width="2"
+      onclick="worldTap('South America','🦜 South America — home of the Amazon rainforest!')"/>
+    <text x="96" y="154" font-size="20" text-anchor="middle" pointer-events="none">🦜</text>
+    <ellipse cx="183" cy="47" rx="25" ry="17" fill="#fca5a5" stroke="#dc2626" stroke-width="2"
+      onclick="worldTap('Europe','🏰 Europe — castles, the Eiffel Tower, and Big Ben!')"/>
+    <text x="183" y="54" font-size="16" text-anchor="middle" pointer-events="none">🏰</text>
+    <ellipse cx="186" cy="112" rx="29" ry="37" fill="#fdba74" stroke="#ea580c" stroke-width="2"
+      onclick="worldTap('Africa','🦁 Africa — lions, elephants, and the Sahara Desert!')"/>
+    <text x="186" y="120" font-size="22" text-anchor="middle" pointer-events="none">🦁</text>
+    <ellipse cx="265" cy="62" rx="52" ry="36" fill="#c4b5fd" stroke="#7c3aed" stroke-width="2"
+      onclick="worldTap('Asia','🐼 Asia — the biggest continent, home of the Great Wall!')"/>
+    <text x="265" y="70" font-size="22" text-anchor="middle" pointer-events="none">🐼</text>
+    <ellipse cx="306" cy="156" rx="27" ry="18" fill="#f9a8d4" stroke="#db2777" stroke-width="2"
+      onclick="worldTap('Australia','🦘 Australia — kangaroos hop all around!')"/>
+    <text x="306" y="163" font-size="17" text-anchor="middle" pointer-events="none">🦘</text>
+    <rect class="land" x="88" y="198" width="184" height="18" rx="9" fill="#f0f9ff" stroke="#0284c7" stroke-width="2"
+      onclick="worldTap('Antarctica','🐧 Antarctica — brrr! Ice, snow, and penguins!')"/>
+    <text x="180" y="212" font-size="12" text-anchor="middle" pointer-events="none">🐧</text>
+  </svg>
+  <div class="worldcap" id="worldCap">👆 Tap a continent to say hello!</div>`;
+}
+
+function renderLesson(){
+  const L = M.m.lessons[M.li];
+  const dots = M.m.lessons.map((x,i)=>`<div class="dot ${i===M.li?"on":""}"></div>`).join("");
+  const last = M.li === M.m.lessons.length - 1;
+  app(`
+    <div class="topbar">
+      <button class="backbtn" onclick="goRegion('${M.r.id}')">⬅ Back</button>
+      <div class="topstars">${M.m.emoji} ${M.m.title}</div>
+    </div>
+    <div class="card lesson">
+      <div class="le">${L.e}</div>
+      <h2>${L.t}</h2>
+      <p>${L.x}</p>
+      ${L.world ? worldSVG() : ""}
+      <div class="dots">${dots}</div>
+      <button class="bigbtn ${last?"green":""}" onclick="nextLesson()">${last ? "Start the Questions! 🚀" : "Next ➜"}</button>
+    </div>
+  `);
+}
+function nextLesson(){
+  if(M.li < M.m.lessons.length - 1){ M.li++; renderLesson(); }
+  else { M.qi = 0; M.firstTry = 0; renderQuestion(); }
+}
+
+function recordUnit(correct){
+  S.stats.answered++; if(correct) S.stats.correct++;
+  save();
+}
+
+function qShell(inner){
+  const total = M.m.questions.length;
+  app(`
+    <div class="topbar">
+      <button class="backbtn" onclick="goRegion('${M.r.id}')">✖</button>
+      <div class="topstars">${M.m.emoji} ${M.m.title}</div>
+    </div>
+    <div class="qcount">Question ${M.qi+1} of ${total}</div>
+    <div class="qbar"><div style="width:${(M.qi/total*100)}%"></div></div>
+    <div class="card">${inner}</div>
+  `);
+}
+
+function renderQuestion(){
+  if(M.qi >= M.m.questions.length){ finishMission(); return; }
+  M.curClean = true;
+  const Q = M.m.questions[M.qi];
+  if(Q.t === "mc") renderMC(Q);
+  else if(Q.t === "match") renderMatch(Q);
+  else renderOrder(Q);
+}
+
+/* --- multiple choice --- */
+let mcChoices = [];
+function renderMC(Q){
+  mcChoices = shuffle(Q.ch.map((text,i)=>({text:text, ok: i===Q.a})));
+  const grid = Q.grid ? `<div class="gridmap">${Q.grid.join("<br>")}</div>` : "";
+  const btns = mcChoices.map((c,i)=>`<button class="choice" id="ch${i}" onclick="pickMC(${i})">${c.text}</button>`).join("");
+  qShell(`
+    <div class="qemoji">${Q.e || "❓"}</div>
+    <div class="qtext">${Q.q}</div>
+    ${grid}
+    ${btns}
+    <div id="fb"></div>
+  `);
+}
+function pickMC(i){
+  const Q = M.m.questions[M.qi];
+  const picked = mcChoices[i];
+  mcChoices.forEach((c,j)=>{
+    const b = $("ch"+j); b.disabled = true;
+    if(c.ok) b.classList.add("right");
+    else if(j===i) b.classList.add("wrong");
+    else b.classList.add("dim");
+  });
+  const good = picked.ok;
+  if(good && M.curClean) M.firstTry++;
+  recordUnit(good);
+  recordEffort(1);
+  ding(good);
+  $("fb").innerHTML = `
+    <div class="feedback ${good?"good":"bad"}">
+      ${good ? cheer() : OOPS[Math.floor(Math.random()*OOPS.length)]}<br>${Q.why || ""}
+    </div>
+    <button class="bigbtn ${good?"green":""}" onclick="M.qi++;renderQuestion()">Next ➜</button>`;
+}
+
+/* --- matching --- */
+let mt = null;
+function renderMatch(Q){
+  const left = shuffle(Q.pairs.map((p,i)=>({i:i, txt:p[0]})));
+  const right = shuffle(Q.pairs.map((p,i)=>({i:i, txt:p[1]})));
+  mt = {Q:Q, left:left, right:right, sel:-1, done:{}, mistakes:0, doneCount:0};
+  const lb = left.map((o,k)=>`<button class="mbtn" id="L${k}" onclick="tapL(${k})">${o.txt}</button>`).join("");
+  const rb = right.map((o,k)=>`<button class="mbtn" id="R${k}" onclick="tapR(${k})">${o.txt}</button>`).join("");
+  qShell(`
+    <div class="qemoji">🧩</div>
+    <div class="qtext">${Q.q}</div>
+    <div class="qcount">Tap one on the left, then its match on the right!</div>
+    <div class="matchwrap">
+      <div class="matchcol">${lb}</div>
+      <div class="matchcol">${rb}</div>
+    </div>
+    <div id="fb"></div>
+  `);
+}
+function tapL(k){
+  if(mt.done["L"+k]) return;
+  if(mt.sel >= 0){ const old = $("L"+mt.sel); if(old) old.classList.remove("sel"); }
+  mt.sel = k;
+  $("L"+k).classList.add("sel");
+}
+function tapR(k){
+  if(mt.done["R"+k] || mt.sel < 0) return;
+  const l = mt.left[mt.sel], r = mt.right[k];
+  if(l.i === r.i){
+    ding(true);
+    mt.done["L"+mt.sel] = true; mt.done["R"+k] = true; mt.doneCount++;
+    recordEffort(1);
+    $("L"+mt.sel).classList.remove("sel");
+    $("L"+mt.sel).classList.add("done"); $("R"+k).classList.add("done");
+    mt.sel = -1;
+    if(mt.doneCount === mt.Q.pairs.length){
+      const clean = mt.mistakes === 0;
+      if(clean) M.firstTry++;
+      recordUnit(clean);
+      $("fb").innerHTML = `
+        <div class="feedback good">${clean ? "Perfect matching! " + cheer() : "All matched! " + cheer()}</div>
+        <button class="bigbtn green" onclick="M.qi++;renderQuestion()">Next ➜</button>`;
+    }
+  } else {
+    ding(false);
+    mt.mistakes++; M.curClean = false;
+    const rb = $("R"+k), lb = $("L"+mt.sel);
+    rb.classList.add("err"); lb.classList.add("err");
+    setTimeout(()=>{ rb.classList.remove("err"); lb.classList.remove("err"); }, 350);
+  }
+}
+
+/* --- ordering --- */
+let od = null;
+function renderOrder(Q){
+  let pool = shuffle(Q.items.map((txt,i)=>({i:i, txt:txt})));
+  // make sure it does not start already solved
+  if(pool.every((o,k)=>o.i===k) && pool.length > 1) pool = [pool[1],pool[0]].concat(pool.slice(2));
+  od = {Q:Q, pool:pool, next:0, mistakes:0};
+  const slots = Q.items.map((x,i)=>`<div class="slot" id="S${i}">${i+1}.</div>`).join("");
+  const btns = pool.map((o,k)=>`<button class="pbtn" id="P${k}" onclick="tapOrder(${k})">${o.txt}</button>`).join("");
+  qShell(`
+    <div class="qemoji">${Q.e || "🔢"}</div>
+    <div class="qtext">${Q.q}</div>
+    <div class="slots">${slots}</div>
+    <div class="qcount">Tap what comes FIRST, then next, then next!</div>
+    <div class="pool">${btns}</div>
+    <div id="fb"></div>
+  `);
+}
+function tapOrder(k){
+  const o = od.pool[k];
+  const btn = $("P"+k);
+  if(btn.classList.contains("gone")) return;
+  if(o.i === od.next){
+    ding(true);
+    btn.classList.add("gone");
+    const s = $("S"+od.next);
+    s.classList.add("filled"); s.textContent = (od.next+1) + ". " + o.txt;
+    od.next++;
+    recordEffort(1);
+    if(od.next === od.Q.items.length){
+      const clean = od.mistakes === 0;
+      if(clean) M.firstTry++;
+      recordUnit(clean);
+      $("fb").innerHTML = `
+        <div class="feedback good">${clean ? "Perfect order! " + cheer() : "You did it! " + cheer()}</div>
+        <button class="bigbtn green" onclick="M.qi++;renderQuestion()">Next ➜</button>`;
+    }
+  } else {
+    ding(false);
+    od.mistakes++; M.curClean = false;
+    btn.classList.add("err");
+    setTimeout(()=>btn.classList.remove("err"), 350);
+  }
+}
+
+/* --- results --- */
+function finishMission(){
+  const total = M.m.questions.length;
+  const acc = M.firstTry / total;
+  const stars = acc >= 0.85 ? 3 : acc >= 0.6 ? 2 : 1;
+  const key = M.r.id + "-" + M.mi;
+  const prev = S.stars[key] || 0;
+  if(stars > prev) S.stars[key] = stars;
+  let newStamp = false;
+  if(regionDone(M.r) && S.stamps.indexOf(M.r.id) < 0){
+    S.stamps.push(M.r.id); newStamp = true;
+  }
+  recordEffort(5);
+  save();
+  confettiBurst();
+  app(`
+    <div class="card results">
+      <div class="re">${newStamp ? M.r.stamp : "🏆"}</div>
+      <h2>Mission Complete!</h2>
+      <div class="starsbig">${starStr(stars)}</div>
+      <div class="accline">You got ${M.firstTry} of ${total} on the first try!</div>
+      ${stars===3 ? `<div class="accline" style="color:#b45309;margin-top:6px">PERFECT EXPLORER! 🌟</div>` : ""}
+      ${newStamp ? `<div class="stampbanner">${M.r.stamp} NEW PASSPORT STAMP EARNED!<br>${M.r.stampName}</div>` : ""}
+      <button class="bigbtn green" onclick="goRegion('${M.r.id}')">Back to ${M.r.name} ➜</button>
+      <button class="bigbtn blue" onclick="startMission('${M.r.id}',${M.mi})">Play Again 🔁</button>
+      ${newStamp ? `<button class="bigbtn" onclick="goPassport()">See My Passport 📖</button>` : ""}
+    </div>
+  `);
+}
+
+/* ============ START ============ */
+if (typeof document !== "undefined" && document.getElementById("app")) {
+  goHome();
+}
+</script>
+</body>
+</html>

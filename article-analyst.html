@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Article Analyst</title>
+<title>The Film Room</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@400;700&family=JetBrains+Mono:wght@400;500&display=swap');
   *{margin:0;padding:0;box-sizing:border-box;}
@@ -100,14 +100,27 @@
   .wf .wf-icon{font-size:1.5em;margin-bottom:6px;}
   .wf .wf-title{font-weight:600;margin-bottom:4px;font-size:0.95em;}
   .wf .wf-desc{color:var(--muted);font-size:0.82em;line-height:1.4;}
+
+  /* Mobile */
+  @media (max-width:768px){
+    .topbar{flex-direction:column;align-items:flex-start;gap:8px;padding:10px 16px;}
+    .stats-row{flex-wrap:wrap;gap:8px;}
+    .main-layout{flex-direction:column;height:auto;}
+    .sidebar{width:100%;border-right:none;border-bottom:1px solid var(--border);max-height:240px;}
+    .content{overflow-y:visible;}
+    .article-view{padding:20px 16px;}
+    .welcome{padding:30px 16px;}
+    .welcome-features{grid-template-columns:1fr;}
+    .score-grid{grid-template-columns:repeat(2,1fr);}
+  }
 </style>
 </head>
 <body>
 
 <div class="topbar">
-  <h1>📰 Article <span>Analyst</span></h1>
+  <h1>🎬 The <span>Film Room</span></h1>
   <div class="stats-row">
-    <div class="stat-pill">📝 Completed: <span class="sv" id="completedCount">0</span></div>
+    <div class="stat-pill">✅ Breakdowns: <span class="sv" id="completedCount">0</span></div>
     <div class="stat-pill">🔥 Avg Score: <span class="sv" id="avgScore">—</span></div>
     <div class="stat-pill">📊 Words Written: <span class="sv" id="totalWords">0</span></div>
   </div>
@@ -117,13 +130,13 @@
   <div class="sidebar" id="sidebar"></div>
   <div class="content" id="content">
     <div class="welcome">
-      <h2>Read. Think. Write.</h2>
-      <p>Read interesting articles about science, technology, and engineering — then practice writing about what you read. Each article walks you through a structured response process that builds real analytical writing skills.</p>
+      <h2>Study the Game Like a Pro</h2>
+      <p>Every serious athlete watches film. This is your film room — short reads about soccer, running, and what makes athletes better, then a quick 3-step breakdown. In and out in about 5 minutes.</p>
       <div class="welcome-features">
-        <div class="wf"><div class="wf-icon">🔬</div><div class="wf-title">Interesting Topics</div><div class="wf-desc">Articles about CS, engineering, space, and tech you actually want to read</div></div>
-        <div class="wf"><div class="wf-icon">🧠</div><div class="wf-title">Guided Responses</div><div class="wf-desc">Step-by-step process with sentence starters to help you organize your thoughts</div></div>
-        <div class="wf"><div class="wf-icon">📊</div><div class="wf-title">Scoring & Feedback</div><div class="wf-desc">Get scored on each section and see where you can improve</div></div>
-        <div class="wf"><div class="wf-icon">💪</div><div class="wf-title">Build the Skill</div><div class="wf-desc">The more you practice, the easier analytical writing becomes</div></div>
+        <div class="wf"><div class="wf-icon">⚽</div><div class="wf-title">Real Sports Science</div><div class="wf-desc">Free kicks that bend, penalty mind games, negative splits — stuff you can actually use</div></div>
+        <div class="wf"><div class="wf-icon">⏱️</div><div class="wf-title">Quick Breakdowns</div><div class="wf-desc">Just 3 short steps per read: the big idea, the best evidence, and your take</div></div>
+        <div class="wf"><div class="wf-icon">📊</div><div class="wf-title">Scout Report</div><div class="wf-desc">Get a score after every breakdown and see your stats climb</div></div>
+        <div class="wf"><div class="wf-icon">🏆</div><div class="wf-title">Game IQ</div><div class="wf-desc">The players who understand WHY things work are the ones coaches trust</div></div>
       </div>
     </div>
   </div>
@@ -132,147 +145,255 @@
 <script>
 // ─── State ───
 let completed = {};
+let scoresByArticle = {};
 let scores = [];
 let totalWordsWritten = 0;
+let drafts = {};
 let currentArticle = null;
 let currentStepData = {};
+let activity = { date:'', actions:0, earnedDates:[] };  // daily effort tracking
+
+// ─── Daily effort tracking ───
+function localToday() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+function normActivity(a) {
+  const n = { date:'', actions:0, earnedDates:[] };
+  if (a && typeof a === 'object') {
+    if (typeof a.date === 'string') n.date = a.date;
+    if (Number.isFinite(a.actions)) n.actions = a.actions;
+    if (Array.isArray(a.earnedDates)) n.earnedDates = a.earnedDates.slice(-30);
+  }
+  return n;
+}
+function recordActivity(weight) {
+  try {
+    activity = normActivity(activity);
+    const today = localToday();
+    if (activity.date !== today) { activity.date = today; activity.actions = 0; }
+    activity.actions += weight;
+    if (activity.actions >= 20 && activity.earnedDates.indexOf(today) === -1) {
+      activity.earnedDates.push(today);
+      if (activity.earnedDates.length > 30) activity.earnedDates = activity.earnedDates.slice(-30);
+    }
+  } catch (e) { /* tracking must never break the app */ }
+}
+
+// ─── Persistence ───
+const SAVE_KEY = 'article-analyst-save-v1';
+const HUB_KEY = 'hubSummary_article-analyst';
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return;
+    const s = JSON.parse(raw);
+    completed = s.completed || {};
+    scoresByArticle = s.scores || {};
+    totalWordsWritten = s.totalWordsWritten || 0;
+    drafts = s.drafts || {};
+    activity = normActivity(s.activity); // older saves have no activity field
+    // Drop entries for article ids that no longer exist (stale saves from
+    // an older article bank) so counts and averages stay accurate.
+    const validIds = {};
+    ARTICLES.forEach(a => { validIds[a.id] = true; });
+    Object.keys(completed).forEach(id => { if (!validIds[id]) delete completed[id]; });
+    Object.keys(scoresByArticle).forEach(id => { if (!validIds[id]) delete scoresByArticle[id]; });
+    Object.keys(drafts).forEach(k => {
+      const artId = k.substring(0, k.lastIndexOf('_'));
+      if (!validIds[artId]) delete drafts[k];
+    });
+    scores = Object.values(scoresByArticle);
+  } catch (e) { /* corrupted or unavailable storage — start fresh */ }
+}
+
+function saveState() {
+  try {
+    localStorage.setItem(SAVE_KEY, JSON.stringify({
+      completed: completed,
+      scores: scoresByArticle,
+      totalWordsWritten: totalWordsWritten,
+      drafts: drafts,
+      activity: activity
+    }));
+    const n = Object.keys(completed).length;
+    const avg = scores.length > 0 ? Math.round(scores.reduce((a,b)=>a+b,0)/scores.length) : null;
+    let label = n + '/' + ARTICLES.length + ' articles';
+    if (avg !== null) label += ' • avg ' + avg + '%';
+    localStorage.setItem(HUB_KEY, JSON.stringify({
+      app: 'article-analyst',
+      kid: 'isaiah',
+      icon: '🎬',
+      label: label,
+      pct: Math.round(n / ARTICLES.length * 100),
+      streak: null,
+      stars: null,
+      lastPlayed: new Date().toISOString(),
+      actionsToday: (function () { const a = normActivity(activity); return a.date === localToday() ? a.actions : 0; })(),
+      actionsDate: localToday(),
+      earnedDates: normActivity(activity).earnedDates
+    }));
+  } catch (e) { /* storage unavailable — continue without saving */ }
+}
+
+let autosaveTimer = null;
+function autosaveDraft(stepIdx) {
+  if (!currentArticle) return;
+  clearTimeout(autosaveTimer);
+  const artId = currentArticle.id;
+  autosaveTimer = setTimeout(() => {
+    const input = document.getElementById(`input_${stepIdx}`);
+    if (!input) return;
+    drafts[artId + '_' + stepIdx] = input.value;
+    saveState();
+  }, 500);
+}
 
 // ─── ARTICLES ───
 const ARTICLES = [
   {
-    id:'ai_creativity', cat:'Computer Science', tag:'AI', readTime:'4 min',
-    title:'Can Artificial Intelligence Actually Be Creative?',
-    body:`<p>When most people think about artificial intelligence, they imagine a computer following strict rules and crunching numbers. But in recent years, AI systems have started doing things that look remarkably creative — composing music, generating artwork, and even writing poetry.</p>
+    id:'grass_vs_turf', cat:'On the Pitch', tag:'Soccer', readTime:'3 min',
+    title:'Grass vs. Turf: Why the Field Changes the Whole Game',
+    body:`<p>Watch a team that trains on grass play their first match on artificial turf, and you can spot the difference in the first five minutes. Passes they normally trap easily skip past their feet. Through balls they expect to slow down keep rolling all the way to the keeper. Same players, same ball — different game.</p>
 
-<p>The question that fascinates scientists and philosophers alike is whether these machines are truly being creative, or just very good at copying patterns from human work. To understand this, we need to think about what creativity actually means.</p>
+<p>Here's why. On natural grass, the blades and soft soil grab the ball and slow it down. On turf, the surface is flatter and harder, so the ball rolls faster, bounces higher, and stays truer. Studies of professional matches have found teams complete more short passes on turf because the ball behaves so predictably. Grass adds friction — and a little chaos.</p>
 
-<p>Creativity, at its core, involves combining existing ideas in new ways to produce something valuable or surprising. By that definition, some AI systems do seem creative. They can produce combinations that no human has created before. An AI trained on thousands of paintings can generate an entirely new image that doesn't copy any single painting but draws on patterns it has learned.</p>
+<p>The surface changes bodies, too. Turf doesn't give the way grass does, so cleats grip harder. That's great for sharp cuts, but it means your knees and ankles absorb force the ground would normally soak up. That's one reason many players wear shorter studs or turf shoes on artificial fields — long cleats can catch and stick at the worst possible moment.</p>
 
-<p>However, critics argue that AI lacks understanding and intention. A human artist chooses to paint a sunset because it means something to them — perhaps it reminds them of a childhood memory. An AI generates a sunset because mathematical calculations suggest it would be visually effective. The output might look similar, but the process behind it is fundamentally different.</p>
+<p>Smart teams actually adjust their tactics to the surface. On fast turf, quick one-touch passing teams thrive because the ball zips cleanly across the ground. On thick, slow, or wet grass, long balls and physical play become more valuable, since dribbling and short passing get harder when the ball keeps checking up in the turf.</p>
 
-<p>This debate isn't just academic — it has real consequences. If AI can be creative, what does that mean for human artists and musicians? Should AI-generated art receive copyright protection? And as these systems get more sophisticated, where do we draw the line between a tool that assists creativity and a system that replaces it?</p>
-
-<p>Some researchers suggest a middle ground: AI is best understood as a powerful creative partner rather than a replacement for human creativity. Just as calculators didn't eliminate the need for mathematicians (they actually enabled more complex mathematics), AI tools might expand what human creativity can accomplish rather than diminish it.</p>`,
+<p>So the field isn't just the stage — it's practically another player. Pros check the surface during warmups, test how the ball rolls and bounces, and change their plan before kickoff. The next time you step onto an unfamiliar field, do what they do: read it before it reads you.</p>`,
     questions: {
-      main_idea: "What is the central question or debate this article explores?",
-      key_detail: "What is one argument FOR AI being creative and one argument AGAINST?",
-      vocabulary: "The article uses the word 'sophisticated.' Based on how it's used, what do you think it means?",
-      opinion: "Do you think AI can be truly creative? Use evidence from the article AND your own reasoning to explain your position.",
-      connection: "How does this article connect to something you know about from your own experience with technology?"
+      big_idea: "What's the big idea? In 1–2 sentences, what is this article really saying about playing surfaces?",
+      evidence: "Best evidence: pick ONE fact from the article that best proves the surface changes the game.",
+      take: "Your take: would this change how you warm up or play on turf vs. grass? How?"
     }
   },
   {
-    id:'bridge_engineering', cat:'Engineering', tag:'Structures', readTime:'4 min',
-    title:'Why Bridges Fail: Engineering Lessons from Disaster',
-    body:`<p>The Tacoma Narrows Bridge, nicknamed "Galloping Gertie," opened in Washington State on July 1, 1940. Just four months later, on November 7th, it twisted and collapsed into the water below. Remarkably, the only casualty was a dog who was too scared to leave a car on the bridge. But the engineering lessons from that disaster changed bridge design forever.</p>
+    id:'magnus_free_kick', cat:'On the Pitch', tag:'Soccer', readTime:'3 min',
+    title:'The Free Kick That Breaks Physics (Except It Doesn\'t)',
+    body:`<p>In 1997, Brazil's Roberto Carlos hit a free kick that seemed to defy the laws of nature. The ball flew so far outside the wall that a ball boy ducked — then it swerved violently back and slammed into the net. The French keeper never moved. He didn't misjudge it. The ball genuinely changed direction in midair.</p>
 
-<p>The bridge failed because its designers didn't fully account for a phenomenon called aeroelastic flutter. When wind hit the bridge's flat, solid sides, it created forces that made the bridge sway back and forth. Instead of dampening these movements, the bridge's design actually amplified them — each swing got bigger and bigger until the structure tore itself apart.</p>
+<p>The trick is called the Magnus effect, and it's pure physics. When you strike the ball off-center, it spins as it flies. The spinning surface drags air around with it. On one side of the ball, that dragged air moves with the oncoming airflow, speeding it up. On the other side, it fights against the airflow, slowing it down. Faster air means lower pressure — so the ball gets pushed toward the low-pressure side, curving in the direction of the spin.</p>
 
-<p>This wasn't simply a case of the wind being too strong. The bridge had been designed to handle forces much greater than the wind that day. The problem was the type of force: a rhythmic, oscillating force that matched the bridge's natural frequency, similar to how pushing a swing at just the right moment makes it go higher and higher. Engineers call this resonance.</p>
+<p>That's the whole secret. Sidespin bends the ball left or right. Topspin makes it dip suddenly, which is how players clear a wall and still hit the goal. And a ball struck with almost no spin does something creepier: it flutters unpredictably, like a knuckleball, because the air peels off it in uneven bursts. Keepers hate those most of all.</p>
 
-<p>After the Tacoma Narrows failure, engineers completely rethought how they design bridges. Modern suspension bridges use open trusses instead of solid sides, allowing wind to pass through rather than push against the structure. They also undergo extensive wind tunnel testing with scale models before construction begins.</p>
+<p>The strike itself decides everything. Hitting the ball slightly off-center with the inside of your foot creates the sidespin that bends it. More wrap around the ball means more spin, and more spin means more curve — but usually less speed. Every great free-kick taker is balancing that trade.</p>
 
-<p>The story of Galloping Gertie teaches a crucial engineering principle: understanding how forces interact with your design is just as important as making it strong. A bridge can be strong enough to hold enormous weight but still fail if engineers don't consider dynamic forces — the forces that change and repeat over time.</p>
-
-<p>Today, engineers use computer simulations to test thousands of possible force combinations before a bridge is ever built. Each failure in engineering history, as painful as it was, contributed knowledge that makes modern structures safer. As one engineering professor puts it, every bridge we cross safely is built on lessons learned from bridges that fell.</p>`,
+<p>So Roberto Carlos didn't break physics — he used it better than anyone on the field that day. The bend is a skill, and skills can be trained. Ten free kicks after practice, aiming to curl each one a little more, is literally physics homework you get to do with your feet.</p>`,
     questions: {
-      main_idea: "What is the main lesson this article teaches about engineering?",
-      key_detail: "Explain in your own words why the Tacoma Narrows Bridge collapsed. What specific force caused the failure?",
-      vocabulary: "The article mentions 'oscillating force' and 'resonance.' Using clues from the article, explain what these terms mean.",
-      opinion: "The article says 'every bridge we cross safely is built on lessons learned from bridges that fell.' Do you agree that failure is necessary for progress in engineering? Why or why not?",
-      connection: "Can you think of another example (from any field) where a failure led to important improvements?"
+      big_idea: "What's the big idea? In 1–2 sentences, explain what really makes a free kick bend.",
+      evidence: "Best evidence: what's one detail from the article that explains HOW the Magnus effect pushes the ball sideways?",
+      take: "Your take: does this change how you'd practice free kicks or crosses? What would you try?"
     }
   },
   {
-    id:'quantum_computing', cat:'Computer Science', tag:'Quantum', readTime:'5 min',
-    title:'Quantum Computing: Why Regular Computers Have Limits',
-    body:`<p>Your computer, your phone, and every digital device you use works by processing bits — tiny switches that are either ON (1) or OFF (0). Every photo you take, every game you play, and every message you send is ultimately represented as a long sequence of ones and zeros. This system has worked incredibly well for decades, but it has a fundamental limitation.</p>
+    id:'keeper_game_theory', cat:'On the Pitch', tag:'Soccer', readTime:'3 min',
+    title:'Left or Right? The Mind Game Behind Every Penalty Kick',
+    body:`<p>A penalty kick takes about half a second to reach the goal. That's less time than a human needs to see the ball, decide, and dive. So here's the uncomfortable truth about keepers: on hard-struck penalties, most of them are guessing. They pick a side before the ball is even kicked.</p>
 
-<p>Some problems are so complex that even the fastest traditional computer would take millions of years to solve them. These aren't problems that need a faster processor — they're problems where the number of possible solutions is so astronomically large that checking each one, even at billions per second, would take longer than the age of the universe.</p>
+<p>But it's not random guessing — it's a strategy battle that mathematicians call game theory. The shooter wants to be unpredictable. The keeper wants to predict. If a shooter always goes to his favorite corner, keepers will scout that and camp there. So great shooters mix it up on purpose, like a pitcher who won't throw the same pitch twice in a row.</p>
 
-<p>Quantum computers approach these problems differently. Instead of bits, they use quantum bits, or qubits. While a regular bit must be either 0 or 1, a qubit can exist in a state called superposition, where it's effectively both 0 and 1 simultaneously. This isn't just a strange theory — it's a measurable property of particles at the quantum scale.</p>
+<p>Researchers who studied thousands of professional penalties found some strange patterns. Keepers dive left or right on about 94% of penalties — but shooters aim for the middle far more often than keepers stay there. Standing still feels wrong to keepers, like they're not even trying, so they dive even when staying put would save more goals. Scientists call that "action bias": the urge to do something dramatic instead of the smartest thing.</p>
 
-<p>When you combine multiple qubits, something remarkable happens. Two regular bits can represent one of four possible states (00, 01, 10, or 11) at a time. But two qubits in superposition can represent all four states at once. Three qubits can represent eight states simultaneously. With each additional qubit, the number of simultaneous states doubles. Fifty qubits can represent over one quadrillion states at the same time.</p>
+<p>Keepers fight back with homework. Before big matches, they study film of every shooter's past penalties: which foot, which corner, how long a run-up. Some keepers keep notes taped inside their water bottles. When a keeper guesses "correctly," it's often not a guess at all — it's scouting.</p>
 
-<p>This doesn't mean quantum computers are simply faster versions of regular computers. They're fundamentally different machines that excel at specific types of problems — particularly optimization problems, cryptography, and simulating molecular behavior for drug development. For everyday tasks like browsing the web or writing a document, a regular computer actually works better.</p>
-
-<p>The biggest challenge in quantum computing right now is maintaining qubit stability. Qubits are extremely fragile and can lose their quantum properties through a process called decoherence when they interact with their environment. Current quantum computers operate at temperatures colder than outer space to minimize this interference, and even then, errors are common.</p>
-
-<p>Despite these challenges, major technology companies and governments are investing heavily in quantum computing research. The potential applications — from breaking current encryption methods to designing new materials and medicines — are so significant that many consider it the next major computing revolution.</p>`,
+<p>The deepest lesson is that penalties aren't luck. They're a thinking contest where the best strategy is being just unpredictable enough. The shooter who can strike BOTH corners with power is almost impossible to scout — because there's no pattern to find.</p>`,
     questions: {
-      main_idea: "What is the fundamental difference between regular computers and quantum computers?",
-      key_detail: "Explain what superposition means and why it gives quantum computers an advantage for certain problems.",
-      vocabulary: "The article uses 'decoherence' and 'astronomically.' What do these words mean based on how they're used in the article?",
-      opinion: "The article mentions quantum computers could break current encryption methods. Do you think the benefits of quantum computing outweigh the potential risks? Explain your reasoning.",
-      connection: "How does the concept of quantum computing connect to anything you've learned in math or science class?"
+      big_idea: "What's the big idea? In 1–2 sentences, what is a penalty kick really a battle of?",
+      evidence: "Best evidence: what's one stat or fact from the article that shows keepers aren't just reacting?",
+      take: "Your take: as a shooter (or keeper), what would you do differently in a penalty after reading this?"
     }
   },
   {
-    id:'mars_colony', cat:'Space & Engineering', tag:'Space', readTime:'4 min',
-    title:'The Engineering Challenges of Living on Mars',
-    body:`<p>Scientists and engineers agree that humans could reach Mars with current technology. The real challenge isn't getting there — it's surviving once we arrive. Mars presents engineering problems unlike anything we've solved on Earth, and the solutions will need to work perfectly from day one because help from Earth would be at least nine months away.</p>
+    id:'negative_splits', cat:'On the Course', tag:'Cross Country', readTime:'3 min',
+    title:'Start Slower, Finish Faster: The Racing Trick That Feels Wrong',
+    body:`<p>Almost every world record in distance running — from the mile to the marathon — was set the same surprising way: the second half was faster than the first. Runners call it a negative split, and it feels completely backwards. Shouldn't you bank time early while you're fresh?</p>
 
-<p>The first major challenge is the atmosphere. Mars has an atmosphere, but it's about 100 times thinner than Earth's and is 95% carbon dioxide. Humans would need pressurized habitats with their own oxygen supply. Some engineers propose using a process called electrolysis to split carbon dioxide into carbon monoxide and oxygen, essentially manufacturing breathable air from the Martian atmosphere.</p>
+<p>No — and your body is the reason. When you sprint out too fast, your muscles burn through energy faster than your heart and lungs can deliver oxygen. Acid builds up in your legs, and that early debt never gets repaid. Physiologists have shown that going just 10 seconds per mile too fast in the first mile can cost you far more than 10 seconds by the end. The race doesn't give the borrowed time back — it charges interest.</p>
 
-<p>Radiation is another critical problem. Earth's magnetic field and thick atmosphere protect us from harmful cosmic radiation and solar particles. Mars has neither protection. Without shielding, astronauts on Mars would receive radiation doses far above safe limits. Current proposals suggest building habitats underground or covering them with several meters of Martian soil (regolith) to serve as a radiation shield.</p>
+<p>That's why the start of a cross country race is a trap. The gun fires, adrenaline dumps into your blood, the whole pack sprints, and that suicidal pace feels easy — for about 400 meters. Experienced runners let the rabbits go. They know they'll see most of them again around the two-mile mark, breathing like broken vacuum cleaners.</p>
 
-<p>Growing food presents unique challenges too. Martian soil contains toxic chemicals called perchlorates that would need to be removed before anything could grow in it. The reduced sunlight — Mars receives only about 43% of the sunlight Earth gets — means crops would likely need artificial lighting, which requires significant energy.</p>
+<p>Running a negative split takes real discipline. It means holding back when you feel amazing and pressing forward when you feel terrible. Coaches often break it into thirds: run the first third with your head, the middle third with your training, and the final third with your heart.</p>
 
-<p>That energy problem connects everything together. Every system on Mars — air production, water recycling, heating, food growing, and communication with Earth — requires reliable power. Solar panels work on Mars but produce less energy due to the weaker sunlight and frequent dust storms that can block sunlight for weeks. Nuclear power systems are considered the most reliable option, but they add complexity and weight to the mission.</p>
-
-<p>Perhaps the most underestimated challenge is psychological. The first Mars colonists would be isolated in a small group, millions of miles from home, unable to step outside without a spacesuit, for years at a time. Studies of crews in isolated environments on Earth show that interpersonal conflict, depression, and decreased motivation are serious risks that engineering alone cannot solve.</p>`,
+<p>There's a bonus weapon, too. Passing people in the last mile is rocket fuel — every runner you pick off pulls you forward and crushes them a little. Getting passed late does the opposite. A negative split doesn't just manage your energy. It puts you on the right side of that trade when the race is decided.</p>`,
     questions: {
-      main_idea: "According to the article, what is the real challenge of a Mars mission — and why?",
-      key_detail: "Pick TWO of the engineering challenges mentioned and explain the proposed solutions for each.",
-      vocabulary: "What does 'regolith' mean based on the article? What context clues helped you figure it out?",
-      opinion: "Do you think humanity should invest heavily in Mars colonization now, or focus resources on solving problems on Earth first? Support your opinion with reasoning.",
-      connection: "Which of the engineering challenges described in this article do you find most interesting, and how does it connect to science or engineering concepts you already know?"
+      big_idea: "What's the big idea? In 1–2 sentences, what is a negative split and why does it work?",
+      evidence: "Best evidence: what's one fact from the article that proves starting too fast costs you later?",
+      take: "Your take: how would you actually pace your next race differently? Be specific."
     }
   },
   {
-    id:'open_source', cat:'Computer Science', tag:'Software', readTime:'4 min',
-    title:'Open Source: How Free Software Changed the World',
-    body:`<p>Some of the most important software in the world is completely free. Linux, which runs most of the world's servers, smartphones (through Android), and supercomputers, costs nothing. The Firefox web browser, the Python programming language, and the WordPress platform that powers over 40% of all websites — all free. This isn't charity. It's a philosophy called open source, and understanding it reveals something surprising about how collaboration works.</p>
+    id:'sprint_muscles', cat:'On the Course', tag:'Sports Science', readTime:'3 min',
+    title:'Inside Your Legs During an All-Out Sprint',
+    body:`<p>The moment you explode into a sprint — chasing a through ball or kicking at the finish line — a chemical emergency starts inside your muscles. Your legs need massive energy RIGHT NOW, and your body has to choose how to pay for it.</p>
 
-<p>Open source means that a program's source code — the actual instructions that make it work — is publicly available for anyone to read, modify, and share. This is the opposite of proprietary software, where companies keep their code secret and sell access to the finished product.</p>
+<p>Muscles run on one fuel: a molecule called ATP. Here's the wild part — your muscles only store enough ATP for about two seconds of all-out effort. Two seconds! Everything after that has to be manufactured on the fly, and your body has three factories that come online one after another.</p>
 
-<p>The concept might seem economically impossible. Why would talented programmers work for free? The answer is that open source creates value in indirect ways. Companies like Red Hat (now part of IBM) give away software but sell support and consulting. Developers contribute to open source projects to build their reputation and skills, which leads to better job opportunities. And many companies contribute to open source because they use it themselves and benefit from improvements made by others.</p>
+<p>Factory one is a backup chemical called creatine phosphate, which rebuilds ATP almost instantly but runs dry in roughly 10 seconds. That's your pure-speed window. Factory two smashes stored sugar apart without oxygen. It's fast, but it dumps out acidic by-products — that burning, legs-turning-to-concrete feeling near the end of a long sprint is the bill arriving. Factory three uses oxygen. It can run all day, which is why you can jog for an hour, but it's too slow to power a real sprint.</p>
 
-<p>The quality argument is also compelling. When thousands of developers can examine code, bugs and security vulnerabilities are found and fixed faster than any single company could manage alone. This is sometimes called "Linus's Law" (named after Linux creator Linus Torvalds): given enough eyes, all bugs are shallow.</p>
+<p>Your muscle fibers matter, too. Fast-twitch fibers contract explosively but exhaust quickly; slow-twitch fibers are weaker but nearly tireless. Everyone is born with a mix, and training teaches whichever fibers you have to fire harder and recover faster.</p>
 
-<p>However, open source has challenges. Maintaining popular projects is exhausting work that often falls on a small number of volunteers. Several critical pieces of internet infrastructure depend on projects maintained by just one or two people in their spare time. When these maintainers burn out — and many do — it can create serious security and stability risks for systems used by millions.</p>
-
-<p>The open source model has influenced far beyond software. Wikipedia applies similar principles to knowledge sharing. Open-access scientific journals make research available to everyone. Even hardware designs can be open source — organizations publish blueprints for 3D printers, scientific equipment, and prosthetic limbs that anyone can build and improve upon.</p>`,
+<p>This is exactly why soccer and cross country train differently. Soccer is dozens of short sprints with recovery jogs in between — factories one and two, over and over. Cross country lives in factory three with a factory-two kick at the end. Understanding which energy system a workout targets turns practice from "coach is torturing us" into "we're upgrading a specific engine." Same sweat — but now you know what you're buying with it.</p>`,
     questions: {
-      main_idea: "What is open source software, and what is the main argument the article makes about why it works?",
-      key_detail: "Explain 'Linus's Law' in your own words. Why does having more people looking at code lead to better software?",
-      vocabulary: "What does 'proprietary' mean based on how the article contrasts it with open source?",
-      opinion: "The article mentions that critical internet infrastructure sometimes depends on one or two volunteer maintainers. Is this a problem? What would you propose as a solution?",
-      connection: "Have you ever used open source software or contributed to a collaborative project? How does the open source philosophy connect to collaboration you've experienced?"
+      big_idea: "What's the big idea? In 1–2 sentences, what happens inside your muscles when you sprint?",
+      evidence: "Best evidence: what's one specific fact from the article about your body's energy systems that surprised you?",
+      take: "Your take: knowing about the three 'factories,' would you train or pace yourself any differently?"
     }
   },
   {
-    id:'neural_networks', cat:'Computer Science', tag:'Machine Learning', readTime:'5 min',
-    title:'How Neural Networks Learn to See',
-    body:`<p>When you look at a photo of a dog, your brain instantly recognizes it — breed, size, expression, everything. This feels effortless, but your brain is performing billions of calculations to achieve this feat. Teaching computers to do the same thing seemed nearly impossible until researchers developed artificial neural networks inspired by how biological brains process information.</p>
+    id:'sleep_edge', cat:'The Edge', tag:'Recovery', readTime:'3 min',
+    title:'The Legal Performance Enhancer Almost Nobody Uses Enough',
+    body:`<p>Imagine a supplement that made you sprint faster, react quicker, shoot more accurately, and get injured way less often. It's completely legal, every pro team invests in it, and it's free. It's sleep — and most young athletes are shorting themselves on it every single night.</p>
 
-<p>A neural network is a system of interconnected nodes organized in layers. The simplest version has three layers: an input layer that receives data, one or more hidden layers that process it, and an output layer that produces the result. Each connection between nodes has a weight — a number that determines how much influence one node has on another.</p>
+<p>The evidence is almost unfair. In a famous Stanford study, basketball players extended their sleep to about ten hours a night. Their sprint times dropped, and their free-throw and three-point shooting improved by roughly 9%. Nothing else changed — no new drills, no new coaching. Just sleep. Meanwhile, research on youth athletes found that those sleeping less than eight hours a night were about 1.7 times more likely to get injured than teammates who slept more.</p>
 
-<p>Here's how a neural network learns to recognize cats in photos. First, you feed it thousands of labeled images — some containing cats, some not. The network makes predictions about each image by passing the pixel data through its layers. Initially, its predictions are essentially random guesses because all the weights are random numbers.</p>
+<p>Why is sleep that powerful? Because it's when the actual upgrades get installed. Hard training doesn't make you stronger — it damages muscle and drains the tank. During deep sleep, your body releases growth hormone, repairs those muscle fibers, and restocks energy stores. Skip the sleep, and you did the workout but skipped the gains.</p>
 
-<p>After each prediction, the network checks how far off it was from the correct answer. Then — and this is the crucial part — it works backwards through its layers, adjusting the weights slightly to make that particular prediction more accurate. This process is called backpropagation, and it's repeated millions of times across thousands of images.</p>
+<p>Your brain trains while you sleep, too. New skills — a first touch, a corner-kick play, race tactics — get replayed and locked into long-term memory overnight. Sleep scientists have shown people literally perform a skill better after a night of sleep than they did at the end of practice. Your brain keeps practicing after you stop.</p>
 
-<p>Over time, something remarkable happens. The first layers learn to detect simple features like edges and color gradients. Middle layers combine these into shapes like eyes, ears, and whiskers. The final layers assemble these shapes into the concept of "cat." Nobody explicitly programmed these categories — the network discovered them on its own through the learning process.</p>
-
-<p>Modern neural networks for image recognition, like those used in self-driving cars, can have hundreds of layers and billions of parameters. Training them requires enormous computing power — sometimes thousands of specialized processors running for weeks. But once trained, they can process new images in milliseconds.</p>
-
-<p>Despite their power, neural networks have a significant limitation: they can't explain their reasoning. When a neural network identifies a photo as containing a cat, it can't tell you why. It might be focusing on features that make perfect sense, or it might have found a shortcut — like noticing that cat photos in the training data often had specific backgrounds. This "black box" problem is one of the biggest challenges in AI research today.</p>`,
+<p>This is why pro clubs hire sleep coaches and schedule naps like training sessions. They treat sleep as part of the job. So here's the punchline: the kid who games until 1 a.m. and the kid who sleeps nine hours are running different programs — and it shows up on the field within weeks.</p>`,
     questions: {
-      main_idea: "How do neural networks learn to recognize things in images?",
-      key_detail: "Explain the process of backpropagation in your own words. Why is it the 'crucial part' of how neural networks learn?",
-      vocabulary: "What does 'black box problem' mean in the context of this article? Why is it a concern?",
-      opinion: "Should we trust neural networks to make important decisions (like in self-driving cars) if they can't explain their reasoning? Make your case.",
-      connection: "How does the way neural networks learn (starting simple and building up to complex patterns) compare to how you learn new subjects in school?"
+      big_idea: "What's the big idea? In 1–2 sentences, why does the article call sleep a performance enhancer?",
+      evidence: "Best evidence: pick the ONE stat or study result from the article that makes the strongest case.",
+      take: "Your take: honestly, would you change anything about your sleep during the season? What?"
+    }
+  },
+  {
+    id:'analytics_scouts', cat:'The Edge', tag:'Analytics', readTime:'3 min',
+    title:'How a Spreadsheet Beat the Scouts',
+    body:`<p>In 2002, the Oakland A's had one of baseball's smallest budgets and a problem: rich teams kept buying their best players. So general manager Billy Beane tried something desperate. Instead of trusting scouts' opinions about who "looked like" a ballplayer, he used statistics to find winners other teams ignored. That cheap, weird-looking roster won 20 games in a row — and sports were never the same.</p>
+
+<p>The idea, made famous by the book Moneyball, was simple: human eyes have blind spots. Scouts overvalued players who looked athletic and undervalued ones who quietly did the things that actually win games. The data didn't care what anyone looked like. It just measured what happened.</p>
+
+<p>Soccer caught the fever next. Analysts invented a stat called expected goals (xG), which rates every shot by its real chance of scoring — a tap-in from six yards might be 0.6 xG, a 30-yard screamer 0.03. Suddenly clubs could tell whether a striker on a hot streak was genuinely great or just lucky, and whether a team that lost 1–0 actually played well. Clubs like Liverpool and Brentford used data to sign undervalued players for cheap — and turned them into stars worth ten times the price.</p>
+
+<p>Runners live in this world, too. Every GPS watch logging splits, heart rate, and mileage is doing personal moneyball — showing whether you're improving or just tired.</p>
+
+<p>But here's the twist: analytics didn't replace scouts. Numbers can say a winger's crosses rarely lead to goals; they can't say whether he'll fight for the badge or fold under pressure. The best teams use both — data to find the truth, and human judgment to understand it. The lesson for any athlete: what gets measured gets improved.</p>`,
+    questions: {
+      big_idea: "What's the big idea? In 1–2 sentences, how did data change the way teams pick players?",
+      evidence: "Best evidence: what's one example from the article of data spotting something human eyes missed?",
+      take: "Your take: what's one thing about your own game or running you could start measuring? Would it help?"
+    }
+  },
+  {
+    id:'clutch_vs_choke', cat:'The Edge', tag:'Mental Game', readTime:'3 min',
+    title:'Why Great Athletes Choke — and How Pros Bulletproof Their Brains',
+    body:`<p>A star player steps up for the penalty that decides the championship — a kick she's buried ten thousand times in practice — and rolls it weakly into the keeper's arms. Fans call it choking. Scientists call it fascinating, because it's not a talent problem. It's a brain traffic jam.</p>
+
+<p>Here's what actually happens. Skills you've practiced for years get handled by the brain's automatic systems — that's why your best touches happen without thinking. But under huge pressure, your conscious mind panics and tries to grab the steering wheel. Psychologists call it "paralysis by analysis": you start monitoring how you're kicking, mid-kick. It's like thinking hard about every letter while typing — suddenly your fingers forget how.</p>
+
+<p>Pressure also triggers a fight-or-flight flood: racing heart, tunnel vision, tight muscles. None of that helps you strike a clean ball or hold race pace with a lap to go.</p>
+
+<p>The good news: pressure-proofing is trainable, and pros drill it like fitness. First, they practice under fake pressure — penalties after brutal sprints, with teammates watching and consequences for missing — so the stress feels familiar on game day. Second, they build pre-shot routines: same steps, same breath, same look at the target every time. The routine keeps the conscious mind busy so the automatic system can do its job. Third, they reframe nerves. A pounding heart before a race isn't fear — it's your body loading extra fuel. Studies show athletes who tell themselves "I'm excited" instead of "I'm nervous" perform measurably better.</p>
+
+<p>So clutch isn't a superpower some athletes are born with. It's a skill — the skill of getting out of your own way. And like any skill, reps are how you build it.</p>`,
+    questions: {
+      big_idea: "What's the big idea? In 1–2 sentences, what actually causes choking under pressure?",
+      evidence: "Best evidence: what's one detail from the article about how pros train for pressure?",
+      take: "Your take: think of a pressure moment in your season. What would you try from this article next time?"
     }
   }
 ];
@@ -317,11 +438,9 @@ function loadArticle(id) {
   buildSidebar();
 
   const steps = [
-    { key:'main_idea', title:'Main Idea', desc:'What is this article really about? Identify the central argument or question.', starters:['The main idea of this article is...','This article explores the question of...','The central argument is that...'] },
-    { key:'key_detail', title:'Key Details', desc:'Find specific facts, examples, or evidence that support the main idea.', starters:['One important detail is...','The article supports this by explaining...','For example, the article states...','Evidence for this includes...'] },
-    { key:'vocabulary', title:'Vocabulary in Context', desc:'Use clues from the surrounding sentences to figure out what unfamiliar words mean.', starters:['Based on the context, I think this word means...','The article uses this word when describing...','Clues that helped me figure out the meaning include...'] },
-    { key:'opinion', title:'Your Opinion', desc:'Take a position on the topic. Use evidence from the article AND your own reasoning.', starters:['I believe that...because...','While the article argues...I think...','Based on the evidence, my position is...','I agree/disagree with this because...'] },
-    { key:'connection', title:'Make a Connection', desc:'Connect what you read to your own knowledge, experiences, or other things you\'ve learned.', starters:['This reminds me of...','I can connect this to...','This is similar to...because...','In my experience...'] }
+    { key:'big_idea', title:"What's the Big Idea?", desc:'Sum it up in 1–2 sentences — like explaining the play to a teammate.', starters:['The big idea is...','Basically, this article says...','The main point is that...'] },
+    { key:'evidence', title:'Best Evidence', desc:'Pick ONE fact from the article that backs up the big idea.', starters:['The best proof is...','The article backs this up with...','One fact that proves it:'] },
+    { key:'take', title:'Your Take', desc:'Does this change how you\'d play or train? Give your honest call.', starters:['My take:','This would change how I...','Honestly, I think...','After reading this, I\'d try...'] }
   ];
 
   let html = `<div class="article-view">
@@ -331,8 +450,8 @@ function loadArticle(id) {
     </div>
     <div class="article-body">${a.body}</div>
     <div class="response-container">
-      <h3>✍️ Your Analysis</h3>
-      <p style="color:var(--muted);font-size:0.9em;margin-bottom:20px;">Work through each step below. Use the sentence starters if you need help getting started. There are no wrong answers — the goal is to practice thinking critically and expressing your ideas clearly!</p>`;
+      <h3>🎬 Film Room Breakdown</h3>
+      <p style="color:var(--muted);font-size:0.9em;margin-bottom:20px;">Three quick steps and you're done — about 5 minutes total. Use the sentence starters if you want a running start. No wrong answers; this is your scout report.</p>`;
 
   steps.forEach((step, i) => {
     const q = a.questions[step.key];
@@ -346,14 +465,14 @@ function loadArticle(id) {
       <div class="starters" id="starters_${i}">
         ${step.starters.map(s => `<span class="starter-chip" onclick="useStarter(${i},'${s.replace(/'/g,"\\'")}')">${s}</span>`).join('')}
       </div>
-      <textarea class="response-input" id="input_${i}" placeholder="Write your response here..." oninput="updateCharCount(${i})"></textarea>
-      <div class="char-count" id="charCount_${i}">0 words</div>
+      <textarea class="response-input" id="input_${i}" placeholder="Write your response here..." oninput="updateCharCount(${i});autosaveDraft(${i})"></textarea>
+      <div class="char-count" id="charCount_${i}">0 words · aim for 20–40 words</div>
       <button class="save-step-btn" id="saveBtn_${i}" onclick="saveStep(${i})" disabled>Save & Continue →</button>
     </div>`;
   });
 
   html += `<div class="score-card" id="scoreCard">
-      <h3>🎉 Analysis Complete!</h3>
+      <h3>🏆 Breakdown Complete!</h3>
       <div class="score-grid">
         <div class="score-item"><div class="si-val" id="finalScore">0</div><div class="si-label">Overall Score</div></div>
         <div class="score-item"><div class="si-val" id="finalWords">0</div><div class="si-label">Words Written</div></div>
@@ -361,12 +480,22 @@ function loadArticle(id) {
         <div class="score-item"><div class="si-val" id="finalDepth">0</div><div class="si-label">Depth Score</div></div>
       </div>
       <div class="feedback-section" id="feedbackSection"></div>
-      <button class="save-step-btn" style="margin-top:16px;background:var(--green);" onclick="buildSidebar();document.getElementById('content').scrollTo(0,0);">← Pick Another Article</button>
+      <button class="save-step-btn" style="margin-top:16px;background:var(--green);" onclick="buildSidebar();document.getElementById('content').scrollTo(0,0);">← Back to the Film Room</button>
     </div>
   </div></div>`;
 
   document.getElementById('content').innerHTML = html;
   document.getElementById('content').scrollTo(0, 0);
+
+  // Restore any saved drafts for this article
+  steps.forEach((step, i) => {
+    const saved = drafts[a.id + '_' + i];
+    if (saved) {
+      const input = document.getElementById(`input_${i}`);
+      input.value = saved;
+      updateCharCount(i);
+    }
+  });
 
   // Activate first step
   document.getElementById('step_0').classList.add('active-step');
@@ -384,9 +513,12 @@ function useStarter(stepIdx, text) {
 function updateCharCount(stepIdx) {
   const input = document.getElementById(`input_${stepIdx}`);
   const words = input.value.trim().split(/\s+/).filter(w => w.length > 0).length;
-  document.getElementById(`charCount_${stepIdx}`).textContent = `${words} words`;
+  const hint = words >= 20 ? ' · nice length!' : ' · aim for 20–40 words';
+  document.getElementById(`charCount_${stepIdx}`).textContent = `${words} words${hint}`;
   document.getElementById(`saveBtn_${stepIdx}`).disabled = words < 5;
 }
+
+const TOTAL_STEPS = 3;
 
 function saveStep(stepIdx) {
   const input = document.getElementById(`input_${stepIdx}`);
@@ -394,6 +526,8 @@ function saveStep(stepIdx) {
   if (!text) return;
 
   currentStepData[stepIdx] = text;
+  recordActivity(7); // step submitted (full 3-step article = 21)
+  saveState();
 
   // Mark step as done
   const step = document.getElementById(`step_${stepIdx}`);
@@ -424,43 +558,52 @@ function showScore() {
     const words = text.split(/\s+/).filter(w => w.length > 0).length;
     totalWords += words;
 
-    // Evaluate depth
-    const hasEvidence = /because|for example|the article|evidence|according|states|shows|demonstrates/i.test(text);
-    const hasOpinion = /I think|I believe|my position|I agree|I disagree|in my opinion/i.test(text);
-    const hasConnection = /reminds me|similar to|connect|experience|learned|relates/i.test(text);
-    const isDetailed = words >= 25;
-    const isSubstantial = words >= 40;
+    // Evidence/opinion/connection are treated as BONUSES, not requirements.
+    const hasEvidence = /because|for example|the article|evidence|according|states|shows|demonstrates|proof|stat/i.test(text);
+    const hasOpinion = /I think|I believe|my take|my position|I agree|I disagree|in my opinion|honestly|I'd|I would/i.test(text);
+    const hasConnection = /reminds me|similar to|connect|experience|my team|my race|practice|train|game|season|next time/i.test(text);
 
-    let stepDepth = 0;
-    if (words >= 15) stepDepth += 1;
-    if (isDetailed) stepDepth += 1;
-    if (isSubstantial) stepDepth += 1;
-    if (hasEvidence) stepDepth += 2;
+    // Base score rewards effort by length (generous — no keyword is required).
+    let stepDepth;
+    if (words >= 30) stepDepth = 6;
+    else if (words >= 20) stepDepth = 5;
+    else if (words >= 12) stepDepth = 4;
+    else if (words >= 6) stepDepth = 3;
+    else stepDepth = 2;
+
+    // Bonuses on top (capped at maxDepth of 8).
+    if (hasEvidence) stepDepth += 1;
     if (hasOpinion) stepDepth += 1;
     if (hasConnection) stepDepth += 1;
+    stepDepth = Math.min(stepDepth, 8);
     depthScore += stepDepth;
   });
 
-  const maxDepth = stepsCompleted * 7;
-  const depthPercent = Math.round((depthScore / maxDepth) * 100);
-  const overallScore = Math.round((stepsCompleted / 5 * 40) + (Math.min(depthPercent, 100) * 0.6));
+  const maxDepth = stepsCompleted * 8;
+  const depthPercent = maxDepth > 0 ? Math.round((depthScore / maxDepth) * 100) : 0;
+  let overallScore = Math.round((stepsCompleted / TOTAL_STEPS * 30) + (Math.min(depthPercent, 100) * 0.7));
+
+  // Never score a thoughtful, substantial effort below ~60%.
+  const avgWords = stepsCompleted > 0 ? totalWords / stepsCompleted : 0;
+  if (stepsCompleted >= TOTAL_STEPS && avgWords >= 25 && overallScore < 60) overallScore = 60;
+  overallScore = Math.min(overallScore, 100);
 
   // Feedback
-  if (totalWords >= 150) feedbacks.push({ type:'good', text:'Great job writing detailed responses! Writing more helps you think through ideas more thoroughly.' });
-  else feedbacks.push({ type:'improve', text:'Try writing a bit more in each section. Longer responses usually show deeper thinking. Aim for at least 30 words per section.' });
+  if (totalWords >= 75) feedbacks.push({ type:'good', text:'Solid film session — you put real reps into every step of the breakdown.' });
+  else feedbacks.push({ type:'improve', text:'Quick breakdown! Next time add a little more detail in each step — around 20+ words each is a strong rep.' });
 
-  let evidenceCount = Object.values(currentStepData).filter(t => /because|for example|the article|evidence|according/i.test(t)).length;
-  if (evidenceCount >= 3) feedbacks.push({ type:'good', text:'Excellent use of evidence! You referenced the article to support your points.' });
-  else feedbacks.push({ type:'improve', text:'Try to reference specific details from the article more often. Phrases like "The article states..." or "For example..." show you\'re engaging with the text.' });
+  let evidenceCount = Object.values(currentStepData).filter(t => /because|for example|the article|evidence|according|proof|stat/i.test(t)).length;
+  if (evidenceCount >= 2) feedbacks.push({ type:'good', text:'Great use of evidence — you backed your calls with facts from the read, like a real scout.' });
+  else feedbacks.push({ type:'improve', text:'Point at the tape! Phrases like "the article says..." or "the best proof is..." make your breakdown stronger.' });
 
-  let opinionCount = Object.values(currentStepData).filter(t => /I think|I believe|my position|I agree|I disagree/i.test(t)).length;
-  if (opinionCount >= 2) feedbacks.push({ type:'good', text:'Nice work expressing your own opinions! Analytical writing is about combining evidence with your own thinking.' });
-  else feedbacks.push({ type:'improve', text:'Don\'t be afraid to share your own opinion more! Say "I think..." or "I believe..." — your perspective is valuable.' });
+  let opinionCount = Object.values(currentStepData).filter(t => /I think|I believe|my take|I agree|I disagree|honestly|I'd|I would/i.test(t)).length;
+  if (opinionCount >= 1) feedbacks.push({ type:'good', text:'You made a call and owned it — that\'s exactly what "Your Take" is for.' });
+  else feedbacks.push({ type:'improve', text:'Don\'t hold back your opinion — say "my take is..." or "I\'d try...". Coaches want players who make a call.' });
 
   // Display
   document.getElementById('finalScore').textContent = overallScore + '%';
   document.getElementById('finalWords').textContent = totalWords;
-  document.getElementById('finalSteps').textContent = stepsCompleted + '/5';
+  document.getElementById('finalSteps').textContent = stepsCompleted + '/' + TOTAL_STEPS;
   document.getElementById('finalDepth').textContent = depthPercent + '%';
 
   let fbHtml = '';
@@ -473,9 +616,18 @@ function showScore() {
   document.getElementById('feedbackSection').innerHTML = fbHtml;
 
   // Save
-  completed[currentArticle.id] = true;
-  scores.push(overallScore);
-  totalWordsWritten += totalWords;
+  const artId = currentArticle.id;
+  const wasAlreadyDone = !!completed[artId];
+  completed[artId] = true;
+  // Record best score per article (avoids double-counting on re-runs).
+  if (scoresByArticle[artId] == null || overallScore > scoresByArticle[artId]) {
+    scoresByArticle[artId] = overallScore;
+  }
+  scores = Object.values(scoresByArticle);
+  if (!wasAlreadyDone) totalWordsWritten += totalWords;
+  // Clear this article's drafts now that it's completed.
+  Object.keys(drafts).forEach(k => { if (k.indexOf(artId + '_') === 0) delete drafts[k]; });
+  saveState();
   updateStats();
   buildSidebar();
 
@@ -485,7 +637,9 @@ function showScore() {
 }
 
 // ─── Init ───
+loadState();
 buildSidebar();
+saveState();
 </script>
 </body>
 </html>

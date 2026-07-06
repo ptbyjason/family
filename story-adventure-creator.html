@@ -1,0 +1,1855 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Story Adventure Creator</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&family=Patrick+Hand&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --pink: #e91e90;
+    --purple: #7c3aed;
+    --blue: #2563eb;
+    --teal: #0d9488;
+    --gold: #f59e0b;
+    --green: #16a34a;
+    --red: #dc2626;
+    --bg: #0f0a1a;
+    --card: #1a1230;
+    --text: #f0e6ff;
+    --muted: #a89cc8;
+  }
+
+  body {
+    font-family: 'Quicksand', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Starfield background */
+  .stars {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none; z-index: 0;
+  }
+  .star {
+    position: absolute;
+    background: white;
+    border-radius: 50%;
+    animation: twinkle var(--dur) ease-in-out infinite alternate;
+  }
+  @keyframes twinkle {
+    0% { opacity: 0.2; transform: scale(0.8); }
+    100% { opacity: 1; transform: scale(1.2); }
+  }
+
+  .container {
+    position: relative; z-index: 1;
+    max-width: 800px; margin: 0 auto; padding: 20px;
+  }
+
+  /* Header */
+  .header {
+    text-align: center; padding: 30px 0 20px;
+  }
+  .header h1 {
+    font-size: 2.4em;
+    background: linear-gradient(135deg, var(--pink), var(--purple), var(--blue));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 8px;
+  }
+  .header p { color: var(--muted); font-size: 1.1em; }
+
+  /* Stats bar */
+  .stats-bar {
+    display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;
+    margin: 16px 0 24px;
+  }
+  .stat {
+    background: rgba(124,58,237,0.15); border: 1px solid rgba(124,58,237,0.3);
+    border-radius: 20px; padding: 8px 18px; font-size: 0.95em;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .stat .icon { font-size: 1.2em; }
+  .stat .val { font-weight: 700; color: var(--gold); }
+
+  /* Main card */
+  .card {
+    background: var(--card);
+    border: 1px solid rgba(124,58,237,0.2);
+    border-radius: 20px;
+    padding: 32px;
+    margin-bottom: 20px;
+    animation: fadeUp 0.5s ease;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Story text */
+  .story-text {
+    font-family: 'Patrick Hand', cursive;
+    font-size: 1.35em;
+    line-height: 1.7;
+    color: #e8dff5;
+    margin-bottom: 24px;
+    white-space: pre-line;
+  }
+  .story-text .highlight {
+    color: var(--gold);
+    font-weight: 700;
+    cursor: help;
+    border-bottom: 2px dotted var(--gold);
+    position: relative;
+  }
+
+  /* Scene image area */
+  .scene-image {
+    width: 100%;
+    height: 200px;
+    border-radius: 16px;
+    margin-bottom: 20px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 5em;
+    position: relative;
+    overflow: hidden;
+  }
+  .scene-image .scene-bg {
+    position: absolute; inset: 0;
+    opacity: 0.3;
+  }
+
+  /* Choices */
+  .choices { display: flex; flex-direction: column; gap: 12px; }
+  .choice-btn {
+    background: linear-gradient(135deg, rgba(124,58,237,0.2), rgba(37,99,235,0.2));
+    border: 2px solid rgba(124,58,237,0.4);
+    border-radius: 14px;
+    padding: 16px 20px;
+    color: var(--text);
+    font-family: 'Quicksand', sans-serif;
+    font-size: 1.1em;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-align: left;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .choice-btn:hover {
+    border-color: var(--purple);
+    background: linear-gradient(135deg, rgba(124,58,237,0.35), rgba(37,99,235,0.35));
+    transform: translateX(6px);
+    box-shadow: 0 0 20px rgba(124,58,237,0.3);
+  }
+  .choice-btn .choice-icon { font-size: 1.4em; }
+
+  /* Quiz section */
+  .quiz-section {
+    background: rgba(245,158,11,0.08);
+    border: 2px solid rgba(245,158,11,0.3);
+    border-radius: 16px;
+    padding: 24px;
+    margin-top: 20px;
+  }
+  .quiz-section h3 {
+    color: var(--gold);
+    font-size: 1.2em;
+    margin-bottom: 12px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .quiz-options { display: flex; flex-direction: column; gap: 10px; }
+  .quiz-opt {
+    background: rgba(245,158,11,0.1);
+    border: 2px solid rgba(245,158,11,0.2);
+    border-radius: 12px;
+    padding: 14px 18px;
+    color: var(--text);
+    font-family: 'Quicksand', sans-serif;
+    font-size: 1.05em;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+  .quiz-opt:hover {
+    border-color: var(--gold);
+    background: rgba(245,158,11,0.2);
+  }
+  .quiz-opt.correct {
+    border-color: var(--green);
+    background: rgba(22,163,74,0.2);
+    animation: popCorrect 0.4s ease;
+  }
+  .quiz-opt.wrong {
+    border-color: var(--red);
+    background: rgba(220,38,38,0.15);
+    animation: shake 0.4s ease;
+  }
+  @keyframes popCorrect {
+    0% { transform: scale(1); } 50% { transform: scale(1.03); } 100% { transform: scale(1); }
+  }
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    25% { transform: translateX(-6px); }
+    75% { transform: translateX(6px); }
+  }
+
+  /* Vocab popup */
+  .vocab-popup {
+    display: none;
+    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    background: #231845; border: 2px solid var(--gold);
+    border-radius: 20px; padding: 30px; z-index: 100;
+    max-width: 400px; width: 90%; text-align: center;
+    box-shadow: 0 0 40px rgba(245,158,11,0.3);
+  }
+  .vocab-popup.show { display: block; animation: fadeUp 0.3s ease; }
+  .vocab-word { font-size: 1.6em; color: var(--gold); font-weight: 700; margin-bottom: 8px; }
+  .vocab-def { color: var(--muted); font-size: 1.1em; margin-bottom: 16px; line-height: 1.5; }
+  .vocab-close {
+    background: var(--gold); color: #000; border: none; border-radius: 10px;
+    padding: 10px 24px; font-family: 'Quicksand', sans-serif; font-size: 1em;
+    font-weight: 700; cursor: pointer;
+  }
+  .overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.6); z-index: 99;
+  }
+  .overlay.show { display: block; }
+
+  /* Feedback banner */
+  .feedback {
+    text-align: center; padding: 16px; border-radius: 14px;
+    margin-top: 16px; font-size: 1.15em; font-weight: 600;
+    animation: fadeUp 0.4s ease;
+  }
+  .feedback.good {
+    background: rgba(22,163,74,0.15); border: 1px solid rgba(22,163,74,0.4);
+    color: #4ade80;
+  }
+  .feedback.try-again {
+    background: rgba(220,38,38,0.1); border: 1px solid rgba(220,38,38,0.3);
+    color: #f87171;
+  }
+
+  /* Progress trail */
+  .trail {
+    display: flex; align-items: center; gap: 4px;
+    justify-content: center; margin: 12px 0 20px; flex-wrap: wrap;
+  }
+  .trail-dot {
+    width: 12px; height: 12px; border-radius: 50%;
+    background: rgba(124,58,237,0.3); border: 1px solid rgba(124,58,237,0.5);
+    transition: all 0.3s;
+  }
+  .trail-dot.visited { background: var(--purple); box-shadow: 0 0 8px rgba(124,58,237,0.5); }
+  .trail-dot.current { background: var(--gold); box-shadow: 0 0 10px rgba(245,158,11,0.5); border-color: var(--gold); }
+  .trail-arrow { color: var(--muted); font-size: 0.7em; }
+
+  /* Inventory */
+  .inventory {
+    display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;
+    margin: 8px 0;
+  }
+  .inv-item {
+    background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3);
+    border-radius: 10px; padding: 6px 14px; font-size: 0.9em;
+    display: flex; align-items: center; gap: 6px;
+    animation: fadeUp 0.3s ease;
+  }
+
+  /* Start screen */
+  .start-screen { text-align: center; padding: 40px 20px; }
+  .start-screen h2 {
+    font-size: 2em;
+    background: linear-gradient(135deg, var(--gold), var(--pink));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 16px;
+  }
+  .start-screen p { color: var(--muted); font-size: 1.15em; margin-bottom: 24px; line-height: 1.6; }
+
+  .story-select {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+    margin-top: 20px;
+  }
+  @media (max-width: 600px) { .story-select { grid-template-columns: 1fr; } }
+
+  .story-card {
+    background: linear-gradient(135deg, rgba(124,58,237,0.15), rgba(37,99,235,0.1));
+    border: 2px solid rgba(124,58,237,0.3);
+    border-radius: 18px;
+    padding: 24px;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-align: center;
+  }
+  .story-card:hover {
+    border-color: var(--purple);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(124,58,237,0.25);
+  }
+  .story-card .sc-icon { font-size: 3em; margin-bottom: 12px; }
+  .story-card .sc-title { font-size: 1.2em; font-weight: 700; margin-bottom: 6px; }
+  .story-card .sc-desc { color: var(--muted); font-size: 0.95em; }
+
+  /* End screen */
+  .end-screen { text-align: center; }
+  .end-screen h2 {
+    font-size: 2em; margin-bottom: 12px;
+    background: linear-gradient(135deg, var(--gold), var(--green));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .end-stats {
+    display: flex; gap: 16px; justify-content: center; margin: 20px 0; flex-wrap: wrap;
+  }
+  .end-stat {
+    background: rgba(124,58,237,0.1); border: 1px solid rgba(124,58,237,0.3);
+    border-radius: 14px; padding: 16px 24px; text-align: center;
+  }
+  .end-stat .es-val { font-size: 2em; font-weight: 700; color: var(--gold); }
+  .end-stat .es-label { color: var(--muted); font-size: 0.9em; }
+
+  .play-again-btn {
+    background: linear-gradient(135deg, var(--purple), var(--pink));
+    border: none; border-radius: 14px;
+    padding: 14px 36px; color: white;
+    font-family: 'Quicksand', sans-serif;
+    font-size: 1.15em; font-weight: 700;
+    cursor: pointer; margin-top: 16px;
+    transition: all 0.3s;
+  }
+  .play-again-btn:hover { transform: scale(1.05); box-shadow: 0 0 20px rgba(124,58,237,0.4); }
+
+  .continue-btn {
+    background: linear-gradient(135deg, var(--purple), var(--blue));
+    border: none; border-radius: 12px;
+    padding: 12px 28px; color: white;
+    font-family: 'Quicksand', sans-serif;
+    font-size: 1.05em; font-weight: 600;
+    cursor: pointer; margin-top: 12px;
+    transition: all 0.3s;
+    display: none;
+  }
+  .continue-btn:hover { transform: scale(1.03); }
+  .continue-btn.show { display: inline-block; animation: fadeUp 0.3s ease; }
+</style>
+</head>
+<body>
+
+<div class="stars" id="stars"></div>
+<div class="overlay" id="overlay" onclick="closeVocab()"></div>
+<div class="vocab-popup" id="vocabPopup">
+  <div class="vocab-word" id="vocabWord"></div>
+  <div class="vocab-def" id="vocabDef"></div>
+  <button class="vocab-close" onclick="closeVocab()">Got it! ✨</button>
+</div>
+
+<div class="container">
+  <div class="header">
+    <h1>✨ Story Adventure ✨</h1>
+    <p>Read, choose, and learn your way through magical tales!</p>
+  </div>
+
+  <div class="stats-bar" id="statsBar" style="display:none;">
+    <div class="stat"><span class="icon">⭐</span> Stars: <span class="val" id="starsCount">0</span></div>
+    <div class="stat"><span class="icon">📖</span> Words Learned: <span class="val" id="wordsCount">0</span></div>
+    <div class="stat"><span class="icon">✅</span> Questions: <span class="val" id="questionsCount">0/0</span></div>
+    <div class="stat"><span class="icon">📍</span> Chapter: <span class="val" id="chapterNum">1</span></div>
+  </div>
+
+  <div class="trail" id="trail" style="display:none;"></div>
+  <div class="inventory" id="inventory"></div>
+
+  <div class="card" id="mainCard">
+    <!-- Content injected by JS -->
+  </div>
+</div>
+
+<script>
+// ─── Game State ───
+let state = {
+  stars: 0,
+  wordsLearned: [],
+  questionsRight: 0,
+  questionsTotal: 0,
+  chapter: 0,
+  inventory: [],
+  currentStory: null,
+  visitedNodes: [],
+  currentNode: null,
+  quizAnswered: false
+};
+
+// ─── Persistence ───
+const SAVE_KEY = 'story-adventure-creator-save-v1';
+const HUB_KEY = 'hubSummary_story-adventure-creator';
+
+// ─── Daily effort tracking ───
+function todayStr() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+function ensureActivity(obj) {
+  if (!obj.activity || typeof obj.activity !== 'object') obj.activity = { date: todayStr(), actions: 0, earnedDates: [] };
+  if (typeof obj.activity.actions !== 'number') obj.activity.actions = 0;
+  if (!Array.isArray(obj.activity.earnedDates)) obj.activity.earnedDates = [];
+  return obj.activity;
+}
+
+function bumpActivity(weight) {
+  try {
+    const act = ensureActivity(SAVE);
+    const today = todayStr();
+    if (act.date !== today) { act.date = today; act.actions = 0; }
+    act.actions += weight;
+    if (act.actions >= 20 && !act.earnedDates.includes(today)) {
+      act.earnedDates.push(today);
+      if (act.earnedDates.length > 30) act.earnedDates = act.earnedDates.slice(-30);
+    }
+    persist();
+  } catch (e) { /* keep playing even if tracking fails */ }
+}
+
+function loadSave() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (raw) {
+      const s = JSON.parse(raw);
+      if (s && typeof s === 'object' && s.stories) {
+        if (!Array.isArray(s.wordsLearnedAll)) s.wordsLearnedAll = [];
+        return s;
+      }
+    }
+  } catch (e) { /* storage unavailable or corrupted — start fresh */ }
+  return { v: 1, stories: {}, wordsLearnedAll: [] };
+}
+
+let SAVE = loadSave();
+
+function storySave(key) {
+  if (!SAVE.stories[key]) SAVE.stories[key] = { completed: false, bestStars: 0, progress: null };
+  return SAVE.stories[key];
+}
+
+function persist() {
+  try {
+    if (state.currentStory && state.currentNode) {
+      const ss = storySave(state.currentStory);
+      const node = STORIES[state.currentStory].nodes[state.currentNode];
+      if (node && node.ending) {
+        ss.completed = true;
+        ss.bestStars = Math.max(ss.bestStars || 0, state.stars);
+        ss.progress = null; // finished — nothing to resume
+      } else {
+        ss.progress = {
+          stars: state.stars,
+          wordsLearned: state.wordsLearned.slice(),
+          questionsRight: state.questionsRight,
+          questionsTotal: state.questionsTotal,
+          chapter: state.chapter,
+          inventory: state.inventory.slice(),
+          visitedNodes: state.visitedNodes.slice(),
+          currentNode: state.currentNode,
+          quizAnswered: state.quizAnswered
+        };
+      }
+      state.wordsLearned.forEach(w => {
+        if (!SAVE.wordsLearnedAll.includes(w)) SAVE.wordsLearnedAll.push(w);
+      });
+    }
+    localStorage.setItem(SAVE_KEY, JSON.stringify(SAVE));
+    writeHubSummary();
+  } catch (e) { /* localStorage unavailable — play without saving */ }
+}
+
+function writeHubSummary() {
+  try {
+    const keys = Object.keys(STORIES);
+    let done = 0, totalStars = 0;
+    keys.forEach(k => {
+      const ss = SAVE.stories[k];
+      if (!ss) return;
+      if (ss.completed) done++;
+      totalStars += Math.max(ss.bestStars || 0, ss.progress ? (ss.progress.stars || 0) : 0);
+    });
+    const act = ensureActivity(SAVE);
+    const today = todayStr();
+    const summary = {
+      app: 'story-adventure-creator',
+      kid: 'siena',
+      icon: '✨',
+      label: done + '/' + keys.length + ' stories • ' + SAVE.wordsLearnedAll.length + (SAVE.wordsLearnedAll.length === 1 ? ' word learned' : ' words learned'),
+      pct: Math.round((done / keys.length) * 100),
+      streak: null,
+      stars: totalStars,
+      lastPlayed: new Date().toISOString(),
+      actionsToday: act.date === today ? act.actions : 0,
+      actionsDate: today,
+      earnedDates: act.earnedDates.slice()
+    };
+    localStorage.setItem(HUB_KEY, JSON.stringify(summary));
+  } catch (e) { /* ignore */ }
+}
+
+// ─── Starfield ───
+(function createStars() {
+  const el = document.getElementById('stars');
+  for (let i = 0; i < 80; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    const size = Math.random() * 3 + 1;
+    s.style.cssText = `width:${size}px;height:${size}px;left:${Math.random()*100}%;top:${Math.random()*100}%;--dur:${Math.random()*3+2}s;animation-delay:${Math.random()*3}s;`;
+    el.appendChild(s);
+  }
+})();
+
+// ─── STORIES DATA ───
+const STORIES = {
+  enchanted_forest: {
+    title: "The Enchanted Forest",
+    icon: "🌲",
+    desc: "Explore a magical forest full of mysteries",
+    nodes: {
+      start: {
+        emoji: "🌲🌙",
+        bg: "linear-gradient(135deg, #0a3d0a, #1a0a3d)",
+        text: `You stand at the edge of a vast, enchanted forest. The trees are so tall they seem to touch the stars. Tiny fireflies dance between the branches, making the whole forest glow with a soft, golden light.
+
+A wooden sign reads: "Welcome, brave adventurer! The Forest of Whispers awaits."
+
+You notice two paths ahead. One is covered in soft, green moss. The other is lined with sparkling blue mushrooms that seem to hum a quiet tune.`,
+        vocab: [
+          { word: "vast", definition: "Very large or wide — covering a huge area. The ocean is vast!" },
+          { word: "enchanted", definition: "Under a magical spell — made magical and wonderful." }
+        ],
+        quiz: {
+          question: "What makes the forest glow with golden light?",
+          options: ["The moon", "Fireflies", "The mushrooms", "Magic lanterns"],
+          correct: 1
+        },
+        choices: [
+          { text: "Take the mossy green path", icon: "🌿", next: "mossy_path" },
+          { text: "Follow the glowing blue mushrooms", icon: "🍄", next: "mushroom_path" }
+        ]
+      },
+
+      mossy_path: {
+        emoji: "🌿🦊",
+        bg: "linear-gradient(135deg, #0d4a0d, #0a2a1a)",
+        text: `The mossy path feels soft under your feet, like walking on a cloud. As you go deeper, you hear a small cry for help.
+
+Behind a fallen log, you find a tiny fox cub. Its paw is caught under a heavy branch. The fox looks up at you with big, frightened eyes.
+
+"Please help me," the fox whispers. "I've been stuck here since morning. If you help me, I'll show you a secret shortcut through the forest."
+
+The branch looks heavy, but you think you might be able to lift it if you're careful.`,
+        vocab: [
+          { word: "frightened", definition: "Very scared or afraid. The fox was frightened because it was stuck." }
+        ],
+        quiz: {
+          question: "What is wrong with the fox cub?",
+          options: ["It's lost", "Its paw is stuck under a branch", "It's hungry", "It's sleeping"],
+          correct: 1
+        },
+        choices: [
+          { text: "Help the fox by lifting the branch carefully", icon: "💪", next: "help_fox" },
+          { text: "Look for a stick to use as a lever", icon: "🪵", next: "lever_fox" }
+        ]
+      },
+
+      help_fox: {
+        emoji: "🦊✨",
+        bg: "linear-gradient(135deg, #2d1a0a, #0a2a1a)",
+        text: `You bend down and grip the branch with both hands. It's heavier than it looks! You take a deep breath and pull with all your strength.
+
+The branch lifts just enough for the fox to wiggle free. The little cub jumps up and shakes its fur, sending tiny sparkles into the air.
+
+"Thank you so much!" the fox says, wagging its tail. "My name is Ember. You showed great courage and kindness. Here — take this."
+
+Ember drops a small, glowing acorn into your hand. It feels warm and tingly.
+
+"That's a Wishing Acorn," Ember explains. "It will help you later on your journey. Now, follow me — I know a shortcut!"`,
+        vocab: [
+          { word: "courage", definition: "Being brave even when you feel scared. It takes courage to try hard things!" },
+          { word: "grip", definition: "To hold onto something very tightly." }
+        ],
+        quiz: {
+          question: "What does Ember give you as a thank-you gift?",
+          options: ["A golden key", "A magic map", "A Wishing Acorn", "A silver coin"],
+          correct: 2
+        },
+        item: { name: "Wishing Acorn", icon: "🌰" },
+        choices: [
+          { text: "Follow Ember through the shortcut", icon: "🦊", next: "ember_shortcut" }
+        ]
+      },
+
+      lever_fox: {
+        emoji: "🪵🦊",
+        bg: "linear-gradient(135deg, #1a1a0a, #0a2a1a)",
+        text: `Smart thinking! You look around and find a strong, sturdy stick nearby. You slide it under the heavy branch and push down hard, using the stick as a lever.
+
+The branch pops up easily! The fox cub scrambles free and does a happy little dance.
+
+"Oh, you're so clever!" the fox says, amazed. "My name is Ember. Most people just try to use their muscles, but you used your brain! Here, take this."
+
+Ember gives you a glowing feather that floats above your palm.
+
+"That's a Feather of Wisdom," Ember explains. "It will help you solve puzzles on your journey. You've earned it!"`,
+        vocab: [
+          { word: "sturdy", definition: "Strong and well-built — not easy to break." },
+          { word: "clever", definition: "Smart and good at figuring things out." }
+        ],
+        quiz: {
+          question: "Why was Ember extra impressed with you?",
+          options: ["You were very strong", "You used your brain to solve the problem", "You brought friends to help", "You used magic"],
+          correct: 1
+        },
+        item: { name: "Feather of Wisdom", icon: "🪶" },
+        choices: [
+          { text: "Follow Ember through the shortcut", icon: "🦊", next: "ember_shortcut" }
+        ]
+      },
+
+      ember_shortcut: {
+        emoji: "🌳🏰",
+        bg: "linear-gradient(135deg, #1a0a3d, #0a3d3d)",
+        text: `Ember leads you through a hidden tunnel behind a waterfall. The tunnel walls are covered in crystals that glow in every color of the rainbow.
+
+When you come out the other side, you gasp. In front of you stands a magnificent tree house village! Dozens of little houses are built into the branches of the biggest tree you've ever seen.
+
+Rope bridges connect the houses, and friendly creatures wave at you from their doorways — talking rabbits, wise owls, and even a family of friendly dragons!
+
+"Welcome to Heartwood Village!" Ember announces proudly. "We need your help. Our village treasure — the Crystal of Stories — has gone missing. Without it, our books are losing their words!"
+
+You look around and notice some of the books on the shelves really do have blank pages.`,
+        vocab: [
+          { word: "magnificent", definition: "Extremely beautiful and impressive — something that takes your breath away!" },
+          { word: "dozens", definition: "A lot of something — groups of twelve. Dozens means many, many!" }
+        ],
+        quiz: {
+          question: "What problem does Heartwood Village have?",
+          options: ["The tree is dying", "The Crystal of Stories is missing", "A storm is coming", "The bridges are broken"],
+          correct: 1
+        },
+        choices: [
+          { text: "Search the library for clues", icon: "📚", next: "library_clues" },
+          { text: "Talk to the wise old owl", icon: "🦉", next: "wise_owl" }
+        ]
+      },
+
+      mushroom_path: {
+        emoji: "🍄💜",
+        bg: "linear-gradient(135deg, #1a0a3d, #3d0a3d)",
+        text: `The blue mushrooms hum louder as you walk closer. Each one glows brighter when you step near it, like they're greeting you!
+
+The path winds deeper into the forest until you reach a clearing filled with enormous mushrooms — some as tall as houses! In the center sits a peculiar creature: a small, round being made entirely of starlight.
+
+"Hello, traveler!" the creature chirps. "I'm Lumi, the Star Sprite. I've been waiting for someone brave to come along. You see, I have a riddle for you. Answer correctly, and I'll show you something wonderful!"
+
+Lumi floats up and spins in a circle, leaving trails of sparkles.
+
+"Here's my riddle: I have cities, but no houses. I have mountains, but no trees. I have water, but no fish. What am I?"`,
+        vocab: [
+          { word: "peculiar", definition: "Strange or unusual in an interesting way — not like anything you've seen before!" },
+          { word: "enormous", definition: "Really, really big — even bigger than large!" }
+        ],
+        quiz: {
+          question: "What is the answer to Lumi's riddle?",
+          options: ["A painting", "A dream", "A map", "A photograph"],
+          correct: 2
+        },
+        choices: [
+          { text: "\"A map!\" you answer confidently", icon: "🗺️", next: "riddle_correct" },
+          { text: "Ask Lumi for a hint", icon: "💡", next: "riddle_hint" }
+        ]
+      },
+
+      riddle_hint: {
+        emoji: "💡✨",
+        bg: "linear-gradient(135deg, #1a0a3d, #3d0a3d)",
+        text: `Lumi giggles. "I like that you asked! Asking for help is a sign of wisdom, not weakness. Here's your hint: Think about something you can look at and see the whole world, but you can't actually visit those places by looking at it."
+
+You think hard. Cities but no houses... mountains but no trees... water but no fish... Something that shows these things but isn't real...
+
+"A map!" you shout.
+
+Lumi claps with delight, sending sparkles everywhere. "Correct! You figured it out! And because you were wise enough to ask for help, I have a special bonus gift for you!"
+
+Lumi hands you a tiny compass that glows with soft purple light.`,
+        vocab: [
+          { word: "wisdom", definition: "Being smart about making good choices — using what you know to do the right thing." }
+        ],
+        quiz: {
+          question: "Why did Lumi say asking for help was good?",
+          options: ["Because the riddle was too easy", "Because asking for help is a sign of wisdom", "Because Lumi wanted to talk more", "Because you had to ask"],
+          correct: 1
+        },
+        item: { name: "Glowing Compass", icon: "🧭" },
+        choices: [
+          { text: "Follow where the compass points", icon: "🧭", next: "ember_shortcut" }
+        ]
+      },
+
+      riddle_correct: {
+        emoji: "🗺️🎉",
+        bg: "linear-gradient(135deg, #0a1a3d, #3d0a3d)",
+        text: `"A MAP!" you answer with confidence.
+
+Lumi bursts into a shower of golden sparks! "YES! That's exactly right! You're very sharp, young adventurer!"
+
+The Star Sprite does a backflip in the air and then waves its tiny hand. The giant mushrooms around you begin to shift and move, revealing a hidden stairway carved into the forest floor.
+
+"This stairway leads to Heartwood Village," Lumi says. "They need a hero right now. Their precious Crystal of Stories has disappeared, and without it, all the storybooks are going blank!"
+
+Lumi drops a tiny star into your palm. It floats just above your skin.
+
+"Take this Guiding Star. It will light your way in the darkest places."`,
+        vocab: [
+          { word: "confidence", definition: "Believing in yourself and feeling sure about what you're doing." },
+          { word: "precious", definition: "Something very valuable and important — something you care about deeply." }
+        ],
+        quiz: {
+          question: "What happens to the mushrooms after you solve the riddle?",
+          options: ["They disappear", "They grow even bigger", "They move to reveal a hidden stairway", "They change color"],
+          correct: 2
+        },
+        item: { name: "Guiding Star", icon: "⭐" },
+        choices: [
+          { text: "Go down the stairway to Heartwood Village", icon: "⬇️", next: "ember_shortcut" }
+        ]
+      },
+
+      library_clues: {
+        emoji: "📚🔍",
+        bg: "linear-gradient(135deg, #1a0a0a, #0a1a3d)",
+        text: `The village library is inside the biggest branch of the tree. Shelves stretch up as far as you can see, filled with thousands of books. But many of them are losing their words — the pages are slowly going blank.
+
+An old rabbit wearing glasses looks up from behind the desk. "Oh, thank goodness someone is investigating! I'm Professor Clover."
+
+She opens a large book to a page that's only half blank. You can still read some words:
+
+"The Crystal of Stories rests where... shadow meets... beneath the oldest... when the moon..."
+
+Professor Clover sighs. "The rest has faded. But I do know that the Crystal was last seen near the Whispering Well at the edge of the village. And I found this torn piece of cloth near the shelf where the Crystal used to sit."
+
+She hands you a piece of dark purple fabric with silver thread.`,
+        vocab: [
+          { word: "investigating", definition: "Looking carefully for clues to solve a mystery — like a detective!" },
+          { word: "faded", definition: "Slowly disappeared or became lighter and harder to see." }
+        ],
+        quiz: {
+          question: "What did Professor Clover find near where the Crystal used to be?",
+          options: ["A footprint", "A torn piece of cloth", "A written note", "A magic wand"],
+          correct: 1
+        },
+        item: { name: "Purple Cloth Clue", icon: "🧵" },
+        choices: [
+          { text: "Go to the Whispering Well", icon: "🕳️", next: "whispering_well" },
+          { text: "Ask around the village about the purple cloth", icon: "🗣️", next: "ask_villagers" }
+        ]
+      },
+
+      wise_owl: {
+        emoji: "🦉🌙",
+        bg: "linear-gradient(135deg, #0a0a2d, #1a1a3d)",
+        text: `You climb a rope ladder to the highest house in the tree, where the wise old owl lives. Her name is Minerva, and she's been alive for over three hundred years.
+
+"Ah, I've been expecting you," Minerva says, adjusting her tiny spectacles. "I saw in my dreams that a young hero would come to help us find the Crystal of Stories."
+
+She picks up a cup of tea with her wing and takes a sip. "I can tell you three important things. First, the Crystal was not stolen by anyone mean — it was taken by someone who is scared and confused. Second, there are clues hidden near the Whispering Well. And third..."
+
+She pauses and looks at you carefully. "The third thing is that being kind will matter more than being strong on this journey. Remember that."
+
+She hands you a small scroll tied with a gold ribbon.`,
+        vocab: [
+          { word: "spectacles", definition: "Another word for glasses — what you wear to help you see better." },
+          { word: "confused", definition: "Not understanding what's happening — feeling mixed up or unsure." }
+        ],
+        quiz: {
+          question: "According to Minerva, who took the Crystal?",
+          options: ["A mean villain", "An evil witch", "Someone who is scared and confused", "Nobody knows"],
+          correct: 2
+        },
+        item: { name: "Minerva's Scroll", icon: "📜" },
+        choices: [
+          { text: "Head to the Whispering Well", icon: "🕳️", next: "whispering_well" }
+        ]
+      },
+
+      ask_villagers: {
+        emoji: "🐰🐉",
+        bg: "linear-gradient(135deg, #0a2a1a, #1a1a0a)",
+        text: `You show the purple cloth to different villagers. A friendly dragon named Spark recognizes it immediately.
+
+"That fabric! I know who wears a cloak like that — it's Shadow, the young raccoon who lives alone near the edge of the village. But Shadow isn't bad! She's just very shy and lonely. She doesn't have any friends."
+
+A rabbit named Daisy hops over. "I saw Shadow near the Whispering Well last night. She was carrying something that glowed. She looked really sad."
+
+You start to understand. Maybe Shadow didn't steal the Crystal to be mean. Maybe she took it because she's lonely and the Crystal's stories were her only friends.
+
+"If you go to the Whispering Well," Spark says, "be gentle with her. She scares easily."`,
+        vocab: [
+          { word: "recognizes", definition: "Knows what something is because they've seen it before." },
+          { word: "lonely", definition: "Feeling sad because you're alone and wish you had company or friends." }
+        ],
+        quiz: {
+          question: "Why do the villagers think Shadow took the Crystal?",
+          options: ["To sell it", "Because she's evil", "Because she's lonely and the stories were her friends", "To destroy it"],
+          correct: 2
+        },
+        choices: [
+          { text: "Go find Shadow at the Whispering Well", icon: "🕳️", next: "whispering_well" }
+        ]
+      },
+
+      whispering_well: {
+        emoji: "🕳️🌙",
+        bg: "linear-gradient(135deg, #0a0a1a, #1a0a2d)",
+        text: `The Whispering Well sits in a quiet clearing at the edge of the village. Moonlight shines down on the old stone well, and you can hear soft voices coming from inside — the well really does whisper!
+
+As you get closer, you see her. A small raccoon in a purple cloak, sitting behind the well. She's holding the Crystal of Stories, which glows with a warm, rainbow light. She's reading from it, and you can see tears on her face.
+
+She notices you and jumps up, frightened. "Please don't be mad at me!" Shadow cries. "I know I shouldn't have taken it. But the stories in the Crystal... they're my only friends. Nobody in the village talks to me. When I read the stories, I don't feel so alone."
+
+She hugs the Crystal tight. "Are you going to take it away from me?"
+
+You can see that Shadow isn't mean at all — she's just a scared, lonely kid who loves stories, just like you.`,
+        vocab: [
+          { word: "clearing", definition: "An open space in a forest where there aren't many trees." }
+        ],
+        quiz: {
+          question: "How does Shadow feel when she sees you?",
+          options: ["Angry", "Happy", "Frightened and sad", "Excited"],
+          correct: 2
+        },
+        choices: [
+          { text: "\"You can keep reading, but can we share the stories with everyone?\"", icon: "💜", next: "kind_ending" },
+          { text: "\"What if I become your friend? Then you won't need to take things.\"", icon: "🤝", next: "friend_ending" }
+        ]
+      },
+
+      kind_ending: {
+        emoji: "🌈📚",
+        bg: "linear-gradient(135deg, #1a0a3d, #0a3d0a)",
+        text: `Shadow's eyes go wide. "You... you'd share the stories with me? You're not going to yell at me?"
+
+"Of course not," you say gently. "Everyone deserves to enjoy stories. What if we bring the Crystal back to the library and make sure YOU always have a special spot to read? And maybe... we could read together sometimes?"
+
+Shadow starts to cry — but this time they're happy tears. "Nobody has ever been this nice to me."
+
+Together, you walk back to the village. When the others see Shadow, they don't get angry. Instead, Professor Clover invites Shadow to be the library's special Reading Helper.
+
+As Shadow places the Crystal back on its shelf, all the books begin filling with words again. But something magical happens — new stories appear too, stories about friendship and kindness and a brave adventurer who chose compassion over anger.
+
+The whole village celebrates, and Shadow finally has friends — including you, her very first one.
+
+✨ THE END ✨`,
+        vocab: [
+          { word: "compassion", definition: "Caring about how someone else feels and wanting to help them — being kind from your heart." },
+          { word: "gently", definition: "In a soft, careful, kind way — not rough or mean." }
+        ],
+        quiz: {
+          question: "What was the lesson of this adventure?",
+          options: [
+            "Being strong is the most important thing",
+            "Kindness and sharing can solve problems better than anger",
+            "You should always follow the rules no matter what",
+            "Never talk to strangers"
+          ],
+          correct: 1
+        },
+        choices: [],
+        ending: true
+      },
+
+      friend_ending: {
+        emoji: "🤝💛",
+        bg: "linear-gradient(135deg, #3d2a0a, #0a1a3d)",
+        text: `Shadow looks shocked. "You... want to be my friend? Really? But you don't even know me."
+
+You smile. "I know you love stories, and I know you were brave enough to come out here alone. That's enough for me. Real friends don't have to know everything about each other right away."
+
+Shadow slowly puts the Crystal down. Then, for the first time in a long time, she smiles. "I'd like that very much."
+
+You walk back to the village together, side by side. When you arrive, you explain everything to the villagers. Instead of being upset, they feel bad that Shadow was so lonely.
+
+Ember the fox invites Shadow to play. The friendly dragons offer to teach her to roast marshmallows (they're great at that). And Professor Clover asks Shadow to help run a Story Time club.
+
+As the Crystal returns to its place, the books fill with words again. And the very best new story that appears is about the day a lonely raccoon found her first friend.
+
+✨ THE END ✨`,
+        vocab: [
+          { word: "shocked", definition: "Very surprised — so surprised you can barely believe what happened!" }
+        ],
+        quiz: {
+          question: "What did the villagers do when they learned why Shadow took the Crystal?",
+          options: [
+            "They punished her",
+            "They felt bad and welcomed her as a friend",
+            "They ignored her",
+            "They kicked her out of the village"
+          ],
+          correct: 1
+        },
+        choices: [],
+        ending: true
+      }
+    }
+  },
+
+  dragon_academy: {
+    title: "Dragon Academy",
+    icon: "🐉",
+    desc: "Train a baby dragon at a school for magical creatures",
+    nodes: {
+      start: {
+        emoji: "🐉🏫",
+        bg: "linear-gradient(135deg, #3d0a0a, #3d2a0a)",
+        text: `Today is your first day at Dragon Academy — the most famous school for dragon trainers in all the land! You've dreamed about this since you were little.
+
+As you walk through the enormous stone gates, you see dragons of every color soaring through the sky. Some breathe fire, others breathe ice, and a few even breathe rainbow sparkles!
+
+Professor Flameheart, a tall woman with bright red hair, greets you at the entrance. "Welcome, new trainer! Today you'll choose your very first dragon partner. This dragon will be your companion for the whole year."
+
+She leads you to the Dragon Nursery, where three baby dragons are playing.`,
+        vocab: [
+          { word: "companion", definition: "A friend who goes with you on adventures — someone who stays by your side." },
+          { word: "soaring", definition: "Flying high in the sky, gliding smoothly through the air." }
+        ],
+        quiz: {
+          question: "What do some of the dragons at the Academy breathe?",
+          options: ["Only fire", "Fire, ice, and rainbow sparkles", "Only smoke", "Water"],
+          correct: 1
+        },
+        choices: [
+          { text: "Choose Blaze, the small red fire dragon", icon: "🔥", next: "choose_blaze" },
+          { text: "Choose Frost, the shy blue ice dragon", icon: "❄️", next: "choose_frost" },
+          { text: "Choose Shimmer, the playful purple dragon", icon: "💜", next: "choose_shimmer" }
+        ]
+      },
+
+      choose_blaze: {
+        emoji: "🔥🐉",
+        bg: "linear-gradient(135deg, #3d0a0a, #3d1a0a)",
+        text: `Blaze bounces over to you immediately, wagging his tail so hard his whole body wiggles. He's small but full of energy! When he sneezes, tiny sparks fly out of his nose.
+
+"Ah, Blaze chose you just as much as you chose him!" Professor Flameheart laughs. "He's enthusiastic but sometimes gets a little too excited. Your first challenge will be teaching him to control his fire."
+
+Blaze licks your hand with his warm tongue and looks up at you with adoring eyes. You can already tell this is going to be a great partnership.
+
+Professor Flameheart hands you your class schedule. "Your first class starts in ten minutes. You can go to Flying Basics or Fire Safety. I'd recommend starting with whichever one seems most important for Blaze."`,
+        vocab: [
+          { word: "enthusiastic", definition: "Really, really excited about something — full of energy and happiness about it!" },
+          { word: "partnership", definition: "When two people (or a person and a dragon!) work together as a team." }
+        ],
+        quiz: {
+          question: "What is Blaze's biggest challenge?",
+          options: ["He can't fly", "He needs to learn to control his fire", "He doesn't like people", "He's too big"],
+          correct: 1
+        },
+        item: { name: "Dragon Partner: Blaze", icon: "🔥" },
+        choices: [
+          { text: "Go to Flying Basics class", icon: "🪽", next: "flying_class" },
+          { text: "Go to Fire Safety class", icon: "🧯", next: "fire_class" }
+        ]
+      },
+
+      choose_frost: {
+        emoji: "❄️🐉",
+        bg: "linear-gradient(135deg, #0a1a3d, #0a3d3d)",
+        text: `While the other dragons play loudly, Frost sits quietly in the corner, watching you with curious, bright blue eyes. When you slowly walk over and sit down next to her, she cautiously sniffs your hand, then nudges it with her cold little nose.
+
+"Interesting choice," Professor Flameheart says softly. "Frost is very intelligent, but she's timid around new people. She needs someone patient. I think you two are a perfect match."
+
+Frost lets out a tiny breath of icy air that makes snowflakes dance around your fingers. It's beautiful! She seems to relax now that you're sitting calmly with her.
+
+"Your first class starts soon," the professor says. "You can go to Flying Basics or Ice Control. Frost is actually an excellent flyer already, but she could use help managing her ice powers."`,
+        vocab: [
+          { word: "cautiously", definition: "Doing something very carefully and slowly because you're not sure if it's safe." },
+          { word: "timid", definition: "Shy and a little nervous — easily scared by new things." }
+        ],
+        quiz: {
+          question: "Why is Frost a good match for a patient trainer?",
+          options: ["Because she's mean", "Because she's timid and needs someone gentle", "Because she's the strongest", "Because she's the fastest"],
+          correct: 1
+        },
+        item: { name: "Dragon Partner: Frost", icon: "❄️" },
+        choices: [
+          { text: "Go to Flying Basics class", icon: "🪽", next: "flying_class" },
+          { text: "Go to Ice Control class", icon: "❄️", next: "fire_class" }
+        ]
+      },
+
+      choose_shimmer: {
+        emoji: "💜✨",
+        bg: "linear-gradient(135deg, #2d0a3d, #3d0a2d)",
+        text: `Shimmer is doing somersaults in the air when she spots you. She zooms over and lands on your shoulder, wrapping her sparkly purple tail around your arm like a hug.
+
+"Ha! Shimmer is our class clown," Professor Flameheart chuckles. "She's very creative and loves to show off. Her special ability is that she can change the color of her scales and even turn partially invisible! But she has trouble focusing."
+
+Shimmer demonstrates by turning bright pink, then green, then making her wings disappear entirely — which causes her to tumble off your shoulder. She looks up at you and grins.
+
+"Your first class awaits! You can try Flying Basics or Camouflage Training. Both would be good for Shimmer."`,
+        vocab: [
+          { word: "creative", definition: "Good at coming up with new ideas and using your imagination to make things!" },
+          { word: "demonstrates", definition: "Shows how to do something so others can see and learn." }
+        ],
+        quiz: {
+          question: "What is Shimmer's special ability?",
+          options: ["Breathing fire", "Super strength", "Changing colors and turning invisible", "Reading minds"],
+          correct: 2
+        },
+        item: { name: "Dragon Partner: Shimmer", icon: "💜" },
+        choices: [
+          { text: "Go to Flying Basics class", icon: "🪽", next: "flying_class" },
+          { text: "Go to Camouflage Training", icon: "🫥", next: "fire_class" }
+        ]
+      },
+
+      flying_class: {
+        emoji: "🪽☁️",
+        bg: "linear-gradient(135deg, #0a2a3d, #1a1a3d)",
+        text: `The Flying Basics classroom is actually a huge open field with clouds floating at different heights. Other students are already there with their dragons, practicing take-offs and landings.
+
+Coach Windglider, a cheerful woman who rides a massive silver dragon, claps her hands. "Welcome, new trainers! Today's lesson: getting your dragon to take off smoothly!"
+
+She explains the three steps:
+1. Stand beside your dragon and give them a gentle pat
+2. Say "Up, up, and away!" in a clear, confident voice
+3. Hold on tight and lean forward!
+
+Your dragon looks at you eagerly, ready to try. But as you look around, you notice some students are struggling too. One student's dragon keeps spinning in circles instead of going up.
+
+Coach Windglider says, "Remember, your dragon can sense your feelings. If you're nervous, they'll be nervous too. Stay calm and believe in your team!"`,
+        vocab: [
+          { word: "massive", definition: "Extremely big — even bigger than enormous! The biggest you can imagine." },
+          { word: "confident", definition: "Feeling sure of yourself — believing that you can do something well." }
+        ],
+        quiz: {
+          question: "What does Coach Windglider say dragons can sense?",
+          options: ["The weather", "Your feelings", "Other dragons", "Magic spells"],
+          correct: 1
+        },
+        choices: [
+          { text: "Take a deep breath and try the take-off", icon: "🌬️", next: "try_flying" },
+          { text: "Watch other students first to learn from them", icon: "👀", next: "watch_first" }
+        ]
+      },
+
+      fire_class: {
+        emoji: "🎓🐉",
+        bg: "linear-gradient(135deg, #3d1a0a, #1a0a3d)",
+        text: `The training room is a big stone chamber with magical shields on the walls (so nothing gets damaged). Your teacher, Professor Ashworth, is a calm man with a gray beard.
+
+"Welcome! In this class, we'll learn how to work with your dragon's natural abilities. The key is communication and practice."
+
+He sets up a target range with different colored rings. "I want you to guide your dragon to aim at just the blue target — not the red one, not the green one. This teaches precision and control."
+
+Your dragon seems excited but a little unsure. Professor Ashworth reminds you: "Patience is the most important skill a trainer can have. Celebrate every small success!"
+
+Your dragon tries and hits the green target first. Close, but not quite right!`,
+        vocab: [
+          { word: "precision", definition: "Being very exact and accurate — hitting exactly the right spot." },
+          { word: "patience", definition: "Being able to wait calmly and not get frustrated when things take time." }
+        ],
+        quiz: {
+          question: "What does Professor Ashworth say is the most important skill?",
+          options: ["Strength", "Speed", "Patience", "Bravery"],
+          correct: 2
+        },
+        choices: [
+          { text: "Encourage your dragon and try again calmly", icon: "💪", next: "try_flying" },
+          { text: "Break the task into smaller steps", icon: "📝", next: "watch_first" }
+        ]
+      },
+
+      watch_first: {
+        emoji: "👀✨",
+        bg: "linear-gradient(135deg, #0a1a2d, #1a2a3d)",
+        text: `You decide to observe first — and it's a great decision! By watching others, you notice that the most successful students all do something special: they talk to their dragons the whole time, encouraging them with kind words.
+
+You kneel down next to your dragon and whisper, "We're going to do great. I believe in you."
+
+Your dragon's eyes light up. When you finally try, something amazing happens — your dragon performs perfectly on the first attempt! The other students cheer.
+
+Your teacher comes over, beaming with pride. "Excellent strategy! You observed, you prepared, and you connected with your partner. That's what makes a truly great dragon trainer."
+
+Your dragon nuzzles you happily, and you earn your first Training Badge!`,
+        vocab: [
+          { word: "observe", definition: "To watch carefully and pay attention to learn something new." },
+          { word: "strategy", definition: "A clever plan for how to do something well." }
+        ],
+        quiz: {
+          question: "What did you learn by watching the successful students?",
+          options: ["They yelled at their dragons", "They used magic spells", "They encouraged their dragons with kind words", "They had special equipment"],
+          correct: 2
+        },
+        item: { name: "Training Badge", icon: "🎖️" },
+        choices: [
+          { text: "Continue to the afternoon challenge!", icon: "⭐", next: "afternoon_challenge" }
+        ]
+      },
+
+      try_flying: {
+        emoji: "🐉💨",
+        bg: "linear-gradient(135deg, #0a2a3d, #0a3d2a)",
+        text: `You take a deep breath. "We can do this," you tell your dragon. Your dragon looks at you and nods (yes, dragons can nod!).
+
+You pat your dragon gently, stand tall, and say clearly: "Let's go, partner!"
+
+Your dragon leaps — and you're wobbly at first! You tilt left, then right, almost losing your balance. But you don't panic. Instead, you hold on, stay calm, and lean forward just like the teacher said.
+
+Slowly, things get smoother. Your dragon finds their rhythm, and before you know it, you're doing it! It's not perfect, but it's real progress.
+
+"Good effort!" your teacher calls out. "That's exactly what learning looks like — messy at first, then better with practice. You didn't give up, and that's what counts!"
+
+You earn your first Training Badge for perseverance!`,
+        vocab: [
+          { word: "perseverance", definition: "Keeping on trying even when something is hard and you want to give up." },
+          { word: "rhythm", definition: "A regular, repeated pattern — like a beat in music or a smooth movement." }
+        ],
+        quiz: {
+          question: "What did the teacher say learning looks like?",
+          options: ["Perfect from the start", "Messy at first, then better with practice", "Easy for everyone", "The same for all students"],
+          correct: 1
+        },
+        item: { name: "Training Badge", icon: "🎖️" },
+        choices: [
+          { text: "Continue to the afternoon challenge!", icon: "⭐", next: "afternoon_challenge" }
+        ]
+      },
+
+      afternoon_challenge: {
+        emoji: "🏆🐉",
+        bg: "linear-gradient(135deg, #3d2a0a, #0a1a3d)",
+        text: `After lunch (dragon trainers eat magical sandwiches that taste like whatever you want!), Professor Flameheart announces a surprise.
+
+"This afternoon, we have a special Teamwork Challenge! You and your dragon will work together to solve three tasks. But here's the twist — you'll also be partnered with another trainer and their dragon!"
+
+Your partner turns out to be a kid named Alex, who has a small golden dragon named Sunbeam. Alex looks nervous.
+
+"I'm not very good at this stuff yet," Alex whispers to you. "Sunbeam and I keep making mistakes."
+
+The three tasks are:
+1. Cross a wobbly bridge together (tests balance and trust)
+2. Solve a puzzle box to find a hidden key (tests problem-solving)
+3. Guide both dragons through a cloud maze (tests communication)
+
+"Remember," Professor Flameheart says, "this challenge isn't about being the fastest. It's about working together!"`,
+        vocab: [
+          { word: "announces", definition: "Says something important out loud so everyone can hear it." },
+          { word: "partnered", definition: "Put together with someone else to work as a team." }
+        ],
+        quiz: {
+          question: "What is the Teamwork Challenge about?",
+          options: ["Being the fastest", "Working together with a partner", "Fighting other dragons", "Winning a trophy"],
+          correct: 1
+        },
+        choices: [
+          { text: "Encourage Alex: \"We'll figure it out together!\"", icon: "🤝", next: "encourage_alex" },
+          { text: "Suggest you each focus on what you're good at", icon: "🧠", next: "smart_plan_ending" }
+        ]
+      },
+
+      encourage_alex: {
+        emoji: "🤝🏆",
+        bg: "linear-gradient(135deg, #0a2a0a, #0a0a3d)",
+        text: `You turn to Alex with a smile. "Hey, everyone makes mistakes when they're learning. That's totally normal! Let's just help each other."
+
+Alex brightens up. Together, you tackle the challenges:
+
+For the wobbly bridge, you hold Alex's hand and go slowly. Your dragons fly alongside you for balance. You make it across!
+
+For the puzzle box, Alex actually turns out to be amazing at puzzles! While you looked at the big picture, Alex noticed tiny details you missed. Together, you open it faster than any other team.
+
+For the cloud maze, you and Alex take turns calling out directions while the dragons fly. "Left! Now up! Wait — go right!" It's chaotic and hilarious, but you make it through.
+
+When you finish, Professor Flameheart is clapping. "Outstanding! You showed the most important skill of all — you lifted each other up. You both earn the Golden Teamwork Star!"
+
+Alex grins at you. "Thanks for believing in me. Best first day ever!"
+
+✨ THE END ✨`,
+        vocab: [
+          { word: "outstanding", definition: "Amazingly good — so great that it stands out from everything else!" },
+          { word: "chaotic", definition: "Wild, messy, and a little crazy — things happening everywhere at once!" }
+        ],
+        quiz: {
+          question: "What was the most important lesson of Dragon Academy?",
+          options: [
+            "The strongest dragon always wins",
+            "Working together and lifting each other up is the most important skill",
+            "You should always be the leader",
+            "Practice makes perfect"
+          ],
+          correct: 1
+        },
+        choices: [],
+        ending: true
+      },
+
+      smart_plan_ending: {
+        emoji: "🧠🏆",
+        bg: "linear-gradient(135deg, #1a0a3d, #0a2a2a)",
+        text: `"Here's an idea," you say to Alex. "Let's each do what we're best at. What are you really good at?"
+
+Alex thinks for a moment. "Well... I love puzzles. And Sunbeam is small, so she can squeeze through tight spaces."
+
+"Perfect!" you say. "My dragon is great at staying steady. Let's make a plan!"
+
+On the wobbly bridge, your steady dragon goes first and shows Sunbeam exactly where to step. On the puzzle box, you hand it straight to Alex — and Alex cracks it in record time! In the cloud maze, tiny Sunbeam zips ahead through the narrow gaps and calls back directions while your dragon follows with you both riding safely.
+
+When you cross the finish line, Professor Flameheart is beaming. "Brilliant! You discovered each teammate's unique strengths and built a strategy around them. That is exactly how great teams work!"
+
+Alex high-fives you. "I never knew being good at puzzles could make me a hero. Thanks for noticing!"
+
+You both earn the Golden Teamwork Star — and a new best friend.
+
+✨ THE END ✨`,
+        vocab: [
+          { word: "unique", definition: "One of a kind — special and different from everyone else." },
+          { word: "brilliant", definition: "Extremely clever or wonderful — shining bright with smarts!" }
+        ],
+        quiz: {
+          question: "How did your team win the challenge?",
+          options: [
+            "By being the strongest",
+            "By using each teammate's special strengths",
+            "By skipping the hard parts",
+            "By racing ahead alone"
+          ],
+          correct: 1
+        },
+        choices: [],
+        ending: true
+      }
+    }
+  },
+
+  coral_kingdom: {
+    title: "The Coral Kingdom",
+    icon: "🧜‍♀️",
+    desc: "Dive beneath the waves to help the mermaids of Coral City",
+    nodes: {
+      start: {
+        emoji: "🐚🌊",
+        bg: "linear-gradient(135deg, #0a1a3d, #0a3d3d)",
+        text: `You are walking along the beach at sunset when you spot something shimmering in the sand. It's a silver seashell, glowing softly like a tiny moon.
+
+Being a curious explorer, you pick it up and hold it to your ear. Instead of the usual whoosh of waves, you hear a small voice!
+
+"Hello, land friend! Coral City needs your help. Hold me tight and step into the water — I will let you breathe under the sea, easy as breathing air!"
+
+Your heart beats fast with excitement. You wade into the warm waves, and just like the shell promised, you can breathe! Below you, the whole glittering ocean world opens up.
+
+A friendly dolphin circles nearby, clicking happily. Farther down, a mysterious golden light glows in the deep.`,
+        vocab: [
+          { word: "curious", definition: "Wanting to learn and discover new things — always asking questions and exploring!" },
+          { word: "shimmering", definition: "Shining with a soft, sparkly light that seems to dance." }
+        ],
+        quiz: {
+          question: "What does the silver seashell let you do?",
+          options: ["Swim faster", "Breathe under the sea", "Talk to fish", "Turn into a mermaid"],
+          correct: 1
+        },
+        choices: [
+          { text: "Swim with the friendly dolphin", icon: "🐬", next: "dolphin_ride" },
+          { text: "Dive toward the golden light", icon: "✨", next: "dive_light" }
+        ]
+      },
+
+      dolphin_ride: {
+        emoji: "🐬💙",
+        bg: "linear-gradient(135deg, #0a2a3d, #0a1a4d)",
+        text: `The dolphin swims a happy loop around you. "I'm Splash!" he chirps. "You must be the helper the seashell found! Coral City is this way — hold onto my fin!"
+
+You grab Splash's smooth gray fin, and off you zoom! Schools of rainbow fish part to let you through, waving their fins like tiny flags.
+
+Splash slows down and nudges something toward you with his nose. It's a small charm made of a bubble that never pops.
+
+"That's a Bubble Charm," Splash explains. "If you're ever in trouble, it will float you gently to safety. Every helper of the sea gets one!"
+
+Ahead, the water splits into two paths: a swift, rushing current that sparkles like a water slide, and a calm, quiet trail through a meadow of waving seagrass.`,
+        vocab: [
+          { word: "swift", definition: "Very fast and quick — moving speedily!" }
+        ],
+        quiz: {
+          question: "What does the Bubble Charm do?",
+          options: ["Makes you invisible", "Floats you gently to safety", "Lets you talk to crabs", "Glows in the dark"],
+          correct: 1
+        },
+        item: { name: "Bubble Charm", icon: "🫧" },
+        choices: [
+          { text: "Ride the swift sparkling current", icon: "🌀", next: "fast_current" },
+          { text: "Glide through the calm seagrass meadow", icon: "🌿", next: "calm_path" }
+        ]
+      },
+
+      fast_current: {
+        emoji: "🌀🐬",
+        bg: "linear-gradient(135deg, #0a1a4d, #0a3d5d)",
+        text: `"Hold on tight!" Splash laughs. You dive into the current and — WHOOSH! — it's like the world's best water slide!
+
+You twirl past towers of pink coral and loop around a giggling family of sea otters. Bubbles stream behind you like a comet's tail.
+
+Just when it's the most fun, the current gives one big final push and gently sets you down at the gates of Coral City. Your hair floats around your head in a silly cloud, and Splash can't stop laughing.
+
+"You did great!" he says. "Some visitors squeal the whole way down. You just smiled and held on. That was brave!"
+
+The gates of Coral City rise before you, carved from mother-of-pearl and taller than a lighthouse.`,
+        vocab: [
+          { word: "comet", definition: "A bright space rock that streaks across the sky with a glowing tail behind it." }
+        ],
+        quiz: {
+          question: "How did you handle the fast current?",
+          options: ["You cried the whole way", "You smiled and held on bravely", "You turned back", "You fell asleep"],
+          correct: 1
+        },
+        choices: [
+          { text: "Swim through the gates of Coral City", icon: "🏰", next: "coral_city" }
+        ]
+      },
+
+      calm_path: {
+        emoji: "🌿🌊",
+        bg: "linear-gradient(135deg, #0a3d2a, #0a1a3d)",
+        text: `You choose the peaceful path, and it turns out to be full of wonders. The seagrass sways like it's dancing to music only it can hear.
+
+Tiny seahorses with delicate curled tails bob along beside you. One brave little seahorse, no bigger than your thumb, rides on your shoulder the whole way.
+
+"That's Pip," Splash whispers. "He never trusts anyone that fast. You must have a gentle heart."
+
+Pip squeaks a goodbye song when you reach the end of the meadow, and all the seahorses join in — a tiny choir of bubbly notes.
+
+"Music is everywhere in the sea," Splash says softly. "At least... it used to be. You'll see what I mean soon."
+
+Ahead, the pearly gates of Coral City glow in the blue water.`,
+        vocab: [
+          { word: "delicate", definition: "Small, fine, and easily broken — something you handle very gently." }
+        ],
+        quiz: {
+          question: "Why does Splash say you must have a gentle heart?",
+          options: ["You swam very fast", "Pip the seahorse trusted you right away", "You sang a song", "You gave Pip food"],
+          correct: 1
+        },
+        choices: [
+          { text: "Swim through the gates of Coral City", icon: "🏰", next: "coral_city" }
+        ]
+      },
+
+      dive_light: {
+        emoji: "🎐✨",
+        bg: "linear-gradient(135deg, #1a0a3d, #0a2a4d)",
+        text: `You dive down, down, down toward the golden glow. It turns out to be a jellyfish — but not an ordinary one. This jellyfish shines like a floating lantern, with ribbons of light trailing beneath her.
+
+"Well hello, brave diver!" she hums. "I'm Twinkle, the Lantern Jelly. I light the way to Coral City — but only for clever visitors who can answer my riddle!"
+
+She spins slowly, sprinkling glitter-light through the water.
+
+"Here it is: I have a bed, but I never sleep. I run, but I never walk. I have a mouth, but I never eat. What am I?"`,
+        vocab: [
+          { word: "ordinary", definition: "Normal and usual — nothing special or different about it." }
+        ],
+        quiz: {
+          question: "What is the answer to Twinkle's riddle?",
+          options: ["A whale", "A river", "A cloud", "A clock"],
+          correct: 1
+        },
+        choices: [
+          { text: "\"A river!\" you answer", icon: "🏞️", next: "riddle_pearl" },
+          { text: "Ask Twinkle for a hint", icon: "💡", next: "riddle_help" }
+        ]
+      },
+
+      riddle_pearl: {
+        emoji: "🏞️🎉",
+        bg: "linear-gradient(135deg, #0a2a4d, #1a0a3d)",
+        text: `"A RIVER!" you say. "A river has a riverbed, it runs downhill, and it has a mouth where it meets the sea!"
+
+Twinkle flashes every color at once, like underwater fireworks. "Splendid! Absolutely splendid! You have a quick mind, little diver."
+
+She dips one glowing ribbon into her lantern-belly and pulls out a pearl that shines like the moon on snow.
+
+"This is a Moonpearl. It glows brightest in the darkest places. Where you're going, you may need it — Coral City has a mystery, and mysteries love to hide in the dark."
+
+She points a ribbon of light toward a pearly gate in the distance. "Swim that way, clever one. And remember: bright minds and kind hearts light the deepest seas."`,
+        vocab: [
+          { word: "splendid", definition: "Wonderful and excellent — so good it deserves a cheer!" }
+        ],
+        quiz: {
+          question: "When does the Moonpearl glow brightest?",
+          options: ["At breakfast", "In the darkest places", "When it rains", "Only on Sundays"],
+          correct: 1
+        },
+        item: { name: "Moonpearl", icon: "🌕" },
+        choices: [
+          { text: "Swim to the gates of Coral City", icon: "🏰", next: "coral_city" }
+        ]
+      },
+
+      riddle_help: {
+        emoji: "💡🎐",
+        bg: "linear-gradient(135deg, #1a0a3d, #0a2a4d)",
+        text: `"Hmm, may I have a hint, please?" you ask politely.
+
+Twinkle glows warmly. "Ooh, I do love good manners! Here's your hint: you can find me on a map, I start in the mountains, and I always flow toward the sea."
+
+You think it through. A bed but never sleeps... runs but never walks... starts in the mountains and flows to the sea...
+
+"A river!" you cry.
+
+"Yes indeed!" Twinkle cheers, spinning with joy. "And because you asked so politely, you've earned something extra special."
+
+She hands you a locket made of smooth green sea-glass. "Inside is a drop of morning sunlight. Open it if you ever feel afraid, and it will warm you right up. Now follow my light to Coral City — they need a helper like you!"`,
+        vocab: [
+          { word: "politely", definition: "In a kind, respectful way — using nice manners like please and thank you." }
+        ],
+        quiz: {
+          question: "Why did Twinkle give you an extra special gift?",
+          options: ["You swam the fastest", "You asked for the hint politely", "You brought her a snack", "You guessed on the first try"],
+          correct: 1
+        },
+        item: { name: "Sea-Glass Locket", icon: "🟢" },
+        choices: [
+          { text: "Follow Twinkle's light to Coral City", icon: "🏰", next: "coral_city" }
+        ]
+      },
+
+      coral_city: {
+        emoji: "🏰🧜‍♀️",
+        bg: "linear-gradient(135deg, #3d0a3d, #0a1a4d)",
+        text: `Coral City takes your breath away — and luckily, the magic shell gives it right back! Towers of pink and orange coral spiral up like castles. Mermaids and mermen glide between them, and crabs scuttle along streets paved with sand dollars.
+
+But something feels wrong. The city is too quiet. The glowfish lamps are dim, and the mermaids look worried.
+
+A young mermaid with seaweed-green braids swims up to you. "You came! I'm Coralie. Thank goodness the seashell found someone kind."
+
+She points to an empty stand in the city square. "The Singing Pearl is gone! It sings the ocean's music — it keeps the glowfish bright and the whales humming. Without it, the sea is going silent, note by note. Soon even the waves won't have a song."
+
+Coralie wrings her hands. "We have to find it. Old Tortuga the turtle might know something — he's the wisest creature in the sea. Or we could search the kelp forest, where the pearl's music was last heard."`,
+        vocab: [
+          { word: "worried", definition: "Feeling nervous that something bad might happen." }
+        ],
+        quiz: {
+          question: "What does the Singing Pearl do for the ocean?",
+          options: ["It makes the water salty", "It sings the music that keeps the sea bright and humming", "It feeds the fish", "It makes storms"],
+          correct: 1
+        },
+        choices: [
+          { text: "Visit Old Tortuga, the wise turtle", icon: "🐢", next: "turtle_elder" },
+          { text: "Search the kelp forest for clues", icon: "🌱", next: "kelp_forest" }
+        ]
+      },
+
+      turtle_elder: {
+        emoji: "🐢🌙",
+        bg: "linear-gradient(135deg, #0a2a1a, #1a1a3d)",
+        text: `Old Tortuga lives in a garden of glowing anemones. He is an ancient sea turtle — over four hundred years old — with a shell covered in soft green moss and eyes that twinkle like he knows every secret in the sea.
+
+"Ahh, the land helper," he rumbles slowly. "Come closer, child. My old eyes are slow, but they miss nothing."
+
+He takes a long, thoughtful breath. "Three nights ago, I saw a small shadow slip through the city square. It was not a wicked shadow. It moved like someone very lonely and very scared. It swam toward the old shipwreck in the deep."
+
+He taps his flipper gently on your hand. "Listen well: whoever took the pearl needs kindness more than scolding. Remember that when you find them."
+
+He nods toward the deep water. "The wreck is dark. You may swim straight there, or stop first at the Glowing Grotto to gather some light."`,
+        vocab: [
+          { word: "ancient", definition: "Very, very old — from a long, long time ago." }
+        ],
+        quiz: {
+          question: "What advice does Old Tortuga give you?",
+          options: ["Swim as fast as you can", "The pearl-taker needs kindness more than scolding", "Never trust a shadow", "Bring him a snack"],
+          correct: 1
+        },
+        choices: [
+          { text: "Stop at the Glowing Grotto for light", icon: "🌟", next: "grotto" },
+          { text: "Swim straight to the old shipwreck", icon: "🚢", next: "shipwreck" }
+        ]
+      },
+
+      grotto: {
+        emoji: "🌟🕯️",
+        bg: "linear-gradient(135deg, #0a3d3d, #1a0a3d)",
+        text: `The Glowing Grotto is a secret cave where moon-jellies sleep in rows along the ceiling, like a sky full of tiny hanging stars.
+
+A grandmotherly moon-jelly drifts down to greet you. "Visitors! How lovely. What brings you to our starry cave?"
+
+You explain about the missing Singing Pearl and the dark shipwreck. The moon-jellies murmur to each other with little flickers of light.
+
+"A generous heart deserves a light to carry," the old jelly says. She breathes a glowing bubble into a lantern made of woven kelp, and hands it to you. It shines with a soft, friendly gold — the kind of light that makes dark places feel safe instead of scary.
+
+"One more thing, dear," she adds. "We hear singing from that wreck at night. The saddest, sweetest singing. Whoever is down there... they're hurting inside."`,
+        vocab: [
+          { word: "generous", definition: "Happy to share and give to others without expecting anything back." }
+        ],
+        quiz: {
+          question: "What do the moon-jellies hear coming from the shipwreck at night?",
+          options: ["Loud roaring", "Sad, sweet singing", "Clanging bells", "Nothing at all"],
+          correct: 1
+        },
+        item: { name: "Kelp Lantern", icon: "🏮" },
+        choices: [
+          { text: "Carry your lantern to the shipwreck", icon: "🚢", next: "shipwreck" }
+        ]
+      },
+
+      kelp_forest: {
+        emoji: "🌱🔍",
+        bg: "linear-gradient(135deg, #0a3d0a, #0a1a3d)",
+        text: `The kelp forest is like a jungle made of green ribbons, stretching up toward the faraway sunlight. You and Coralie swim between the giant stalks, looking for clues.
+
+"Look!" Coralie gasps. On the sandy floor, you spot a trail of tiny ink drops, like little black clouds frozen in the water. Next to them lie eight small, round prints in the sand.
+
+"Ink and eight footprints..." you say slowly, thinking hard like a detective. "An octopus came through here!"
+
+Coralie's eyes go wide. "The little octopus from the old shipwreck! She never comes to the city. Everyone gets scared when she inks and swims away from her... oh. Oh no. Maybe that's why she's always alone."
+
+The trail of ink drops leads away into the deep, straight toward the shadow of the old shipwreck.`,
+        vocab: [
+          { word: "detective", definition: "Someone who follows clues to solve mysteries." }
+        ],
+        quiz: {
+          question: "What clues tell you an octopus took the pearl?",
+          options: ["A trail of bubbles", "Ink drops and eight footprints", "A dropped crown", "Torn seaweed"],
+          correct: 1
+        },
+        item: { name: "Kelp Lantern", icon: "🏮" },
+        choices: [
+          { text: "Follow the ink trail to the shipwreck", icon: "🚢", next: "shipwreck" }
+        ]
+      },
+
+      shipwreck: {
+        emoji: "🚢🐙",
+        bg: "linear-gradient(135deg, #0a0a1a, #1a0a2d)",
+        text: `The old shipwreck rests in the deep blue dark, its wooden ribs covered in barnacles. As you swim closer, you hear it: a soft, wobbly little voice, singing along to the most beautiful melody you've ever heard.
+
+You peek through a porthole. Inside, a small purple octopus is curled around the Singing Pearl, swaying to its music. Her eyes are shiny with tears.
+
+When she sees you, she squeaks in fright and a puff of ink clouds the water. "I'm sorry! I'm sorry!" she cries. "I know I shouldn't have taken it! I'm Inky. Nobody ever visits me down here. Every time I get nervous, I ink, and everyone swims away. The pearl's songs are the only friends I have."
+
+She hugs the pearl tighter. "Please don't hate me. I just didn't want to be alone in the quiet anymore."
+
+Your heart squeezes. Inky isn't a thief — she's just a lonely little octopus who loves music, the same way you love stories.`,
+        vocab: [
+          { word: "melody", definition: "A line of musical notes that makes a tune — the part of a song you hum!" }
+        ],
+        quiz: {
+          question: "Why did Inky take the Singing Pearl?",
+          options: ["To sell it for treasure", "She was lonely and the pearl's songs were her only friends", "To stop the mermaids from singing", "By accident"],
+          correct: 1
+        },
+        choices: [
+          { text: "\"Come sing with the pearl in Coral City — join the choir!\"", icon: "🎶", next: "choir_ending" },
+          { text: "\"What if I visit you? Everyone needs a friend.\"", icon: "💜", next: "reef_friend_ending" }
+        ]
+      },
+
+      choir_ending: {
+        emoji: "🎶🌈",
+        bg: "linear-gradient(135deg, #1a0a3d, #0a3d2a)",
+        text: `"Wait," you say gently. "Inky — your singing is beautiful. I heard it through the porthole. What if you didn't have to hide down here with the pearl? What if you brought it back and sang WITH it, in Coral City, where everyone can hear you?"
+
+Inky's eyes go huge. "Sing? In front of... everyone? But my ink—"
+
+"Your ink is part of you," you smile. "And I bet it can be beautiful too."
+
+Nervously, Inky carries the pearl back to the city square. When she starts to sing, something amazing happens — her ink swirls out in graceful ribbons that dance to the music, painting pictures in the water! The glowfish blaze bright again. The whales hum along from far away.
+
+The mermaids cheer and cheer. "The Octopus of the Opera!" Coralie laughs. "Our new star singer!"
+
+From that day on, the loneliest wreck in the sea sits empty, because Inky lives in Coral City now — where every evening, her songs and swirling ink light up the whole ocean.
+
+✨ THE END ✨`,
+        vocab: [
+          { word: "graceful", definition: "Moving in a smooth, beautiful, gentle way — like a dancer." }
+        ],
+        quiz: {
+          question: "What was the lesson of this adventure?",
+          options: [
+            "Never share your treasures",
+            "The things that make you different can become the things that make you shine",
+            "Octopuses should stay in shipwrecks",
+            "Singing is only for mermaids"
+          ],
+          correct: 1
+        },
+        choices: [],
+        ending: true
+      },
+
+      reef_friend_ending: {
+        emoji: "💜🐙",
+        bg: "linear-gradient(135deg, #2d0a3d, #0a1a4d)",
+        text: `"Inky," you say softly, swimming a little closer, "the pearl has to go home so the whole ocean can have its music back. But you don't have to be alone anymore. What if I visit you? And I bet Coralie will too. Everyone needs a friend."
+
+Inky blinks. "You'd come back? To visit... me?"
+
+"Cross my heart," you say. And Coralie adds, "Me too. I'm sorry we never came before. We didn't know how lonely you were."
+
+Inky slowly, carefully hands over the Singing Pearl — and then wraps all eight arms around you both in the world's biggest hug.
+
+Back in the city, the pearl sings from its stand and the glowfish burn bright again. But the best part comes after: the mermaids build Inky a cozy garden right at the edge of the city, with a music shell that plays the pearl's songs all day long.
+
+Now Inky has tea parties with Coralie, races with Splash, and a best friend from the land — you — who visits every single week. And when she gets happy-nervous and inks a little? Nobody swims away. Not ever again.
+
+✨ THE END ✨`,
+        vocab: [
+          { word: "cozy", definition: "Warm, comfortable, and snug — a place that feels safe and happy." }
+        ],
+        quiz: {
+          question: "What did the mermaids do for Inky at the end?",
+          options: [
+            "They told her to stay in the shipwreck",
+            "They built her a cozy garden at the edge of the city",
+            "They took her ink away",
+            "They gave her a crown"
+          ],
+          correct: 1
+        },
+        choices: [],
+        ending: true
+      }
+    }
+  }
+};
+
+// ─── UI Functions ───
+function updateStats() {
+  document.getElementById('starsCount').textContent = state.stars;
+  document.getElementById('wordsCount').textContent = state.wordsLearned.length;
+  document.getElementById('questionsCount').textContent = `${state.questionsRight}/${state.questionsTotal}`;
+  document.getElementById('chapterNum').textContent = state.chapter;
+}
+
+function updateTrail() {
+  const trail = document.getElementById('trail');
+  trail.innerHTML = '';
+  const story = STORIES[state.currentStory];
+  const allNodes = Object.keys(story.nodes);
+  state.visitedNodes.forEach((nodeId, i) => {
+    if (i > 0) trail.innerHTML += '<span class="trail-arrow">▶</span>';
+    const dot = document.createElement('div');
+    dot.className = 'trail-dot' + (nodeId === state.currentNode ? ' current' : ' visited');
+    dot.title = nodeId.replace(/_/g, ' ');
+    trail.appendChild(dot);
+  });
+}
+
+function updateInventory() {
+  const inv = document.getElementById('inventory');
+  inv.innerHTML = '';
+  state.inventory.forEach(item => {
+    const el = document.createElement('div');
+    el.className = 'inv-item';
+    el.innerHTML = `<span>${item.icon}</span> ${item.name}`;
+    inv.appendChild(el);
+  });
+}
+
+function showVocab(word, def) {
+  document.getElementById('vocabWord').textContent = word;
+  document.getElementById('vocabDef').textContent = def;
+  document.getElementById('vocabPopup').classList.add('show');
+  document.getElementById('overlay').classList.add('show');
+  bumpActivity(1); // vocab word tapped
+  if (!state.wordsLearned.includes(word)) {
+    state.wordsLearned.push(word);
+    state.stars += 1;
+    updateStats();
+    persist();
+  }
+}
+
+function closeVocab() {
+  document.getElementById('vocabPopup').classList.remove('show');
+  document.getElementById('overlay').classList.remove('show');
+}
+
+// ─── Render Functions ───
+function showStartScreen() {
+  document.getElementById('statsBar').style.display = 'none';
+  document.getElementById('trail').style.display = 'none';
+  const card = document.getElementById('mainCard');
+  let html = `<div class="start-screen">
+    <h2>Choose Your Adventure!</h2>
+    <p>Pick a story to begin your reading adventure. You'll explore magical worlds, learn new words, and answer fun questions along the way!</p>
+    <div class="story-select">`;
+
+  for (const [key, story] of Object.entries(STORIES)) {
+    const ss = SAVE.stories[key];
+    const completed = ss && ss.completed;
+    const prog = ss && ss.progress;
+    html += `<div class="story-card" onclick="startStory('${key}')">
+      <div class="sc-icon">${story.icon}</div>
+      <div class="sc-title">${story.title}${completed ? ' ✅' : ''}</div>
+      <div class="sc-desc">${story.desc}</div>
+      ${completed && ss.bestStars ? `<div class="sc-desc" style="margin-top:6px; color: var(--gold);">Best: ${ss.bestStars} ⭐</div>` : ''}
+      ${prog ? `<button class="continue-btn show" onclick="resumeStory('${key}', event)">▶ Resume Chapter ${prog.chapter || 1}</button>` : ''}
+    </div>`;
+  }
+
+  html += `</div></div>`;
+  card.innerHTML = html;
+}
+
+function resumeStory(storyKey, ev) {
+  if (ev) ev.stopPropagation();
+  const ss = SAVE.stories[storyKey];
+  if (!ss || !ss.progress || !STORIES[storyKey].nodes[ss.progress.currentNode]) {
+    startStory(storyKey);
+    return;
+  }
+  const p = ss.progress;
+  state = {
+    stars: p.stars || 0,
+    wordsLearned: (p.wordsLearned || []).slice(),
+    questionsRight: p.questionsRight || 0,
+    questionsTotal: p.questionsTotal || 0,
+    chapter: p.chapter || 1,
+    inventory: (p.inventory || []).slice(),
+    currentStory: storyKey,
+    visitedNodes: (p.visitedNodes || []).slice(),
+    currentNode: null,
+    quizAnswered: !!p.quizAnswered
+  };
+  document.getElementById('statsBar').style.display = 'flex';
+  document.getElementById('trail').style.display = 'flex';
+  goToNode(p.currentNode, true);
+}
+
+function startStory(storyKey) {
+  state = {
+    stars: 0, wordsLearned: [], questionsRight: 0, questionsTotal: 0,
+    chapter: 1, inventory: [], currentStory: storyKey,
+    visitedNodes: [], currentNode: null, quizAnswered: false
+  };
+  document.getElementById('statsBar').style.display = 'flex';
+  document.getElementById('trail').style.display = 'flex';
+  goToNode('start');
+}
+
+function goToNode(nodeId, restoring) {
+  const story = STORIES[state.currentStory];
+  const node = story.nodes[nodeId];
+  if (!node) { showStartScreen(); return; }
+  const quizAlreadyDone = !!(restoring && state.quizAnswered);
+  state.currentNode = nodeId;
+  if (!state.visitedNodes.includes(nodeId)) {
+    state.visitedNodes.push(nodeId);
+    state.chapter = state.visitedNodes.length;
+  }
+  if (!restoring) state.quizAnswered = false;
+
+  if (node.item && !restoring) {
+    if (!state.inventory.find(i => i.name === node.item.name)) {
+      state.inventory.push(node.item);
+      state.stars += 2;
+    }
+  }
+
+  updateStats();
+  updateTrail();
+  updateInventory();
+
+  const card = document.getElementById('mainCard');
+  // Build story text with clickable vocab
+  let text = node.text;
+  if (node.vocab) {
+    node.vocab.forEach(v => {
+      const regex = new RegExp(`\\b(${v.word})\\b`, 'gi');
+      text = text.replace(regex, `<span class="highlight" onclick="showVocab('${v.word}', '${v.definition.replace(/'/g, "\\'")}')">$1</span>`);
+    });
+  }
+
+  let html = `
+    <div class="scene-image" style="background: ${node.bg};">
+      <span>${node.emoji}</span>
+    </div>
+    <div class="story-text">${text}</div>`;
+
+  // Quiz (skipped on resume if it was already answered)
+  if (node.quiz && !quizAlreadyDone) {
+    html += `<div class="quiz-section" id="quizSection">
+      <h3>📝 Reading Check!</h3>
+      <p style="margin-bottom:12px; color: var(--muted);">${node.quiz.question}</p>
+      <div class="quiz-options">`;
+    node.quiz.options.forEach((opt, i) => {
+      html += `<button class="quiz-opt" id="qopt${i}" onclick="answerQuiz(${i}, ${node.quiz.correct})">${opt}</button>`;
+    });
+    html += `</div><div id="quizFeedback"></div></div>`;
+  }
+
+  // Choices (hidden until quiz is answered, or shown if no quiz)
+  html += `<div class="choices" id="choicesArea" style="${(node.quiz && !quizAlreadyDone) ? 'display:none;' : ''}">`;
+  if (node.ending) {
+    html += `<div class="end-screen">
+      <h2>Adventure Complete! 🎉</h2>
+      <div class="end-stats">
+        <div class="end-stat"><div class="es-val">${state.stars}</div><div class="es-label">Stars Earned</div></div>
+        <div class="end-stat"><div class="es-val">${state.questionsRight}/${state.questionsTotal}</div><div class="es-label">Quiz Score</div></div>
+        <div class="end-stat"><div class="es-val">${state.wordsLearned.length}</div><div class="es-label">New Words</div></div>
+        <div class="end-stat"><div class="es-val">${state.inventory.length}</div><div class="es-label">Items Found</div></div>
+      </div>
+      ${state.wordsLearned.length ? `<p style="color: var(--muted); margin: 8px 0;">Words you learned this adventure: <span style="color: var(--gold); font-weight: 700;">${state.wordsLearned.join(', ')}</span></p>` : ''}
+      ${state.inventory.length ? `<div class="inventory" style="margin: 12px 0;">${state.inventory.map(i => `<div class="inv-item"><span>${i.icon}</span> ${i.name}</div>`).join('')}</div>` : ''}
+      <button class="play-again-btn" onclick="showStartScreen()">Play Another Adventure! 🚀</button>
+    </div>`;
+  } else {
+    node.choices.forEach(c => {
+      html += `<button class="choice-btn" onclick="goToNode('${c.next}')">
+        <span class="choice-icon">${c.icon}</span> ${c.text}
+      </button>`;
+    });
+  }
+  html += `</div>`;
+
+  card.innerHTML = html;
+  card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  if (!restoring) bumpActivity(node.ending ? 7 : 2); // node advanced (+5 bonus for reaching an ending)
+  persist();
+}
+
+function answerQuiz(selected, correct) {
+  if (state.quizAnswered) return;
+  state.quizAnswered = true;
+  state.questionsTotal++;
+
+  const opts = document.querySelectorAll('.quiz-opt');
+  opts.forEach((o, i) => {
+    o.style.pointerEvents = 'none';
+    if (i === correct) o.classList.add('correct');
+    if (i === selected && i !== correct) o.classList.add('wrong');
+  });
+
+  const fb = document.getElementById('quizFeedback');
+  if (selected === correct) {
+    state.questionsRight++;
+    state.stars += 3;
+    fb.innerHTML = '<div class="feedback good">⭐ Great job! That\'s correct! +3 stars</div>';
+  } else {
+    state.stars += 1;
+    fb.innerHTML = '<div class="feedback try-again">Not quite — but you still earned a star for trying! ⭐</div>';
+  }
+  updateStats();
+  bumpActivity(3); // quiz answered
+  persist();
+
+  // Show choices after a moment
+  setTimeout(() => {
+    document.getElementById('choicesArea').style.display = 'flex';
+    document.getElementById('choicesArea').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, 1200);
+}
+
+// ─── Init ───
+showStartScreen();
+</script>
+</body>
+</html>

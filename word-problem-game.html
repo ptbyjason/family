@@ -297,22 +297,74 @@ function buildTeachContent(){
 }
 
 function showTeach(){
-  if(teachLevel === 0) teachLevel = 1;
+  if(teachLevel > 0) return; // already teaching — don't stack sessions
+  teachLevel = 1;
   state.hintUsed = true;
   document.getElementById('teach-container').innerHTML = buildTeachContent();
+  saveState();
 }
 
 function nextTeachLevel(){
   if(teachLevel < 3) teachLevel++;
   document.getElementById('teach-container').innerHTML = buildTeachContent();
+  saveState();
 }
 
 // ── Save / state ──
-var SAVE_KEY='word-problem-save-v3';
-function defaultState(){return{score:0,streak:0,mode:'add_sub',diff:0,highestUnlocked:0,answered:false,hintUsed:false,answer:null,_hint:'',_problem:null,_problemType:''};}
+var SAVE_KEY='word-problem-save-v4';
+var OLD_SAVE_KEY='word-problem-save-v3';
+function defaultState(){return{score:0,streak:0,mode:'add_sub',diff:0,highestUnlocked:0,answered:false,hintUsed:false,answer:null,_hint:'',_problem:null,_problemType:'',round:null,activity:null};}
 var state=loadState();
-function loadState(){try{var s=localStorage.getItem(SAVE_KEY);if(s)return Object.assign(defaultState(),JSON.parse(s));}catch(e){}return defaultState();}
-function saveState(){try{localStorage.setItem(SAVE_KEY,JSON.stringify({score:state.score,streak:state.streak,mode:state.mode,diff:state.diff,highestUnlocked:state.highestUnlocked}));}catch(e){}}
+function loadState(){
+  try{
+    var s=localStorage.getItem(SAVE_KEY);
+    if(!s){s=localStorage.getItem(OLD_SAVE_KEY);if(s){localStorage.setItem(SAVE_KEY,s);localStorage.removeItem(OLD_SAVE_KEY);}}
+    if(s)return Object.assign(defaultState(),JSON.parse(s));
+  }catch(e){}
+  return defaultState();
+}
+function saveState(){
+  try{
+    var round=null;
+    if(!state.answered&&state._problem){round={mode:state.mode,diff:state.diff,problem:state._problem,hintUsed:state.hintUsed,teachLevel:teachLevel};}
+    localStorage.setItem(SAVE_KEY,JSON.stringify({score:state.score,streak:state.streak,mode:state.mode,diff:state.diff,highestUnlocked:state.highestUnlocked,round:round,activity:state.activity}));
+  }catch(e){}
+  saveHubSummary();
+}
+function saveHubSummary(){
+  try{
+    var act=(state.activity&&typeof state.activity==='object')?state.activity:{};
+    var today=localDateStr();
+    localStorage.setItem('hubSummary_word-problem-game',JSON.stringify({
+      app:'word-problem-game',kid:'siena',icon:'🧮',
+      label:'Level '+(state.highestUnlocked+1)+'/'+LEVELS.length+' • '+state.score+' pts',
+      pct:Math.round(((state.highestUnlocked+1)/LEVELS.length)*100),
+      streak:state.streak,stars:null,lastPlayed:new Date().toISOString(),
+      actionsToday:(act.date===today&&typeof act.actions==='number')?act.actions:0,
+      actionsDate:today,
+      earnedDates:Array.isArray(act.earnedDates)?act.earnedDates:[]
+    }));
+  }catch(e){}
+}
+function localDateStr(){
+  var d=new Date();
+  return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
+}
+function bumpActivity(weight){
+  try{
+    var t=localDateStr();
+    if(!state.activity||typeof state.activity!=='object')state.activity={date:t,actions:0,earnedDates:[]};
+    var a=state.activity;
+    if(!Array.isArray(a.earnedDates))a.earnedDates=[];
+    if(a.date!==t){a.date=t;a.actions=0;}
+    a.actions=(typeof a.actions==='number'?a.actions:0)+weight;
+    if(a.actions>=20&&a.earnedDates.indexOf(t)===-1){
+      a.earnedDates.push(t);
+      if(a.earnedDates.length>30)a.earnedDates=a.earnedDates.slice(-30);
+    }
+  }catch(e){}
+  saveState();
+}
 
 // ── Levels ──
 var LEVELS=[
@@ -324,7 +376,7 @@ var LEVELS=[
 
 function renderDiffBar(){var h='';LEVELS.forEach(function(lv,i){var unlocked=i<=state.highestUnlocked;var cls='diff-btn'+(i===state.diff?' active':'');var lock=unlocked?'':' ('+lv.unlockScore+' pts)';h+='<button class="'+cls+'" onclick="setDiff('+i+')" '+(unlocked?'':'disabled')+'>Lv '+(i+1)+lock+'</button>';});document.getElementById('diffBar').innerHTML=h;}
 function updateUI(){document.getElementById('score').textContent=state.score;document.getElementById('streak').textContent=state.streak;document.getElementById('level').textContent='Lv '+(state.diff+1);}
-function checkUnlocks(){var prev=state.highestUnlocked;for(var i=0;i<LEVELS.length;i++){if(state.score>=LEVELS[i].unlockScore)state.highestUnlocked=i;}if(state.highestUnlocked>prev){document.getElementById('levelup').innerHTML='<div class="levelup-msg">New level unlocked: '+LEVELS[state.highestUnlocked].name+'!</div>';setTimeout(function(){document.getElementById('levelup').innerHTML='';},3500);state.diff=state.highestUnlocked;}renderDiffBar();saveState();}
+function checkUnlocks(){var prev=state.highestUnlocked;for(var i=0;i<LEVELS.length;i++){if(state.score>=LEVELS[i].unlockScore)state.highestUnlocked=i;}if(state.highestUnlocked>prev){document.getElementById('levelup').innerHTML='<div class="levelup-msg">New level unlocked: '+LEVELS[state.highestUnlocked].name+'!</div>';setTimeout(function(){document.getElementById('levelup').innerHTML='';},3500);state.diff=state.highestUnlocked;bumpActivity(4*(state.highestUnlocked-prev));}renderDiffBar();saveState();}
 function setMode(m){state.mode=m;document.querySelectorAll('.mode-btn').forEach(function(b,i){b.classList.toggle('active',(i===0&&m==='add_sub')||(i===1&&m==='fractions'));});newRound();saveState();}
 function setDiff(d){if(d>state.highestUnlocked)return;state.diff=d;renderDiffBar();updateUI();newRound();saveState();}
 
@@ -482,7 +534,7 @@ function genFracOfGroup(lv){
 function tryEasier(){
   var p=state._problem;
   if(!p)return newRound();
-  var easyLv={name:'Easy',unlockScore:0,addMin:10,addMax:50,subMin:10,subMax:40,fracDenom:[2,4],multiStep:false};
+  var easyLv=LEVELS[0];
   var problem;
   switch(p.type){
     case 'addition': problem=genAddition(easyLv); break;
@@ -502,9 +554,10 @@ function tryEasier(){
 // ═══════════════════════════════════════
 // ROUND LOGIC
 // ═══════════════════════════════════════
-function loadProblem(problem, isEasier){
-  state.answered=false;state.hintUsed=false;
-  teachLevel=0;
+function loadProblem(problem, isEasier, restore){
+  state.answered=false;
+  state.hintUsed=restore?!!restore.hintUsed:false;
+  teachLevel=restore?(restore.teachLevel||0):0;
   document.getElementById('feedback').innerHTML='';
   document.getElementById('teach-container').innerHTML='';
   if(!isEasier)document.getElementById('levelup').innerHTML='';
@@ -512,6 +565,7 @@ function loadProblem(problem, isEasier){
 
   state.answer=problem.answer;
   state._problem=problem;
+  rememberProblem(problem);
 
   var html='';
   if(isEasier) html+='<div style="text-align:center;margin-bottom:10px;font-size:0.9em;font-weight:700;color:var(--purple);background:rgba(139,92,246,0.15);padding:8px 14px;border-radius:10px;display:inline-block;">Let’s try an easier one!</div><br>';
@@ -527,22 +581,38 @@ function loadProblem(problem, isEasier){
     problem.choices.forEach(function(c){html+='<button class="mc-btn" onclick="checkMC(this,'+c+')">'+c+'</button>';});
   }
   html+='</div>';
-  html+='<div class="btn-row"><button class="btn btn-teach" onclick="showTeach()">Teach me</button></div>';
+  html+='<div class="btn-row"><button class="btn btn-teach" onclick="showTeach()">Show me how 🤔</button></div>';
   html+='</div>';
   document.getElementById('problem-area').innerHTML=html;
+  if(teachLevel>0)document.getElementById('teach-container').innerHTML=buildTeachContent();
+  saveState();
+}
+
+// ── Repeat prevention (session-only) ──
+var recentProblems=[];
+function problemSig(p){return p.type+'|'+(p.nums?p.nums.join(','):'')+'|'+p.story;}
+function rememberProblem(p){
+  var sig=problemSig(p);
+  if(recentProblems.indexOf(sig)===-1){
+    recentProblems.push(sig);
+    if(recentProblems.length>20)recentProblems.shift();
+  }
 }
 
 function newRound(){
-  var lv=LEVELS[state.diff];var problem;
-  if(state.mode==='add_sub'){
-    var types=[genAddition,genSubtraction,genComparison];
-    if(lv.multiStep)types.push(genMultiStep);
-    problem=pick(types)(lv);
-  }else{
-    var types=[genFracShading,genFracEqualParts,genFracPartition,genFracCompareVisual];
-    if(state.diff>=1)types.push(genFracOfGroup);
-    problem=pick(types)(lv);
-  }
+  var lv=LEVELS[state.diff];var problem;var tries=0;
+  do{
+    if(state.mode==='add_sub'){
+      var types=[genAddition,genSubtraction,genComparison];
+      if(lv.multiStep)types.push(genMultiStep);
+      problem=pick(types)(lv);
+    }else{
+      var ftypes=[genFracShading,genFracEqualParts,genFracPartition,genFracCompareVisual];
+      if(state.diff>=1)ftypes.push(genFracOfGroup);
+      problem=pick(ftypes)(lv);
+    }
+    tries++;
+  }while(recentProblems.indexOf(problemSig(problem))!==-1&&tries<15);
   loadProblem(problem, false);
 }
 
@@ -572,6 +642,7 @@ function checkMCStr(btn,val){
 
 function correct(){
   var pts=state.hintUsed?5:10;state.score+=pts;state.streak++;
+  bumpActivity(2);
   updateUI();checkUnlocks();
   var msgs=['Great job!','You got it!','Amazing!','Super star!','Awesome!','Nailed it!','Perfect!','Way to go!','So smart!','Fantastic!'];
   var msg=pick(msgs);
@@ -581,7 +652,7 @@ function correct(){
 }
 
 function wrong(){
-  state.streak=0;updateUI();
+  state.streak=0;bumpActivity(2);updateUI();
   teachLevel=3;
   document.getElementById('teach-container').innerHTML=buildTeachContent();
   document.getElementById('feedback').innerHTML='<span class="feedback-wrong">Not quite! The answer is <strong>'+state.answer+'</strong></span><br><div class="btn-row" style="margin-top:8px"><button class="btn btn-easier" onclick="tryEasier()">Try an easier one</button><button class="btn btn-next" onclick="newRound()">Next</button></div>';
@@ -591,7 +662,11 @@ function wrong(){
 // ── Init ──
 updateUI();renderDiffBar();
 document.querySelectorAll('.mode-btn').forEach(function(b,i){b.classList.toggle('active',(i===0&&state.mode==='add_sub')||(i===1&&state.mode==='fractions'));});
-newRound();
+if(state.round&&state.round.problem&&state.round.problem.choices&&state.round.mode===state.mode){
+  loadProblem(state.round.problem,false,state.round);
+}else{
+  newRound();
+}
 </script>
 </body>
 </html>

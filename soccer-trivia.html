@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Soccer Trivia Stadium</title>
+<style>
+  :root{
+    --pitch-dark:#081c15;
+    --pitch:#1b4332;
+    --hub-green:#2d6a4f;
+    --line:#95d5b2;
+    --gold:#ffd166;
+    --gold-deep:#e9a819;
+    --white:#f8f9fa;
+    --red:#e76f51;
+    --good:#74c69d;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  html,body{min-height:100%;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    color:var(--white);
+    background:
+      repeating-linear-gradient(90deg, rgba(255,255,255,.018) 0 60px, rgba(0,0,0,.05) 60px 120px),
+      radial-gradient(ellipse at 50% -10%, rgba(255,225,140,.16), transparent 55%),
+      linear-gradient(180deg, #05130d 0%, var(--pitch-dark) 30%, var(--pitch) 75%, #14532d 100%);
+    background-attachment:fixed;
+    padding:14px 12px 40px;
+  }
+  .wrap{max-width:560px;margin:0 auto;}
+  header{text-align:center;margin-bottom:14px;}
+  header h1{
+    font-size:clamp(1.5rem,6vw,2.1rem);
+    letter-spacing:.5px;
+    color:var(--gold);
+    text-shadow:0 2px 12px rgba(0,0,0,.6);
+  }
+  header .sub{color:var(--line);font-size:.85rem;margin-top:2px;}
+  .card{
+    background:linear-gradient(160deg, rgba(45,106,79,.55), rgba(8,28,21,.75));
+    border:1px solid rgba(149,213,178,.25);
+    border-radius:16px;
+    padding:16px;
+    margin-bottom:12px;
+    box-shadow:0 8px 24px rgba(0,0,0,.35);
+    backdrop-filter:blur(2px);
+  }
+  .statgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center;}
+  .stat{background:rgba(8,28,21,.5);border-radius:12px;padding:10px 4px;border:1px solid rgba(149,213,178,.15);}
+  .stat .num{font-size:1.25rem;font-weight:800;color:var(--gold);}
+  .stat .lbl{font-size:.66rem;color:var(--line);text-transform:uppercase;letter-spacing:.5px;margin-top:2px;}
+  .btn{
+    display:block;width:100%;
+    border:none;border-radius:14px;
+    padding:15px 16px;margin-top:10px;
+    font-size:1.05rem;font-weight:800;
+    cursor:pointer;color:var(--pitch-dark);
+    background:linear-gradient(180deg,#ffe08a,var(--gold) 55%,var(--gold-deep));
+    box-shadow:0 4px 0 rgba(0,0,0,.35);
+    transition:transform .08s;
+    text-align:left;
+  }
+  .btn:active{transform:translateY(2px);box-shadow:0 2px 0 rgba(0,0,0,.35);}
+  .btn.green{background:linear-gradient(180deg,#57b894,var(--hub-green) 60%,#1e4d39);color:var(--white);}
+  .btn.ghost{background:rgba(255,255,255,.08);color:var(--white);border:1px solid rgba(149,213,178,.3);box-shadow:none;font-weight:600;}
+  .btn small{display:block;font-weight:500;font-size:.75rem;opacity:.85;margin-top:2px;}
+  .row{display:flex;gap:8px;}
+  .row .btn{flex:1;}
+  .hidden{display:none !important;}
+  /* HUD */
+  .hud{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px;font-weight:700;}
+  .hud .pill{background:rgba(8,28,21,.7);border:1px solid rgba(149,213,178,.25);border-radius:999px;padding:6px 12px;font-size:.85rem;}
+  .hud .score{color:var(--gold);}
+  .hud .streakpill.hot{color:var(--gold);border-color:var(--gold);animation:pulse 1s infinite;}
+  @keyframes pulse{50%{transform:scale(1.07);}}
+  .timerbar{height:8px;border-radius:99px;background:rgba(255,255,255,.12);overflow:hidden;margin-bottom:12px;}
+  .timerbar div{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold-deep));width:100%;transition:width .1s linear;border-radius:99px;}
+  .timerbar div.danger{background:var(--red);}
+  .qmeta{display:flex;justify-content:space-between;font-size:.72rem;color:var(--line);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;}
+  .question{font-size:clamp(1.05rem,4.6vw,1.3rem);font-weight:800;line-height:1.35;margin-bottom:14px;}
+  .opt{
+    display:block;width:100%;text-align:left;
+    background:rgba(255,255,255,.07);
+    border:1px solid rgba(149,213,178,.3);
+    color:var(--white);
+    border-radius:12px;padding:13px 14px;margin-bottom:9px;
+    font-size:1rem;font-weight:600;cursor:pointer;
+    transition:background .12s,border-color .12s;
+  }
+  .opt:not(:disabled):active{background:rgba(255,209,102,.18);}
+  .opt.correct{background:rgba(116,198,157,.28);border-color:var(--good);color:#d8f3dc;}
+  .opt.wrong{background:rgba(231,111,81,.28);border-color:var(--red);}
+  .opt:disabled{cursor:default;opacity:.92;}
+  .funfact{
+    background:rgba(255,209,102,.1);
+    border-left:4px solid var(--gold);
+    border-radius:0 10px 10px 0;
+    padding:10px 12px;margin-top:6px;
+    font-size:.88rem;line-height:1.4;color:#fdf3d8;
+  }
+  .feedback{font-weight:900;font-size:1.1rem;margin-top:6px;}
+  .feedback.good{color:var(--good);}
+  .feedback.bad{color:var(--red);}
+  .catbtns .btn{margin-top:8px;}
+  .panel-title{font-size:.78rem;letter-spacing:1px;text-transform:uppercase;color:var(--line);margin-bottom:8px;font-weight:700;}
+  .catline{display:flex;align-items:center;gap:8px;margin-bottom:7px;font-size:.85rem;}
+  .catline .name{flex:0 0 128px;color:var(--white);opacity:.9;}
+  .catline .bar{flex:1;height:8px;background:rgba(255,255,255,.1);border-radius:99px;overflow:hidden;}
+  .catline .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--hub-green),var(--good));border-radius:99px;}
+  .catline .pct{flex:0 0 40px;text-align:right;color:var(--line);font-weight:700;}
+  .bestworst{display:flex;gap:8px;margin-top:10px;}
+  .bestworst .bw{flex:1;border-radius:12px;padding:9px;text-align:center;font-size:.78rem;}
+  .bw.best{background:rgba(116,198,157,.15);border:1px solid rgba(116,198,157,.4);}
+  .bw.worst{background:rgba(231,111,81,.13);border:1px solid rgba(231,111,81,.4);}
+  .bw b{display:block;font-size:.9rem;margin-top:2px;}
+  .bigscore{text-align:center;padding:8px 0 4px;}
+  .bigscore .n{font-size:3rem;font-weight:900;color:var(--gold);text-shadow:0 2px 14px rgba(255,209,102,.35);}
+  .bigscore .l{color:var(--line);font-size:.8rem;text-transform:uppercase;letter-spacing:1px;}
+  .pr-banner{
+    text-align:center;background:linear-gradient(90deg,transparent,rgba(255,209,102,.25),transparent);
+    color:var(--gold);font-weight:900;font-size:1.15rem;padding:8px 0;margin:6px 0;
+    animation:pulse 1.2s infinite;letter-spacing:1px;
+  }
+  .resline{display:flex;justify-content:space-between;padding:7px 2px;border-bottom:1px dashed rgba(149,213,178,.2);font-size:.92rem;}
+  .resline b{color:var(--gold);}
+  .daily-flag{display:inline-block;background:var(--gold);color:var(--pitch-dark);font-size:.62rem;font-weight:900;padding:2px 7px;border-radius:99px;vertical-align:middle;margin-left:6px;letter-spacing:.5px;}
+  .footer-note{text-align:center;color:rgba(149,213,178,.55);font-size:.7rem;margin-top:18px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>⚽ SOCCER TRIVIA STADIUM</h1>
+    <div class="sub">Isaiah's matchday quiz — chase that PR! 🏟️</div>
+  </header>
+
+  <!-- HOME -->
+  <section id="scr-home">
+    <div class="card">
+      <div class="statgrid">
+        <div class="stat"><div class="num" id="st-hi">0</div><div class="lbl">Quick PR</div></div>
+        <div class="stat"><div class="num" id="st-acc">–</div><div class="lbl">Accuracy</div></div>
+        <div class="stat"><div class="num" id="st-dstreak">0🔥</div><div class="lbl">Daily Streak</div></div>
+      </div>
+    </div>
+
+    <button class="btn" id="b-quick">⚡ Quick Match<small>10 mixed questions · 20s clock · streak bonuses</small></button>
+    <button class="btn green" id="b-daily">📅 Daily 10 <span id="daily-status"></span><small>One official challenge per day — keep the streak alive</small></button>
+    <button class="btn ghost" id="b-drill">🎯 Category Drill<small>Pick a category — questions level up as you score</small></button>
+
+    <div class="card" style="margin-top:14px;">
+      <div class="panel-title">Scouting Report — Category Accuracy</div>
+      <div id="cat-panel"></div>
+      <div class="bestworst" id="bw-panel"></div>
+    </div>
+    <div class="footer-note">Daily PR: <span id="st-hidaily">0</span> · Questions answered: <span id="st-total">0</span></div>
+  </section>
+
+  <!-- CATEGORY PICK -->
+  <section id="scr-cats" class="hidden">
+    <div class="card catbtns">
+      <div class="panel-title">Pick your drill</div>
+      <div id="cat-buttons"></div>
+      <button class="btn ghost" id="b-cats-back">← Back</button>
+    </div>
+  </section>
+
+  <!-- GAME -->
+  <section id="scr-game" class="hidden">
+    <div class="hud">
+      <span class="pill" id="hud-prog">Q 1/10</span>
+      <span class="pill streakpill" id="hud-streak">🔥 0</span>
+      <span class="pill score" id="hud-score">0</span>
+    </div>
+    <div class="timerbar" id="timer-wrap"><div id="timer-fill"></div></div>
+    <div class="card">
+      <div class="qmeta"><span id="q-cat"></span><span id="q-tier"></span></div>
+      <div class="question" id="q-text"></div>
+      <div id="q-opts"></div>
+      <div class="feedback hidden" id="q-fb"></div>
+      <div class="funfact hidden" id="q-fun"></div>
+      <button class="btn hidden" id="b-next">Next ▶</button>
+    </div>
+    <button class="btn ghost" id="b-quit">Quit match</button>
+  </section>
+
+  <!-- RESULTS -->
+  <section id="scr-results" class="hidden">
+    <div class="card">
+      <div class="pr-banner hidden" id="pr-banner">🏆 NEW PR! 🏆</div>
+      <div class="bigscore"><div class="n" id="r-score">0</div><div class="l" id="r-mode">Quick Match</div></div>
+      <div class="resline"><span>Correct answers</span><b id="r-correct">0/10</b></div>
+      <div class="resline"><span>Best streak this match</span><b id="r-streak">0</b></div>
+      <div class="resline"><span>Personal record</span><b id="r-pr">0</b></div>
+      <div class="resline hidden" id="r-dailyline"><span>Daily streak</span><b id="r-dstreak">0 🔥</b></div>
+      <div class="row" style="margin-top:12px;">
+        <button class="btn" id="b-again">Play again</button>
+        <button class="btn ghost" id="b-home">Home</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+"use strict";
+/* ================= QUESTION BANK ================= */
+/*Q-START*/
+const QUESTIONS = [
+// ---------- RULES & OFFICIATING ----------
+{id:1,cat:"rules",t:1,q:"How many players does each team have on the field at kickoff, including the goalkeeper?",o:["11","10","9","12"],a:0,f:"Did you know: a team can't continue a match with fewer than 7 players on the field."},
+{id:2,cat:"rules",t:1,q:"A player shown a red card must…",o:["Leave the match immediately","Sit out for 10 minutes","Switch to goalkeeper","Give up the captain's armband"],a:0,f:"Did you know: the red/yellow card system was inspired by traffic lights and debuted at the 1970 World Cup."},
+{id:3,cat:"rules",t:1,q:"When the ball fully crosses the sideline, play restarts with a…",o:["Throw-in","Corner kick","Goal kick","Drop ball"],a:0,f:"Did you know: on a throw-in, both feet must stay on the ground and the ball must come from behind the head."},
+{id:4,cat:"rules",t:1,q:"How long is each half of a standard soccer match?",o:["45 minutes","30 minutes","60 minutes","40 minutes"],a:0,f:"Did you know: the referee adds stoppage time to make up for pauses — it's never subtracted."},
+{id:5,cat:"rules",t:1,q:"Which body parts are field players NOT allowed to use to play the ball?",o:["Hands and arms","Knees","Shoulders","Head"],a:0,f:"Did you know: the shoulder is legal — chesting and shouldering the ball are perfectly fine."},
+{id:6,cat:"rules",t:2,q:"How far is the penalty spot from the goal line?",o:["12 yards","10 yards","18 yards","6 yards"],a:0,f:"Did you know: the 18-yard box is officially called the 'penalty area' — the small one is the 'goal area'."},
+{id:7,cat:"rules",t:2,q:"Can a player be called offside directly from a throw-in?",o:["No, never","Yes, always","Only in the second half","Only inside the box"],a:0,f:"Did you know: there's also no offside on corner kicks or goal kicks."},
+{id:8,cat:"rules",t:2,q:"A player who gets two yellow cards in the same match receives…",o:["A red card and is sent off","A one-minute penalty","A warning from the captain","An automatic substitution"],a:0,f:"Did you know: two yellows equal a red, but it counts differently than a 'straight red' for suspensions in many leagues."},
+{id:9,cat:"rules",t:2,q:"A corner kick is awarded when the ball crosses the goal line last touched by…",o:["A defending player","An attacking player","The referee","The goalkeeper's gloves only"],a:0,f:"Did you know: you can score directly from a corner — it's called an 'Olympic goal'."},
+{id:10,cat:"rules",t:2,q:"On a free kick, how far must the defensive wall stand from the ball?",o:["10 yards","5 yards","12 yards","15 yards"],a:0,f:"Did you know: referees often use vanishing spray to mark the 10-yard line for the wall."},
+{id:11,cat:"rules",t:2,q:"If the referee stops play for an injury with no foul, play restarts with a…",o:["Drop ball","Penalty kick","Indirect free kick","Throw-in"],a:0,f:"Did you know: since 2019, drop balls are uncontested — they go back to the team that last touched it."},
+{id:12,cat:"rules",t:2,q:"Which player may legally handle the ball, and only inside their own penalty area?",o:["The goalkeeper","The captain","The center back","Any player under pressure"],a:0,f:"Did you know: if a keeper handles the ball outside the box, it's a foul just like for any other player."},
+{id:13,cat:"rules",t:3,q:"If a goalkeeper picks up a deliberate back-pass from a teammate's foot, the other team gets…",o:["An indirect free kick","A penalty kick","A corner kick","A yellow card only"],a:0,f:"Did you know: the back-pass rule was added in 1992 to stop time-wasting and speed up the game."},
+{id:14,cat:"rules",t:3,q:"At the moment a penalty kick is struck, the goalkeeper must have…",o:["At least part of one foot on or above the goal line","Both feet planted on the line","Both hands touching the crossbar","One knee on the ground"],a:0,f:"Did you know: keepers used to have to keep both feet on the line until the ball was kicked."},
+{id:15,cat:"rules",t:3,q:"Can a goal be scored directly from a goal kick?",o:["Yes — it counts against the opponent","No, it's always disallowed","Only if it bounces first","Only in overtime"],a:0,f:"Did you know: a handful of goalkeepers have scored directly from goal kicks with huge wind-assisted punts."},
+{id:16,cat:"rules",t:3,q:"Can a player be offside while standing in their own half of the field?",o:["No — you can't be offside in your own half","Yes, anywhere on the field","Only during a counterattack","Only if the keeper is out of goal"],a:0,f:"Did you know: you also can't be offside if you're level with the second-to-last defender."},
+{id:17,cat:"rules",t:3,q:"In a penalty shootout, how many kicks does each team take before sudden death begins?",o:["5","3","10","7"],a:0,f:"Did you know: the longest shootouts on record have gone past 20 kicks per team!"},
+// ---------- POSITIONS & TACTICS ----------
+{id:18,cat:"tactics",t:1,q:"In a 4-3-3 formation, what does the first number (4) stand for?",o:["Defenders","Forwards","Midfielders","Goalkeepers"],a:0,f:"Did you know: formation numbers always read from defense to attack — the keeper is never counted."},
+{id:19,cat:"tactics",t:1,q:"Which position's main job is stopping shots and protecting the goal?",o:["Goalkeeper","Striker","Winger","Attacking midfielder"],a:0,f:"Did you know: goalkeepers are the only players who wear a different colored jersey from their team."},
+{id:20,cat:"tactics",t:1,q:"A striker's number one job is to…",o:["Score goals","Take every throw-in","Mark the opposing keeper","Guard the near post on corners"],a:0,f:"Did you know: strikers are often called 'number 9s' after the shirt number the position traditionally wears."},
+{id:21,cat:"tactics",t:1,q:"Which defensive position plays widest, near the sidelines?",o:["Fullback","Center back","Holding midfielder","Sweeper... in the middle"],a:0,f:"Did you know: modern fullbacks sprint further in matches than almost any other position."},
+{id:22,cat:"tactics",t:1,q:"A 'header' is when a player…",o:["Plays the ball with their head","Leads the team out of the tunnel","Takes the opening kickoff","Wears the captain's armband"],a:0,f:"Did you know: some players score more with their head than their feet — timing beats height."},
+{id:23,cat:"tactics",t:2,q:"A 'false 9' is a…",o:["Striker who drops deep into midfield instead of staying up top","Defender who wears the number 9","Goalkeeper who joins the attack","Substitute who fakes an injury"],a:0,f:"Did you know: Messi famously played false 9 for Barcelona under Pep Guardiola."},
+{id:24,cat:"tactics",t:2,q:"'Gegenpressing' is a tactic where a team…",o:["Presses to win the ball back immediately after losing it","Passes only backwards","Defends with all 11 players in the box","Fouls on purpose to slow the game"],a:0,f:"Did you know: 'gegen' is German for 'against' — Jürgen Klopp made the style world-famous."},
+{id:25,cat:"tactics",t:2,q:"How many strikers does a classic 4-4-2 formation use?",o:["2","4","1","3"],a:0,f:"Did you know: the 4-4-2 dominated soccer for decades before three-forward systems took over."},
+{id:26,cat:"tactics",t:2,q:"The defensive midfielder who shields the back line is often called the…",o:["Holding midfielder or 'number 6'","Target man","Second striker","Inside forward"],a:0,f:"Did you know: great number 6s are praised for 'breaking up play' — interceptions, not just tackles."},
+{id:27,cat:"tactics",t:2,q:"'Parking the bus' means a team is…",o:["Defending with almost every player behind the ball","Celebrating a win on the team bus","Substituting all forwards","Playing without a goalkeeper"],a:0,f:"Did you know: José Mourinho popularized the phrase while complaining about an opponent in 2004."},
+{id:28,cat:"tactics",t:2,q:"A 'through ball' is a pass that…",o:["Splits the defense for a teammate running behind it","Goes through the wall on a free kick","Is rolled between a teammate's legs","Travels the full length of the field"],a:0,f:"Did you know: a perfect through ball beats the offside trap by arriving just as the runner does."},
+{id:29,cat:"tactics",t:2,q:"When a team finishes a match without conceding a goal, it's called a…",o:["Clean sheet","Blank slate","Shutdown","White wall"],a:0,f:"Did you know: 'clean sheet' comes from the days when reporters kept score on paper sheets."},
+{id:30,cat:"tactics",t:3,q:"A team defending in a 'low block' is…",o:["Sitting deep and compact near its own box","Pressing high up the field","Playing a flat offside trap at midfield","Man-marking the whole game"],a:0,f:"Did you know: beating a low block usually takes quick switches of play and shots from distance."},
+{id:31,cat:"tactics",t:3,q:"An 'overlapping run' happens when a…",o:["Fullback sprints outside and past their own winger","Striker runs behind their own keeper","Defender swaps places with the referee","Midfielder runs backwards with the ball"],a:0,f:"Did you know: the overlap forces defenders to choose between two attackers — that split second creates crosses."},
+{id:32,cat:"tactics",t:3,q:"An 'inverted winger' plays…",o:["On the opposite wing from their strong foot so they can cut inside and shoot","Only in their own half","As a backup goalkeeper","Directly behind the striker at all times"],a:0,f:"Did you know: left-footed Arjen Robben cut in from the right wing so often it became 'unstoppable but unstopped'."},
+{id:33,cat:"tactics",t:3,q:"Traditionally, the 'number 10' role belongs to the…",o:["Creative attacking midfielder / playmaker","Backup goalkeeper","Most defensive center back","Fastest fullback"],a:0,f:"Did you know: Pelé, Maradona, and Messi all made the number 10 shirt legendary."},
+{id:34,cat:"tactics",t:3,q:"In zonal marking, defenders are responsible for…",o:["A zone of space rather than one specific opponent","One opponent wherever they go","Only the ball carrier","The referee's blind side"],a:0,f:"Did you know: most pro teams mix zonal and man marking on corner kicks."},
+// ---------- SKILLS & TRAINING ----------
+{id:35,cat:"skills",t:1,q:"For the most accurate short pass, you should strike the ball with the…",o:["Inside of your foot","Tip of your toes","Heel","Knee"],a:0,f:"Did you know: coaches call the inside-of-foot pass the 'push pass' — it's the first skill most players learn."},
+{id:36,cat:"skills",t:1,q:"'Dribbling' in soccer means…",o:["Running with the ball under close control","Bouncing the ball like basketball","Throwing the ball to a teammate","Sliding on your knees to celebrate"],a:0,f:"Did you know: elite dribblers touch the ball with nearly every step to keep it glued to their feet."},
+{id:37,cat:"skills",t:1,q:"Juggling the ball every day mostly improves your…",o:["First touch and ball control","Throw-in distance","Trash talking","Referee signals"],a:0,f:"Did you know: the freestyle juggling record is over 24 hours of keep-ups without the ball dropping."},
+{id:38,cat:"skills",t:1,q:"Warming up before a match mainly helps players…",o:["Prepare muscles and reduce injury risk","Intimidate the other team","Dry out the field","Save their energy"],a:0,f:"Did you know: pro warmups follow a script — jog, dynamic stretches, ball work, then sprints."},
+{id:39,cat:"skills",t:1,q:"A 'chip' is a shot where you…",o:["Loft the ball up and over the goalkeeper","Blast it as hard as possible along the ground","Pass it backwards to a defender","Kick it out of bounds on purpose"],a:0,f:"Did you know: a well-timed chip works best when the keeper has wandered off the goal line."},
+{id:40,cat:"skills",t:2,q:"The 'Cruyff turn' is named after a legendary player from which country?",o:["Netherlands","Brazil","Italy","Spain"],a:0,f:"Did you know: Johan Cruyff unveiled the move at the 1974 World Cup and left a defender facing the wrong way."},
+{id:41,cat:"skills",t:2,q:"A 'nutmeg' is when you…",o:["Play the ball through an opponent's legs","Score with your first touch of the game","Hit the crossbar twice","Save a penalty with your feet"],a:0,f:"Did you know: in many countries getting nutmegged means teammates get to tease you all week."},
+{id:42,cat:"skills",t:2,q:"A 'volley' is when you strike the ball…",o:["Out of the air before it bounces","After two bounces","Only with your weak foot","While lying on the ground"],a:0,f:"Did you know: a 'half-volley' is struck the instant the ball touches the ground."},
+{id:43,cat:"skills",t:2,q:"For a powerful shot, you should strike the ball with your…",o:["Laces (the instep)","Toes","Heel","Ankle bone"],a:0,f:"Did you know: locking your ankle and following through toward the target adds serious power."},
+{id:44,cat:"skills",t:2,q:"Your 'first touch' is…",o:["How you control the ball the moment you receive it","The first goal of the season","The pregame handshake","The opening kickoff"],a:0,f:"Did you know: a good first touch sets up your next move before defenders can react."},
+{id:45,cat:"skills",t:2,q:"A 'bicycle kick' is when a player…",o:["Kicks the ball overhead while flipping backwards","Rides a bike during training","Kicks with both feet at once on the ground","Passes with the back of the heel"],a:0,f:"Did you know: Pelé's bicycle kick is so iconic there are statues of it."},
+{id:46,cat:"skills",t:2,q:"Practicing with your 'weak foot' means training…",o:["Your non-dominant foot","Whichever foot is injured","Your walking foot","The foot you plant with"],a:0,f:"Did you know: two-footed players are much harder to defend because they can go either direction."},
+{id:47,cat:"skills",t:3,q:"A 'rabona' is a trick where a player kicks the ball…",o:["With their kicking leg wrapped behind their standing leg","With both knees","Using the back of their head","While holding the goalpost"],a:0,f:"Did you know: 'rabona' comes from an Argentine phrase meaning to skip school!"},
+{id:48,cat:"skills",t:3,q:"Plyometric training (box jumps, bounding) mainly builds…",o:["Explosive power","Ball juggling skills","Goalkeeping vision","Flexibility only"],a:0,f:"Did you know: explosive first steps win more 1v1 duels than pure top speed."},
+{id:49,cat:"skills",t:3,q:"The 'elastico' skill move is a…",o:["Quick outside-then-inside flick with one foot","Two-footed slide tackle","Long throw-in technique","Goalkeeper punching drill"],a:0,f:"Did you know: Brazilian star Ronaldinho made the elastico one of the most copied moves on the planet."},
+{id:50,cat:"skills",t:3,q:"Interval training (sprint, rest, repeat) best improves a player's…",o:["Ability to sprint repeatedly and recover fast","Free kick curve","Throw-in accuracy","Shin guard durability"],a:0,f:"Did you know: soccer players change speed or direction roughly every 4–6 seconds in a match."},
+{id:51,cat:"skills",t:3,q:"Modern coaches recommend which kind of stretching during warmups?",o:["Dynamic stretching (moving stretches)","Holding static stretches for 5 minutes each","No stretching ever","Stretching only after the game starts"],a:0,f:"Did you know: leg swings, high knees, and open-the-gate are classic dynamic warmup moves."},
+// ---------- WORLD CUP & HISTORY ----------
+{id:52,cat:"history",t:1,q:"Which country won the 2022 FIFA World Cup?",o:["Argentina","France","Brazil","Germany"],a:0,f:"Did you know: the 2022 final is widely called one of the greatest World Cup finals ever played."},
+{id:53,cat:"history",t:1,q:"The first FIFA World Cup was held in 1930 in which country?",o:["Uruguay","Brazil","Italy","England"],a:0,f:"Did you know: host Uruguay won that first tournament, beating Argentina 4–2 in the final."},
+{id:54,cat:"history",t:1,q:"How often is the FIFA World Cup normally held?",o:["Every 4 years","Every year","Every 2 years","Every 10 years"],a:0,f:"Did you know: the World Cup skipped 1942 and 1946 because of World War II."},
+{id:55,cat:"history",t:1,q:"Which country hosted the 2022 World Cup?",o:["Qatar","Russia","USA","Japan"],a:0,f:"Did you know: 2022 was the first World Cup ever played in November and December instead of summer."},
+{id:56,cat:"history",t:2,q:"How was the 2022 World Cup final between Argentina and France decided?",o:["A penalty shootout after a 3–3 draw","A golden goal in the 91st minute","A 1–0 win in normal time","A coin flip"],a:0,f:"Did you know: Kylian Mbappé scored a hat trick in that final and still ended up on the losing side."},
+{id:57,cat:"history",t:2,q:"Through 2022, which country has won the most men's World Cups?",o:["Brazil (5 titles)","Germany (5 titles)","Argentina (6 titles)","Italy (6 titles)"],a:0,f:"Did you know: Brazil won in 1958, 1962, 1970, 1994, and 2002."},
+{id:58,cat:"history",t:2,q:"How many World Cups did Pelé win as a player?",o:["3","1","2","4"],a:0,f:"Did you know: Pelé is the only player in history to win three World Cups (1958, 1962, 1970)."},
+{id:59,cat:"history",t:2,q:"Who won the 1999 Women's World Cup, famous for a winning penalty by Brandi Chastain?",o:["United States","China","Norway","Germany"],a:0,f:"Did you know: over 90,000 fans packed the Rose Bowl for that final — a record for a women's sporting event at the time."},
+{id:60,cat:"history",t:2,q:"Which country hosted AND won the 1966 World Cup?",o:["England","France","Spain","Mexico"],a:0,f:"Did you know: 1966 is still England's only men's World Cup title."},
+{id:61,cat:"history",t:2,q:"In a famous 2014 World Cup semifinal, Germany beat host Brazil by what score?",o:["7–1","3–2","5–4","2–0"],a:0,f:"Did you know: Germany scored 5 goals in just 18 first-half minutes in that match."},
+{id:62,cat:"history",t:3,q:"Who won the Golden Boot (top scorer) at the 2022 World Cup?",o:["Kylian Mbappé","Lionel Messi","Harry Kane","Olivier Giroud"],a:0,f:"Did you know: Mbappé's 8 goals were the most at a World Cup since Ronaldo's run in 2002."},
+{id:63,cat:"history",t:3,q:"Maradona's controversial 'Hand of God' goal came in the 1986 World Cup against…",o:["England","Brazil","West Germany","Italy"],a:0,f:"Did you know: minutes later he scored the 'Goal of the Century', dribbling past half the England team."},
+{id:64,cat:"history",t:3,q:"Through 2022, who holds the record for most goals in men's World Cup history?",o:["Miroslav Klose (16)","Pelé (14)","Ronaldo of Brazil (15)","Just Fontaine (13)"],a:0,f:"Did you know: Klose broke Brazilian Ronaldo's record on Brazilian soil in 2014."},
+{id:65,cat:"history",t:3,q:"Through 2022, which country is the only one to appear at every men's World Cup?",o:["Brazil","Germany","Italy","Argentina"],a:0,f:"Did you know: Brazil qualified for all 22 tournaments from 1930 through 2022."},
+{id:66,cat:"history",t:3,q:"How many Women's World Cup titles had the USA won through the 2019 tournament?",o:["4","2","3","5"],a:0,f:"Did you know: the USWNT won in 1991, 1999, 2015, and 2019."},
+{id:67,cat:"history",t:3,q:"Uruguay's shocking win over Brazil in the 1950 World Cup's final match is known as the…",o:["Maracanazo","Miracle of Montevideo","Rio Robbery","Samba Silencer"],a:0,f:"Did you know: nearly 200,000 fans at the Maracanã went silent — still one of sport's biggest upsets."},
+{id:68,cat:"history",t:1,q:"What is the winner of the World Cup presented with?",o:["The FIFA World Cup Trophy","The Golden Cleat","The FIFA Champions Shield","The World Football Crown"],a:0,f:"Did you know: winners only keep a replica — the real solid-gold trophy stays with FIFA."},
+// ---------- LEGENDS ----------
+{id:69,cat:"legends",t:1,q:"Lionel Messi plays international soccer for which country?",o:["Argentina","Spain","Portugal","Brazil"],a:0,f:"Did you know: Messi moved to Barcelona's academy at age 13 — the club famously helped pay for his growth treatment."},
+{id:70,cat:"legends",t:1,q:"Cristiano Ronaldo plays international soccer for which country?",o:["Portugal","Brazil","Spain","Italy"],a:0,f:"Did you know: Ronaldo became Portugal's all-time top scorer and holds the men's international goals record."},
+{id:71,cat:"legends",t:1,q:"Soccer legend Pelé was from which country?",o:["Brazil","Argentina","Portugal","Mexico"],a:0,f:"Did you know: Pelé scored over 1,000 career goals — his 1,000th caused a pitch invasion in Rio."},
+{id:72,cat:"legends",t:1,q:"Messi is famous for his incredible…",o:["Left foot","Right elbow","Goalkeeping","Slide tackles"],a:0,f:"Did you know: defenders know Messi wants to cut onto his left foot — they still can't stop it."},
+{id:73,cat:"legends",t:2,q:"Mia Hamm, one of the greatest players ever, starred for which national team?",o:["United States","England","Canada","Germany"],a:0,f:"Did you know: Mia Hamm retired as the world's all-time leading international scorer, man or woman, at the time."},
+{id:74,cat:"legends",t:2,q:"Diego Maradona played international soccer for…",o:["Argentina","Uruguay","Chile","Spain"],a:0,f:"Did you know: Maradona captained Argentina to the 1986 World Cup title almost single-handedly."},
+{id:75,cat:"legends",t:2,q:"Marta, six-time world player of the year, stars for which country?",o:["Brazil","Portugal","Colombia","USA"],a:0,f:"Did you know: Marta is often called 'Pelé in a skirt' — a nickname Pelé himself approved of."},
+{id:76,cat:"legends",t:2,q:"Messi spent the huge majority of his club career (through 2021) at which club?",o:["Barcelona","Real Madrid","Manchester City","AC Milan"],a:0,f:"Did you know: Messi scored 672 goals for Barcelona — a record for one player at a single club."},
+{id:77,cat:"legends",t:2,q:"What is Cristiano Ronaldo's famous goal celebration called?",o:["The 'Siu' jump and spin","The Robot","The Worm","The Griddy"],a:0,f:"Did you know: crowds shout 'SIUUU' in sync with his landing — even at other sports events."},
+{id:78,cat:"legends",t:2,q:"Which club did Cristiano Ronaldo NEVER play for?",o:["Liverpool","Manchester United","Real Madrid","Juventus"],a:0,f:"Did you know: Ronaldo won league titles in England, Spain, and Italy — three different countries."},
+{id:79,cat:"legends",t:3,q:"Pelé won his first World Cup in 1958 at age 17. Which country hosted it?",o:["Sweden","Brazil","Mexico","France"],a:0,f:"Did you know: teenage Pelé scored twice in the final and cried on his teammates' shoulders after."},
+{id:80,cat:"legends",t:3,q:"In which year did Messi finally win his first World Cup?",o:["2022","2014","2018","2010"],a:0,f:"Did you know: Messi was named the tournament's best player in both 2014 and 2022."},
+{id:81,cat:"legends",t:3,q:"Maradona captained Argentina to World Cup glory in which year?",o:["1986","1990","1982","1978"],a:0,f:"Did you know: that 1986 run included maybe the greatest single-tournament performance ever."},
+{id:82,cat:"legends",t:3,q:"Through 2019, who held the record for most goals in World Cup history — men's OR women's?",o:["Marta (17 goals)","Pelé","Cristiano Ronaldo","Abby Wambach"],a:0,f:"Did you know: Marta passed Miroslav Klose's 16 when she scored her 17th at the 2019 Women's World Cup."},
+{id:83,cat:"legends",t:3,q:"How many Olympic gold medals did Mia Hamm win with the USA?",o:["2","1","3","0"],a:0,f:"Did you know: Hamm won gold in 1996 and 2004, plus two World Cups (1991 and 1999)."},
+{id:84,cat:"legends",t:3,q:"Through 2023, who had won the most Ballon d'Or awards?",o:["Lionel Messi (8)","Cristiano Ronaldo (7)","Pelé (6)","Johan Cruyff (5)"],a:0,f:"Did you know: Messi won his 8th Ballon d'Or in 2023, largely for his 2022 World Cup triumph."},
+{id:85,cat:"legends",t:3,q:"What is Pelé's real full first name?",o:["Edson","Eduardo","Emilio","Ernesto"],a:0,f:"Did you know: Edson Arantes do Nascimento was named after Thomas Edison — and nobody knows for sure where 'Pelé' came from."}
+];
+/*Q-END*/
+
+const CATS = {
+  rules:   {label:"Rules & Officiating", icon:"🟨"},
+  tactics: {label:"Positions & Tactics", icon:"🧠"},
+  skills:  {label:"Skills & Training",   icon:"👟"},
+  history: {label:"World Cup & History", icon:"🏆"},
+  legends: {label:"Legends",             icon:"⭐"}
+};
+
+/* ================= STATE / PERSISTENCE ================= */
+const SAVE_KEY = "soccer-trivia-save-v1";
+const HUB_KEY  = "hubSummary_soccer-trivia";
+const RECENT_MAX = 40;
+
+function defaultState(){
+  const cats = {};
+  Object.keys(CATS).forEach(k => cats[k] = {answered:0, correct:0});
+  return {
+    hiQuick:0, hiDaily:0,
+    answered:0, correct:0,
+    daily:{lastDate:null, streak:0},
+    cats, recent:[],
+    activity:{date:todayKey(), actions:0, earnedDates:[]}
+  };
+}
+let S = defaultState();
+
+function load(){
+  try{
+    const raw = localStorage.getItem(SAVE_KEY);
+    if(raw){
+      const d = JSON.parse(raw);
+      S = Object.assign(defaultState(), d);
+      S.daily = Object.assign({lastDate:null,streak:0}, d.daily||{});
+      Object.keys(CATS).forEach(k=>{ if(!S.cats[k]) S.cats[k]={answered:0,correct:0}; });
+      if(!Array.isArray(S.recent)) S.recent = [];
+      if(!S.activity || typeof S.activity !== "object") S.activity = {date:todayKey(), actions:0, earnedDates:[]};
+      if(typeof S.activity.actions !== "number") S.activity.actions = 0;
+      if(!Array.isArray(S.activity.earnedDates)) S.activity.earnedDates = [];
+    }
+  }catch(e){ S = defaultState(); }
+}
+function save(){
+  try{
+    localStorage.setItem(SAVE_KEY, JSON.stringify(S));
+    const pct = S.answered ? Math.round(100*S.correct/S.answered) : 0;
+    const hub = {
+      app:"soccer-trivia", kid:"isaiah", icon:"⚽",
+      label:"High " + S.hiQuick.toLocaleString() + " • " + pct + "% accuracy",
+      pct:pct, streak:S.daily.streak, stars:null,
+      lastPlayed:new Date().toISOString()
+    };
+    const act = S.activity;
+    const today = todayKey();
+    hub.actionsToday = (act && act.date === today && typeof act.actions === "number") ? act.actions : 0;
+    hub.actionsDate = today;
+    hub.earnedDates = (act && Array.isArray(act.earnedDates)) ? act.earnedDates : [];
+    localStorage.setItem(HUB_KEY, JSON.stringify(hub));
+  }catch(e){ /* storage unavailable — play on */ }
+}
+
+function recordActivity(weight){
+  try{
+    const t = todayKey();
+    if(!S.activity || typeof S.activity !== "object") S.activity = {date:t, actions:0, earnedDates:[]};
+    const a = S.activity;
+    if(!Array.isArray(a.earnedDates)) a.earnedDates = [];
+    if(typeof a.actions !== "number") a.actions = 0;
+    if(a.date !== t){ a.date = t; a.actions = 0; }
+    a.actions += weight;
+    if(a.actions >= 20 && !a.earnedDates.includes(t)){
+      a.earnedDates.push(t);
+      if(a.earnedDates.length > 30) a.earnedDates = a.earnedDates.slice(-30);
+    }
+  }catch(e){}
+  save();
+}
+
+/* ================= HELPERS ================= */
+const $ = id => document.getElementById(id);
+function show(id){
+  ["scr-home","scr-cats","scr-game","scr-results"].forEach(s=>$(s).classList.add("hidden"));
+  $(id).classList.remove("hidden");
+  window.scrollTo(0,0);
+}
+function shuffle(arr, rnd){
+  const a = arr.slice(); const r = rnd || Math.random;
+  for(let i=a.length-1;i>0;i--){ const j = Math.floor(r()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+  return a;
+}
+function mulberry32(seed){
+  return function(){
+    seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
+    let t = Math.imul(seed ^ (seed>>>15), 1|seed);
+    t = (t + Math.imul(t ^ (t>>>7), 61|t)) ^ t;
+    return ((t ^ (t>>>14)) >>> 0) / 4294967296;
+  };
+}
+function hashStr(s){ let h=0; for(let i=0;i<s.length;i++){ h = (h*31 + s.charCodeAt(i))|0; } return h; }
+function todayKey(){
+  const d = new Date();
+  return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
+}
+function yesterdayKey(){
+  const d = new Date(); d.setDate(d.getDate()-1);
+  return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
+}
+function pushRecent(id){
+  S.recent.push(id);
+  while(S.recent.length > RECENT_MAX) S.recent.shift();
+}
+function pickAvoidingRecent(pool, n){
+  const fresh = pool.filter(q => !S.recent.includes(q.id));
+  let picked = shuffle(fresh).slice(0, n);
+  if(picked.length < n){
+    const usedIds = picked.map(q=>q.id);
+    const backfill = shuffle(pool.filter(q => !usedIds.includes(q.id))).slice(0, n - picked.length);
+    picked = picked.concat(backfill);
+  }
+  return shuffle(picked);
+}
+
+/* ================= GAME SESSION ================= */
+const TIMER_SECS = 20;
+let G = null;       // {mode, list, idx, score, streak, bestStreak, correctCount, timed, drillTier, drillCat, drillRun, usedIds, dailyCounts}
+let tick = null, timeLeft = 0;
+
+function startQuick(){
+  G = { mode:"quick", list:pickAvoidingRecent(QUESTIONS,10), idx:0, score:0, streak:0,
+        bestStreak:0, correctCount:0, timed:true };
+  show("scr-game"); renderQuestion();
+}
+function startDaily(){
+  const seed = hashStr("soccer-daily-" + todayKey());
+  const rnd = mulberry32(seed);
+  const list = shuffle(QUESTIONS, rnd).slice(0,10);
+  G = { mode:"daily", list, idx:0, score:0, streak:0, bestStreak:0, correctCount:0,
+        timed:true, alreadyDone: S.daily.lastDate === todayKey() };
+  show("scr-game"); renderQuestion();
+}
+function startDrill(cat){
+  const pool = QUESTIONS.filter(q=>q.cat===cat);
+  G = { mode:"drill", drillCat:cat, drillTier:1, drillRun:0, usedIds:[],
+        list:[], idx:0, score:0, streak:0, bestStreak:0, correctCount:0, timed:false, total:10 };
+  nextDrillQuestion();
+  show("scr-game"); renderQuestion();
+}
+function nextDrillQuestion(){
+  const pool = QUESTIONS.filter(q=>q.cat===G.drillCat && !G.usedIds.includes(q.id));
+  if(!pool.length) return false;
+  // prefer current tier, then nearest tiers, lightly avoiding recent
+  const byTierDist = t => pool.filter(q=>q.t===t);
+  let candidates = byTierDist(G.drillTier);
+  if(!candidates.length) candidates = byTierDist(Math.max(1,G.drillTier-1));
+  if(!candidates.length) candidates = byTierDist(Math.min(3,G.drillTier+1));
+  if(!candidates.length) candidates = pool;
+  const fresh = candidates.filter(q=>!S.recent.includes(q.id));
+  const q = shuffle(fresh.length?fresh:candidates)[0];
+  G.usedIds.push(q.id);
+  G.list.push(q);
+  return true;
+}
+
+function currentQ(){ return G.list[G.idx]; }
+function totalQ(){ return G.mode==="drill" ? G.total : G.list.length; }
+
+function renderQuestion(){
+  const q = currentQ();
+  $("hud-prog").textContent = "Q " + (G.idx+1) + "/" + totalQ();
+  $("hud-score").textContent = G.score.toLocaleString();
+  updateStreakPill();
+  $("q-cat").textContent = CATS[q.cat].icon + " " + CATS[q.cat].label;
+  $("q-tier").textContent = "★".repeat(q.t) + "☆".repeat(3-q.t);
+  $("q-text").textContent = q.q;
+  $("q-fb").classList.add("hidden");
+  $("q-fun").classList.add("hidden");
+  $("b-next").classList.add("hidden");
+
+  // shuffle options every render
+  const opts = q.o.map((text,i)=>({text, correct:i===q.a}));
+  const shuffled = shuffle(opts);
+  const box = $("q-opts"); box.innerHTML = "";
+  shuffled.forEach(o=>{
+    const b = document.createElement("button");
+    b.className = "opt"; b.textContent = o.text;
+    b.addEventListener("click", ()=>answer(b, o.correct));
+    box.appendChild(b);
+  });
+
+  if(G.timed){
+    $("timer-wrap").classList.remove("hidden");
+    startTimer();
+  } else {
+    $("timer-wrap").classList.add("hidden");
+  }
+}
+function updateStreakPill(){
+  const p = $("hud-streak");
+  p.textContent = "🔥 " + G.streak;
+  p.classList.toggle("hot", G.streak >= 3);
+}
+function startTimer(){
+  stopTimer();
+  timeLeft = TIMER_SECS;
+  const fill = $("timer-fill");
+  fill.classList.remove("danger");
+  fill.style.width = "100%";
+  tick = setInterval(()=>{
+    timeLeft -= 0.1;
+    const pct = Math.max(0, timeLeft/TIMER_SECS*100);
+    fill.style.width = pct + "%";
+    if(timeLeft <= 5) fill.classList.add("danger");
+    if(timeLeft <= 0){ stopTimer(); timeUp(); }
+  }, 100);
+}
+function stopTimer(){ if(tick){ clearInterval(tick); tick = null; } }
+
+function timeUp(){
+  const q = currentQ();
+  document.querySelectorAll("#q-opts .opt").forEach(b=>{
+    b.disabled = true;
+    if(b.textContent === q.o[q.a]) b.classList.add("correct");
+  });
+  recordAnswer(false);
+  const fb = $("q-fb");
+  fb.textContent = "⏱️ Time's up!";
+  fb.className = "feedback bad";
+  fb.classList.remove("hidden");
+  showFunAndNext(q);
+}
+
+function answer(btn, isCorrect){
+  stopTimer();
+  const q = currentQ();
+  document.querySelectorAll("#q-opts .opt").forEach(b=>{
+    b.disabled = true;
+    if(b.textContent === q.o[q.a]) b.classList.add("correct");
+  });
+  if(!isCorrect) btn.classList.add("wrong");
+
+  let gained = 0;
+  if(isCorrect){
+    gained = 100;
+    if(G.timed) gained += Math.round(Math.max(0,timeLeft) * 5); // time bonus up to +100
+    if(G.streak + 1 >= 3) gained += 50;                          // streak bonus
+    G.score += gained;
+    G.correctCount++;
+    G.streak++;
+    if(G.streak > G.bestStreak) G.bestStreak = G.streak;
+    if(G.mode === "drill"){
+      G.drillRun++;
+      if(G.drillRun >= 2 && G.drillTier < 3){ G.drillTier++; G.drillRun = 0; }
+    }
+  } else {
+    G.streak = 0;
+    if(G.mode === "drill") G.drillRun = 0;
+  }
+  recordAnswer(isCorrect);
+  updateStreakPill();
+  $("hud-score").textContent = G.score.toLocaleString();
+
+  const fb = $("q-fb");
+  if(isCorrect){
+    fb.textContent = "✅ GOAL! +" + gained + (G.streak>=3 ? "  (🔥 streak bonus!)" : "");
+    fb.className = "feedback good";
+  } else {
+    fb.textContent = "❌ Saved by the keeper!";
+    fb.className = "feedback bad";
+  }
+  fb.classList.remove("hidden");
+  showFunAndNext(q);
+}
+
+function recordAnswer(isCorrect){
+  const q = currentQ();
+  S.answered++;
+  if(isCorrect) S.correct++;
+  S.cats[q.cat].answered++;
+  if(isCorrect) S.cats[q.cat].correct++;
+  pushRecent(q.id);
+  recordActivity(1); /* answered question = 1 action; saves + updates hub */
+}
+
+function showFunAndNext(q){
+  const fun = $("q-fun");
+  fun.textContent = "💡 " + q.f;
+  fun.classList.remove("hidden");
+  const nb = $("b-next");
+  nb.textContent = (G.idx+1 >= totalQ()) ? "Final whistle — see results 🏁" : "Next ▶";
+  nb.classList.remove("hidden");
+}
+
+$("b-next").addEventListener("click", ()=>{
+  G.idx++;
+  if(G.idx >= totalQ()){ endGame(); return; }
+  if(G.mode === "drill" && G.idx >= G.list.length){
+    if(!nextDrillQuestion()){ endGame(); return; }
+  }
+  renderQuestion();
+});
+
+function endGame(){
+  stopTimer();
+  let isPR = false;
+  if(G.mode === "quick"){
+    if(G.score > S.hiQuick){ S.hiQuick = G.score; isPR = true; }
+    $("r-mode").textContent = "Quick Match";
+    $("r-pr").textContent = S.hiQuick.toLocaleString();
+    $("r-dailyline").classList.add("hidden");
+  } else if(G.mode === "daily"){
+    if(G.score > S.hiDaily){ S.hiDaily = G.score; isPR = true; }
+    if(!G.alreadyDone){
+      S.daily.streak = (S.daily.lastDate === yesterdayKey()) ? S.daily.streak + 1 : 1;
+      S.daily.lastDate = todayKey();
+    }
+    $("r-mode").textContent = "Daily 10 — " + todayKey();
+    $("r-pr").textContent = S.hiDaily.toLocaleString();
+    $("r-dstreak").textContent = S.daily.streak + " 🔥";
+    $("r-dailyline").classList.remove("hidden");
+  } else {
+    $("r-mode").textContent = CATS[G.drillCat].label + " Drill (reached tier " + G.drillTier + ")";
+    $("r-pr").textContent = S.hiQuick.toLocaleString();
+    $("r-dailyline").classList.add("hidden");
+  }
+  if(G.idx >= totalQ()) recordActivity(2); /* full 10-question round bonus; saves + updates hub */
+  else save();
+  $("pr-banner").classList.toggle("hidden", !isPR);
+  $("r-score").textContent = G.score.toLocaleString();
+  $("r-correct").textContent = G.correctCount + "/" + totalQ();
+  $("r-streak").textContent = G.bestStreak + (G.bestStreak>=3 ? " 🔥" : "");
+  show("scr-results");
+}
+
+/* ================= HOME / PANELS ================= */
+function renderHome(){
+  $("st-hi").textContent = S.hiQuick.toLocaleString();
+  $("st-hidaily").textContent = S.hiDaily.toLocaleString();
+  $("st-total").textContent = S.answered.toLocaleString();
+  $("st-acc").textContent = S.answered ? Math.round(100*S.correct/S.answered) + "%" : "–";
+  $("st-dstreak").textContent = S.daily.streak + "🔥";
+  $("daily-status").innerHTML = S.daily.lastDate === todayKey()
+    ? '<span class="daily-flag">DONE ✓</span>' : '<span class="daily-flag">TODAY</span>';
+
+  // category panel
+  const panel = $("cat-panel"); panel.innerHTML = "";
+  let best = null, worst = null;
+  Object.keys(CATS).forEach(k=>{
+    const c = S.cats[k];
+    const pct = c.answered ? Math.round(100*c.correct/c.answered) : null;
+    const row = document.createElement("div");
+    row.className = "catline";
+    row.innerHTML = '<span class="name">' + CATS[k].icon + " " + CATS[k].label + '</span>' +
+      '<span class="bar"><i style="width:' + (pct===null?0:pct) + '%"></i></span>' +
+      '<span class="pct">' + (pct===null ? "–" : pct + "%") + '</span>';
+    panel.appendChild(row);
+    if(pct !== null && c.answered >= 3){
+      if(!best  || pct > best.pct)  best  = {k, pct};
+      if(!worst || pct < worst.pct) worst = {k, pct};
+    }
+  });
+  const bw = $("bw-panel"); bw.innerHTML = "";
+  if(best && worst && best.k !== worst.k){
+    bw.innerHTML =
+      '<div class="bw best">💪 Strongest<b>' + CATS[best.k].label + " · " + best.pct + '%</b></div>' +
+      '<div class="bw worst">🎯 Train this<b>' + CATS[worst.k].label + " · " + worst.pct + '%</b></div>';
+  } else {
+    bw.innerHTML = '<div class="bw best" style="flex:1">Play a few rounds to unlock your scouting report! 📋</div>';
+  }
+}
+
+function renderCatButtons(){
+  const box = $("cat-buttons"); box.innerHTML = "";
+  Object.keys(CATS).forEach(k=>{
+    const c = S.cats[k];
+    const pct = c.answered ? Math.round(100*c.correct/c.answered) + "% accuracy" : "not scouted yet";
+    const b = document.createElement("button");
+    b.className = "btn green";
+    b.innerHTML = CATS[k].icon + " " + CATS[k].label + "<small>" + pct + "</small>";
+    b.addEventListener("click", ()=>startDrill(k));
+    box.appendChild(b);
+  });
+}
+
+/* ================= WIRING ================= */
+$("b-quick").addEventListener("click", startQuick);
+$("b-daily").addEventListener("click", startDaily);
+$("b-drill").addEventListener("click", ()=>{ renderCatButtons(); show("scr-cats"); });
+$("b-cats-back").addEventListener("click", ()=>{ renderHome(); show("scr-home"); });
+$("b-quit").addEventListener("click", ()=>{ stopTimer(); renderHome(); show("scr-home"); });
+$("b-home").addEventListener("click", ()=>{ renderHome(); show("scr-home"); });
+$("b-again").addEventListener("click", ()=>{
+  if(G.mode === "quick") startQuick();
+  else if(G.mode === "daily") startDaily();
+  else startDrill(G.drillCat);
+});
+
+load();
+renderHome();
+show("scr-home");
+save();
+</script>
+</body>
+</html>

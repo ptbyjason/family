@@ -88,6 +88,27 @@
   .wc .wc-icon{font-size:2em;margin-bottom:8px;}
   .wc .wc-title{font-weight:600;margin-bottom:4px;}
   .wc .wc-desc{color:var(--muted);font-size:0.82em;}
+
+  /* Lessons */
+  .challenge-item.locked{opacity:0.45;cursor:not-allowed;}
+  .challenge-item.locked:hover{background:none;}
+  .locked-note{background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);color:var(--yellow);border-radius:10px;padding:10px 12px;font-size:0.8em;margin:4px 0 8px;line-height:1.5;}
+  .ex-prompt{background:rgba(139,92,246,0.08);border:1px solid rgba(139,92,246,0.3);border-radius:10px;padding:14px;margin:10px 0;font-size:0.95em;line-height:1.6;}
+  .ex-prompt code{color:var(--purple);}
+
+  /* Mobile: stack sidebar above editor */
+  @media (max-width: 900px) {
+    .topbar{flex-wrap:wrap;gap:8px;padding:10px 14px;}
+    .stats-row{flex-wrap:wrap;gap:8px;}
+    .main-layout{flex-direction:column;height:auto;min-height:calc(100vh - 56px);}
+    .sidebar{width:100%;border-right:none;border-bottom:1px solid var(--border);max-height:38vh;}
+    .content{min-height:60vh;}
+    .problem-area{max-height:none;}
+    .editor-area{min-height:420px;}
+    .editor-wrapper{min-height:200px;}
+    .output-panel{height:140px;}
+    .welcome-cards{grid-template-columns:1fr;}
+  }
 </style>
 </head>
 <body>
@@ -96,7 +117,7 @@
   <h1><span class="icon">⚡</span> Code Challenge <span>Arena</span></h1>
   <div class="stats-row">
     <div class="stat-pill">🏆 Solved: <span class="sv" id="solvedCount">0</span>/<span class="sv" id="totalCount">0</span></div>
-    <div class="stat-pill">🔥 Streak: <span class="sv" id="streak">0</span></div>
+    <div class="stat-pill" id="streakPill" title="Best streak: 0">🔥 Streak: <span class="sv" id="streak">0</span></div>
     <div class="stat-pill">⭐ XP: <span class="sv" id="xp">0</span></div>
   </div>
 </div>
@@ -106,7 +127,7 @@
   <div class="content" id="content">
     <div class="welcome" id="welcome">
       <h2>Welcome, Coder!</h2>
-      <p>Solve coding challenges, learn computer science concepts, and level up your skills. Pick a challenge from the sidebar to begin!</p>
+      <p>Solve coding challenges, learn computer science concepts, and level up your skills. <strong>New to coding?</strong> Start with 🎓 Lesson 1 in the sidebar — no experience needed. Already know the basics? Pick a challenge!</p>
       <div class="welcome-cards">
         <div class="wc"><div class="wc-icon">🧩</div><div class="wc-title">Logic</div><div class="wc-desc">Patterns, sequences, and problem-solving</div></div>
         <div class="wc"><div class="wc-icon">⚙️</div><div class="wc-title">Algorithms</div><div class="wc-desc">Sorting, searching, and efficiency</div></div>
@@ -118,10 +139,122 @@
 
 <script>
 // ─── State ───
+const SAVE_KEY = 'code-challenge-arena-save-v1';
+const HUB_KEY = 'hubSummary_code-challenge-arena';
 let solved = new Set();
 let currentChallenge = null;
 let streakCount = 0;
+let bestStreak = 0;
 let xpTotal = 0;
+let drafts = {};      // per-challenge code drafts
+let failCounts = {};  // consecutive failed submissions per challenge
+let draftTimer = null;
+let lessonsDone = new Set();  // completed lesson ids
+let currentLesson = null;
+let lessonExIndex = 0;
+let activity = { date:'', actions:0, earnedDates:[], runs:0 };  // daily effort tracking
+
+// ─── Daily effort tracking ───
+function localToday() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+function normActivity(a) {
+  const n = { date:'', actions:0, earnedDates:[], runs:0 };
+  if (a && typeof a === 'object') {
+    if (typeof a.date === 'string') n.date = a.date;
+    if (Number.isFinite(a.actions)) n.actions = a.actions;
+    if (Array.isArray(a.earnedDates)) n.earnedDates = a.earnedDates.slice(-30);
+    if (Number.isFinite(a.runs)) n.runs = a.runs;
+  }
+  return n;
+}
+function recordActivity(weight) {
+  try {
+    activity = normActivity(activity);
+    const today = localToday();
+    if (activity.date !== today) { activity.date = today; activity.actions = 0; activity.runs = 0; }
+    activity.actions += weight;
+    if (activity.actions >= 20 && activity.earnedDates.indexOf(today) === -1) {
+      activity.earnedDates.push(today);
+      if (activity.earnedDates.length > 30) activity.earnedDates = activity.earnedDates.slice(-30);
+    }
+  } catch (e) { /* tracking must never break the app */ }
+}
+function recordRunAttempt() {
+  try {
+    activity = normActivity(activity);
+    const today = localToday();
+    if (activity.date !== today) { activity.date = today; activity.actions = 0; activity.runs = 0; }
+    if (activity.runs < 10) {  // cap run-attempt credit at 10/day
+      activity.runs++;
+      recordActivity(1);
+    }
+  } catch (e) { /* tracking must never break the app */ }
+}
+
+// ─── Persistence ───
+function loadState() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return;
+    const s = JSON.parse(raw);
+    solved = new Set(Array.isArray(s.solved) ? s.solved : []);
+    xpTotal = Number(s.xp) || 0;
+    streakCount = Number(s.streak) || 0;
+    bestStreak = Number(s.bestStreak) || 0;
+    drafts = (s.drafts && typeof s.drafts === 'object') ? s.drafts : {};
+    failCounts = (s.failCounts && typeof s.failCounts === 'object') ? s.failCounts : {};
+    lessonsDone = new Set(Array.isArray(s.lessons) ? s.lessons : []); // older saves have no lessons field
+    activity = normActivity(s.activity); // older saves have no activity field
+
+  } catch (e) { /* corrupted or unavailable storage — start fresh */ }
+}
+
+function saveState() {
+  try {
+    localStorage.setItem(SAVE_KEY, JSON.stringify({
+      solved: [...solved],
+      xp: xpTotal,
+      streak: streakCount,
+      bestStreak: bestStreak,
+      drafts: drafts,
+      failCounts: failCounts,
+      lessons: [...lessonsDone],
+      activity: activity
+    }));
+  } catch (e) { /* storage unavailable */ }
+  try {
+    const total = CHALLENGES.length;
+    const learnMode = solved.size === 0;
+    localStorage.setItem(HUB_KEY, JSON.stringify({
+      app: 'code-challenge-arena',
+      kid: 'isaiah',
+      icon: '⚡',
+      label: learnMode
+        ? 'Learn ' + lessonsDone.size + '/' + LESSONS.length + ' • ' + xpTotal + ' XP'
+        : solved.size + '/' + total + ' challenges • ' + xpTotal + ' XP',
+      pct: learnMode
+        ? (LESSONS.length ? Math.round((lessonsDone.size / LESSONS.length) * 100) : 0)
+        : (total ? Math.round((solved.size / total) * 100) : 0),
+      streak: streakCount,
+      stars: null,
+      lastPlayed: new Date().toISOString(),
+      actionsToday: (function () { const a = normActivity(activity); return a.date === localToday() ? a.actions : 0; })(),
+      actionsDate: localToday(),
+      earnedDates: normActivity(activity).earnedDates
+    }));
+  } catch (e) { /* storage unavailable */ }
+}
+
+function scheduleDraftSave() {
+  if (!currentChallenge) return;
+  const editor = document.getElementById('codeEditor');
+  if (!editor) return;
+  drafts[currentChallenge.id] = editor.value;
+  clearTimeout(draftTimer);
+  draftTimer = setTimeout(saveState, 800);
+}
 
 // ─── CHALLENGES ───
 const CHALLENGES = [
@@ -160,6 +293,23 @@ const CHALLENGES = [
     xp: 10
   },
   {
+    id:'reverse_words', cat:'Logic', title:'Reverse the Words', difficulty:'easy',
+    concept:'String Splitting & Arrays',
+    desc:`<p>Write a function that takes a sentence and returns it with the <strong>words in reverse order</strong>. The letters inside each word stay the same!</p>
+    <p><strong>CS Concept:</strong> Splitting text into pieces (tokens) and reassembling it is the heart of text processing — search engines, compilers, and chatbots all do it constantly.</p>`,
+    example:`reverseWords("hello world")    → "world hello"\nreverseWords("I love to code") → "code to love I"\nreverseWords("one")            → "one"`,
+    hint:'Use .split(" ") to turn the sentence into an array of words, .reverse() to flip it, and .join(" ") to glue it back together.',
+    starter:`function reverseWords(sentence) {\n  // Your code here\n  \n}`,
+    tests:[
+      {input:['hello world'],expected:'world hello'},
+      {input:['I love to code'],expected:'code to love I'},
+      {input:['one'],expected:'one'},
+      {input:['a b c d'],expected:'d c b a'},
+      {input:['Isaiah writes JavaScript'],expected:'JavaScript writes Isaiah'}
+    ],
+    xp: 10
+  },
+  {
     id:'fibonacci', cat:'Logic', title:'Fibonacci Sequence', difficulty:'medium',
     concept:'Recursion & Sequences',
     desc:`<p>The <strong>Fibonacci sequence</strong> is one of the most famous patterns in math and computer science. Each number is the sum of the two before it:</p>
@@ -190,6 +340,24 @@ const CHALLENGES = [
       {input:['Zoo',1],expected:'App'}
     ],
     xp: 25
+  },
+  {
+    id:'rot13', cat:'Logic', title:'ROT13 Decoder', difficulty:'medium',
+    concept:'Ciphers & Modulo Wrap-Around',
+    desc:`<p><strong>ROT13</strong> is a special Caesar cipher that shifts every letter by exactly 13. Because the alphabet has 26 letters, applying ROT13 twice gets you back the original — the same function encodes AND decodes!</p>
+    <p>Write a function that applies ROT13 to a string. Shift letters a-z and A-Z; leave spaces, numbers, and punctuation unchanged.</p>
+    <p><strong>CS Concept:</strong> ROT13 shows the power of <strong>symmetric operations</strong>. It was used on early internet forums to hide spoilers and puzzle answers!</p>`,
+    example:`rot13("hello") → "uryyb"\nrot13("uryyb") → "hello"\nrot13("Why?")  → "Jul?"`,
+    hint:'Like the Caesar cipher with shift 13. For lowercase letters: String.fromCharCode((code - 97 + 13) % 26 + 97). Do the same for uppercase with 65.',
+    starter:`function rot13(text) {\n  // Your code here\n  \n}`,
+    tests:[
+      {input:['hello'],expected:'uryyb'},
+      {input:['uryyb'],expected:'hello'},
+      {input:['Why?'],expected:'Jul?'},
+      {input:['ABC xyz'],expected:'NOP klm'},
+      {input:['ROT13 is fun!'],expected:'EBG13 vf sha!'}
+    ],
+    xp: 20
   },
 
   // ─── ALGORITHMS ───
@@ -243,6 +411,24 @@ const CHALLENGES = [
       {input:[[10],5],expected:-1}
     ],
     xp: 30
+  },
+  {
+    id:'anagram', cat:'Algorithms', title:'Anagram Checker', difficulty:'medium',
+    concept:'Sorting & Normalization',
+    desc:`<p>Two words are <strong>anagrams</strong> if they use exactly the same letters, just rearranged — like "listen" and "silent".</p>
+    <p>Write a function that returns <code>true</code> if two strings are anagrams of each other. Ignore uppercase/lowercase.</p>
+    <p><strong>CS Concept:</strong> A classic algorithm trick: instead of checking every possible rearrangement, <strong>normalize</strong> both inputs (sort the letters) and compare once. Turning a hard comparison into an easy one is a core skill in algorithm design.</p>`,
+    example:`isAnagram("listen", "silent")       → true\nisAnagram("hello", "world")         → false\nisAnagram("Dormitory", "dirtyroom") → true`,
+    hint:'Lowercase both strings, then split("").sort().join("") each one. If the two sorted strings are equal, they are anagrams. Checking lengths first is a quick exit!',
+    starter:`function isAnagram(a, b) {\n  // Your code here\n  \n}`,
+    tests:[
+      {input:['listen','silent'],expected:true},
+      {input:['hello','world'],expected:false},
+      {input:['Dormitory','dirtyroom'],expected:true},
+      {input:['abc','abcd'],expected:false},
+      {input:['race','care'],expected:true}
+    ],
+    xp: 20
   },
 
   // ─── ENGINEERING ───
@@ -319,21 +505,229 @@ const CHALLENGES = [
   }
 ];
 
+// ─── LESSONS (learn-from-zero path) ───
+// Exercise kinds: 'log' (must print expectLog), 'value' (variable varName must equal expected),
+// 'fn' (function fnName must pass tests). Optional mustMatch regex enforces the taught technique.
+const LESSONS = [
+  {
+    id:'l1', title:'What is Code?',
+    intro:`<p>Code is just a <strong>list of instructions</strong> the computer follows one line at a time, top to bottom — like a coach reading out a play step by step. The computer never guesses; it does exactly what you write.</p>
+    <p>The instruction <code>console.log(...)</code> means <strong>"show this on the screen."</strong> It's how your code talks to you.</p>
+    <p>Heads up: this language is <strong>JavaScript</strong> — the language of websites and browser games. It is <em>not</em> Java. Totally different language, confusingly similar name!</p>`,
+    example:`// Lines starting with // are comments - notes for humans, ignored by the computer
+console.log("Kickoff!");   // shows: Kickoff!
+console.log(42);           // shows: 42`,
+    exercises:[
+      { prompt:'Make the computer show the number <code>7</code>. Replace the blank <code>__</code> with 7.',
+        starter:'// Replace the blank with the number 7\nconsole.log(__);',
+        kind:'log', expectLog:7,
+        why:'console.log shows whatever is between the parentheses — put the number 7 there (no quotes needed for numbers).' },
+      { prompt:'Print some text! Replace the blank so it shows <code>Goal!</code> — keep the quotes, quotes mean "this is text".',
+        starter:'// Text (a "string") always goes inside quotes\nconsole.log("__");',
+        kind:'log', expectLog:'Goal!',
+        why:'Type Goal! between the quotes — the quotes tell the computer it is text to show, not a command to run.' }
+    ]
+  },
+  {
+    id:'l2', title:'Variables',
+    intro:`<p>A <strong>variable</strong> is a labeled box that stores a value — like the scoreboard storing the score. You create one with <code>let</code>, give it a name, and put something inside with <code>=</code>.</p>
+    <p>Two kinds of values so far: <strong>numbers</strong> (written plain: <code>5</code>) and <strong>strings</strong> (text in quotes: <code>"Rockets"</code>).</p>`,
+    example:`let goals = 3;          // a number - no quotes
+let team = "Rockets";   // a string (text) - quotes required
+console.log(goals);     // 3
+console.log(team);      // Rockets`,
+    exercises:[
+      { prompt:'Fill in the blank so the variable <code>goals</code> equals the number <code>5</code>.',
+        starter:'// Make goals equal 5\nlet goals = __;',
+        kind:'value', varName:'goals', expected:5,
+        why:'Writing let goals = 5; puts the number 5 into the box named goals.' },
+      { prompt:'Fill in the blank so <code>playerName</code> holds the text <code>"Isaiah"</code>. Remember: text needs quotes!',
+        starter:'// Make playerName hold the text Isaiah (in quotes!)\nlet playerName = __;',
+        kind:'value', varName:'playerName', expected:'Isaiah',
+        why:'Text needs quotes: "Isaiah" — without quotes the computer thinks Isaiah is a command and gets confused.' }
+    ]
+  },
+  {
+    id:'l3', title:'Math with Variables',
+    intro:`<p>Once values are in variables, you can do math with them: <code>+</code> add, <code>-</code> subtract, <code>*</code> times, <code>/</code> divide.</p>
+    <p>The best part: use the variable <em>names</em>, not the numbers. Like a stat sheet — if the goals change, every stat that uses them updates automatically.</p>`,
+    example:`let shots = 10;
+let scored = 4;
+let missed = shots - scored;   // 6
+let doubled = scored * 2;      // 8
+let accuracy = scored / shots; // 0.4`,
+    exercises:[
+      { prompt:'Make <code>total</code> equal <code>a</code> plus <code>b</code> — use the variable names, not the number 7!',
+        starter:'let a = 4;\nlet b = 3;\n// Make total equal a plus b\nlet total = __;',
+        kind:'value', varName:'total', expected:7,
+        mustMatch:/a\s*\+\s*b/, matchMsg:'Use the variables: a + b (not just the number 7) — then it still works if a or b ever change.',
+        why:'a + b tells the computer to look inside both boxes and add what it finds.' },
+      { prompt:'Goals per game! Make <code>average</code> equal <code>goals</code> divided by <code>games</code>.',
+        starter:'let goals = 10;\nlet games = 2;\n// Average = goals divided by games\nlet average = __;',
+        kind:'value', varName:'average', expected:5,
+        mustMatch:/goals\s*\/\s*games/, matchMsg:'Use the variables with the divide symbol: goals / games.',
+        why:'The / symbol divides: goals / games is 10 divided by 2, which is 5.' }
+    ]
+  },
+  {
+    id:'l4', title:'Functions',
+    intro:`<p>A <strong>function</strong> is like a soccer drill: <strong>ball in → skill applied → ball out</strong>. You pass a value in (the <em>input</em>), the function does its job, and <code>return</code> kicks the answer back out (the <em>output</em>).</p>
+    <p>This one is HUGE: <strong>every challenge in the arena is a function</strong> you complete. Master this and everything else clicks.</p>`,
+    example:`function double(x) {   // x is the input - the ball going in
+  return x * 2;        // return kicks the answer back out
+}
+
+double(5)   // -> 10
+double(20)  // -> 40  (same drill, different ball)`,
+    exercises:[
+      { prompt:'Complete the drill: make <code>double</code> return <code>x</code> times 2.',
+        starter:'function double(x) {\n  // Send back x times 2\n  return __;\n}',
+        kind:'fn', fnName:'double', tests:[{input:[3],expected:6},{input:[10],expected:20}],
+        why:'return x * 2 sends the doubled number back out of the function.' },
+      { prompt:'Complete the line so <code>add</code> returns <code>a</code> plus <code>b</code>.',
+        starter:'function add(a, b) {\n  // Complete this: send back a plus b\n  return a + __;\n}',
+        kind:'fn', fnName:'add', tests:[{input:[2,3],expected:5},{input:[10,5],expected:15}],
+        why:'return a + b; adds both inputs and sends the result out — that works for ANY two numbers.' },
+      { prompt:'Strings work too! Make <code>greet</code> return <code>"Hi "</code> glued to the name with <code>+</code>.',
+        starter:'function greet(name) {\n  // Glue "Hi " and the name together with +\n  return "Hi " + __;\n}',
+        kind:'fn', fnName:'greet', tests:[{input:['Sam'],expected:'Hi Sam'},{input:['Ava'],expected:'Hi Ava'}],
+        why:'With text, + glues pieces together: "Hi " + name becomes "Hi Sam" when name is "Sam".' }
+    ]
+  },
+  {
+    id:'l5', title:'if / else Decisions',
+    intro:`<p><code>if / else</code> lets code make decisions, like a referee: <strong>IF</strong> it was a foul, give a free kick, <strong>ELSE</strong> play on.</p>
+    <p>The part in parentheses is a yes/no question. Comparisons: <code>&gt;</code> greater, <code>&lt;</code> less, <code>===</code> exactly equal. The answer is a special value: <code>true</code> or <code>false</code> (no quotes!).</p>`,
+    example:`function ref(foul) {
+  if (foul === true) {
+    return "Free kick!";
+  } else {
+    return "Play on!";
+  }
+}`,
+    exercises:[
+      { prompt:'Fill in the blank so <code>overHalf</code> returns <code>true</code> (no quotes!) when the score is more than 50.',
+        starter:'function overHalf(score) {\n  if (score > 50) {\n    // Send back true here\n    return __;\n  } else {\n    return false;\n  }\n}',
+        kind:'fn', fnName:'overHalf', tests:[{input:[90],expected:true},{input:[10],expected:false},{input:[51],expected:true}],
+        why:'true (no quotes) is the special yes value — return true means "yes, it is over half".' },
+      { prompt:'A soccer match is 90 minutes. Put the right comparison symbol in the blank so minutes below 45 count as the first half. (Hint: <code>&lt;</code> means less than.)',
+        starter:'function whichHalf(minute) {\n  if (minute __ 45) {\n    return "first half";\n  } else {\n    return "second half";\n  }\n}',
+        kind:'fn', fnName:'whichHalf', tests:[{input:[10],expected:'first half'},{input:[80],expected:'second half'},{input:[30],expected:'first half'},{input:[90],expected:'second half'}],
+        why:'The < symbol means "less than" — minute < 45 is true for minutes in the first half.' }
+    ]
+  },
+  {
+    id:'l6', title:'Loops (for)',
+    intro:`<p>A <strong>loop</strong> repeats code — like doing 10 push-ups without writing "push-up" 10 times. A <code>for</code> loop has three parts: <strong>start</strong> (<code>let i = 0</code>), <strong>keep going while</strong> (<code>i &lt; 3</code>), and <strong>step</strong> (<code>i++</code> means add 1 to i).</p>
+    <p>Fun fact: computers count from <strong>0</strong>, not 1!</p>`,
+    example:`for (let i = 0; i < 3; i++) {
+  console.log("Lap " + i);
+}
+// Lap 0
+// Lap 1
+// Lap 2   (three laps - counting from 0!)`,
+    exercises:[
+      { prompt:'Make this loop run exactly <strong>5 times</strong> so <code>count</code> ends up as 5.',
+        starter:'let count = 0;\n// Make the loop run 5 times\nfor (let i = 0; i < __; i++) {\n  count = count + 1;\n}',
+        kind:'value', varName:'count', expected:5,
+        why:'i goes 0,1,2,3,4 while i < 5 — that is 5 trips through the loop.' },
+      { prompt:'Add the text <code>"Go!"</code> (with quotes) each time through, so <code>cheer</code> becomes <code>"Go!Go!Go!"</code>.',
+        starter:'let cheer = "";\n// Add "Go!" to cheer each time through the loop\nfor (let i = 0; i < 3; i++) {\n  cheer = cheer + __;\n}',
+        kind:'value', varName:'cheer', expected:'Go!Go!Go!',
+        why:'cheer = cheer + "Go!"; glues one more "Go!" on every lap — three laps, three cheers.' }
+    ]
+  },
+  {
+    id:'l7', title:'Arrays (Lists)',
+    intro:`<p>An <strong>array</strong> is a list in one variable — like a team roster. Square brackets make one: <code>["Ava", "Ben", "Cruz"]</code>.</p>
+    <p>Grab an item by its position — and positions start at <strong>0</strong>! <code>team[0]</code> is the first player. <code>team.length</code> tells you how many items are in the list.</p>`,
+    example:`let team = ["Ava", "Ben", "Cruz"];
+team[0]       // "Ava"   (first - position 0!)
+team[2]       // "Cruz"
+team.length   // 3`,
+    exercises:[
+      { prompt:'Get the <strong>first</strong> player from the roster using <code>team[...]</code>. Careful — first is position 0!',
+        starter:'let team = ["Ava", "Ben", "Cruz"];\n// Get the FIRST player using square brackets\nlet first = __;',
+        kind:'value', varName:'first', expected:'Ava',
+        mustMatch:/team\s*\[\s*0\s*\]/, matchMsg:'Use team[0] — the first spot in a list is number 0, not 1.',
+        why:'team[0] looks up whatever is in position 0 of the list — the first item.' },
+      { prompt:'How many scores are in the list? Use <code>.length</code> so it stays correct even if the list changes.',
+        starter:'let scores = [3, 1, 4];\n// How many items? Use .length\nlet howMany = __;',
+        kind:'value', varName:'howMany', expected:3,
+        mustMatch:/scores\s*\.\s*length/, matchMsg:'Use scores.length — it counts the items for you.',
+        why:'scores.length asks the list "how many items do you have?" — here, 3.' }
+    ]
+  },
+  {
+    id:'l8', title:'Putting It Together',
+    intro:`<p>Time to combine everything: a <strong>function</strong> that <strong>loops</strong> over an <strong>array</strong> and returns a result. This exact pattern is behind almost every challenge in the arena!</p>
+    <p>The key move: inside the loop, <code>arr[i]</code> means "the item at position i" — so each lap of the loop looks at the next item in the list.</p>`,
+    example:`function totalPoints(points) {
+  let total = 0;
+  for (let i = 0; i < points.length; i++) {
+    total = total + points[i];  // points[i] = item at position i
+  }
+  return total;
+}
+totalPoints([2, 4, 6])   // -> 12`,
+    exercises:[
+      { prompt:'Season total! Add the goal at position <code>i</code> to <code>total</code> each time through the loop.',
+        starter:'function sumGoals(goals) {\n  let total = 0;\n  for (let i = 0; i < goals.length; i++) {\n    // Add the goal at position i\n    total = total + __;\n  }\n  return total;\n}',
+        kind:'fn', fnName:'sumGoals', tests:[{input:[[1,2,3]],expected:6},{input:[[5]],expected:5},{input:[[]],expected:0},{input:[[2,2,2]],expected:6}],
+        why:'goals[i] means "the number at position i" — add that to total on every lap of the loop.' },
+      { prompt:'Count the wins! Write the whole line that adds 1 to <code>wins</code>: <code>wins = wins + 1;</code>',
+        starter:'function countWins(results) {\n  let wins = 0;\n  for (let i = 0; i < results.length; i++) {\n    if (results[i] === "W") {\n      // Add 1 to wins (write the whole line)\n      __\n    }\n  }\n  return wins;\n}',
+        kind:'fn', fnName:'countWins', tests:[{input:[['W','L','W']],expected:2},{input:[[]],expected:0},{input:[['L','L']],expected:0},{input:[['W','W','W']],expected:3}],
+        why:'wins = wins + 1; bumps the counter by one every time the if spots a "W".' }
+    ]
+  }
+];
+
+const LESSON_GATE = ['l1','l2','l3','l4'];
+
+// Challenges are locked ONLY for fresh users (zero solved) until lessons 1-4 are done.
+function challengesLocked() {
+  return solved.size === 0 && !LESSON_GATE.every(id => lessonsDone.has(id));
+}
+
+function escLesson(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
 // ─── Build sidebar ───
 function buildSidebar() {
   const sb = document.getElementById('sidebar');
   let html = '';
   let lastCat = '';
+
+  // Learn section (always first)
+  html += `<div class="cat-header">🎓 Learn</div>`;
+  LESSONS.forEach((ls, idx) => {
+    const done = lessonsDone.has(ls.id);
+    const isActive = currentLesson && currentLesson.id === ls.id;
+    html += `<div class="challenge-item${done?' solved':''}${isActive?' active':''}" onclick="loadLesson('${ls.id}')">
+      <span class="ci-status">${done ? '✓' : (idx+1)}</span>
+      <div class="ci-info">
+        <div class="ci-title">${ls.title}</div>
+        <div class="ci-diff easy">LESSON ${idx+1} · 5 XP</div>
+      </div>
+    </div>`;
+  });
+
+  const locked = challengesLocked();
   CHALLENGES.forEach(ch => {
     if (ch.cat !== lastCat) {
       lastCat = ch.cat;
       const icons = {Logic:'🧩', Algorithms:'⚙️', Engineering:'🏗️'};
       html += `<div class="cat-header">${icons[ch.cat]||''} ${ch.cat}</div>`;
+      if (locked && ch.cat === 'Logic') {
+        html += `<div class="locked-note">🔒 Complete the first 4 lessons to unlock challenges!</div>`;
+      }
     }
     const isSolved = solved.has(ch.id);
     const isActive = currentChallenge && currentChallenge.id === ch.id;
-    html += `<div class="challenge-item${isSolved?' solved':''}${isActive?' active':''}" onclick="loadChallenge('${ch.id}')">
-      <span class="ci-status">${isSolved ? '✅' : '○'}</span>
+    html += `<div class="challenge-item${isSolved?' solved':''}${isActive?' active':''}${locked?' locked':''}"${locked?'':` onclick="loadChallenge('${ch.id}')"`}>
+      <span class="ci-status">${locked ? '🔒' : (isSolved ? '✅' : '○')}</span>
       <div class="ci-info">
         <div class="ci-title">${ch.title}</div>
         <div class="ci-diff ${ch.difficulty}">${ch.difficulty.toUpperCase()} · ${ch.xp} XP</div>
@@ -344,14 +738,17 @@ function buildSidebar() {
   document.getElementById('totalCount').textContent = CHALLENGES.length;
   document.getElementById('solvedCount').textContent = solved.size;
   document.getElementById('streak').textContent = streakCount;
+  document.getElementById('streakPill').title = 'Best streak: ' + bestStreak;
   document.getElementById('xp').textContent = xpTotal;
 }
 
 // ─── Load challenge ───
 function loadChallenge(id) {
+  if (challengesLocked()) return;
   const ch = CHALLENGES.find(c => c.id === id);
   if (!ch) return;
   currentChallenge = ch;
+  currentLesson = null;
   buildSidebar();
 
   const content = document.getElementById('content');
@@ -383,8 +780,17 @@ function loadChallenge(id) {
       </div>
     </div>`;
 
-  // Tab key support
   const editor = document.getElementById('codeEditor');
+
+  // Restore saved draft for this challenge (set via .value to avoid HTML-escaping issues)
+  if (Object.prototype.hasOwnProperty.call(drafts, ch.id) && typeof drafts[ch.id] === 'string') {
+    editor.value = drafts[ch.id];
+  }
+
+  // Debounced draft autosave
+  editor.addEventListener('input', scheduleDraftSave);
+
+  // Tab key support
   editor.addEventListener('keydown', e => {
     if (e.key === 'Tab') {
       e.preventDefault();
@@ -403,9 +809,183 @@ function toggleHint() {
 function resetCode() {
   if (currentChallenge) {
     document.getElementById('codeEditor').value = currentChallenge.starter;
+    delete drafts[currentChallenge.id];
+    saveState();
     document.getElementById('outputPanel').innerHTML = '<div class="output-label">Test Results</div><div class="output-line info">Code reset. Click "Run Tests" to check your solution.</div>';
     document.getElementById('successBanner').classList.remove('show');
   }
+}
+
+// ─── Lessons: view, check, complete ───
+function loadLesson(id) {
+  const ls = LESSONS.find(l => l.id === id);
+  if (!ls) return;
+  currentLesson = ls;
+  currentChallenge = null;
+  lessonExIndex = 0;
+  buildSidebar();
+  renderLessonView();
+}
+
+function renderLessonView(passNote) {
+  const ls = currentLesson;
+  if (!ls) return;
+  const ex = ls.exercises[lessonExIndex];
+  const idx = LESSONS.indexOf(ls);
+  const content = document.getElementById('content');
+  content.innerHTML = `
+    <div class="problem-area">
+      <h2>🎓 Lesson ${idx+1}: ${ls.title} <span class="badge easy">lesson · 5 XP</span></h2>
+      <div class="concept">📘 ${lessonsDone.has(ls.id) ? 'Completed — replay any time!' : 'Read the idea, then try it below. No experience needed.'}</div>
+      ${ls.intro}
+      <div class="example-box">${escLesson(ls.example)}</div>
+      <div class="ex-prompt"><strong>✏️ Exercise ${lessonExIndex+1} of ${ls.exercises.length}:</strong> ${ex.prompt}</div>
+    </div>
+    <div class="editor-area">
+      <div class="editor-tabs">
+        <div class="editor-tab active">practice.js</div>
+        <button class="reset-btn" onclick="resetLessonCode()">↺ Reset</button>
+        <button class="run-btn" onclick="checkLessonExercise()">▶ Check My Code</button>
+      </div>
+      <div class="editor-wrapper">
+        <textarea class="code-editor" id="codeEditor" spellcheck="false"></textarea>
+      </div>
+      <div class="success-banner" id="successBanner"></div>
+      <div class="output-panel" id="outputPanel">
+        <div class="output-label">Result</div>
+        <div class="output-line info">${passNote ? '' : 'Fill in the blank, then click "Check My Code"'}</div>
+      </div>
+    </div>`;
+  const editor = document.getElementById('codeEditor');
+  editor.value = ex.starter;
+  editor.addEventListener('keydown', e => {
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      const start = editor.selectionStart, end = editor.selectionEnd;
+      editor.value = editor.value.substring(0, start) + '  ' + editor.value.substring(end);
+      editor.selectionStart = editor.selectionEnd = start + 2;
+    }
+  });
+  if (passNote) {
+    document.getElementById('outputPanel').innerHTML =
+      '<div class="output-label">Result</div><div class="output-line pass">' + passNote + '</div>';
+  }
+}
+
+function resetLessonCode() {
+  const ls = currentLesson;
+  if (!ls) return;
+  document.getElementById('codeEditor').value = ls.exercises[lessonExIndex].starter;
+  document.getElementById('outputPanel').innerHTML =
+    '<div class="output-label">Result</div><div class="output-line info">Code reset. Fill in the blank, then click "Check My Code"</div>';
+  document.getElementById('successBanner').classList.remove('show');
+}
+
+// Runs one lesson exercise's checker. Returns {pass, message, why}.
+function evaluateLessonExercise(ex, code) {
+  if (/__/.test(code)) {
+    return {pass:false, message:'Your code still has a blank ( __ ) in it — replace it with your answer.', why:ex.why};
+  }
+  if (ex.mustMatch && !ex.mustMatch.test(code)) {
+    return {pass:false, message: ex.matchMsg || 'Not quite — re-read the exercise instructions.', why:ex.why};
+  }
+  try {
+    if (ex.kind === 'log') {
+      const logs = [];
+      const origLog = console.log;
+      console.log = (...a) => { logs.push(a.length === 1 ? a[0] : a.join(' ')); };
+      try { new Function(code)(); } finally { console.log = origLog; }
+      if (logs.length === 0) {
+        return {pass:false, message:'Nothing was printed — make sure your answer is inside console.log( ).', why:ex.why};
+      }
+      if (JSON.stringify(logs[0]) !== JSON.stringify(ex.expectLog)) {
+        return {pass:false, message:'It printed ' + JSON.stringify(logs[0]) + ' but we wanted ' + JSON.stringify(ex.expectLog) + '.', why:ex.why};
+      }
+      return {pass:true, message:'✓ It printed ' + JSON.stringify(ex.expectLog) + ' — exactly right!'};
+    }
+    if (ex.kind === 'value') {
+      const val = new Function(code + '\nreturn (typeof ' + ex.varName + ' === "undefined") ? "__missing__" : ' + ex.varName + ';')();
+      if (val === '__missing__') {
+        return {pass:false, message:'The variable "' + ex.varName + '" does not exist anymore — keep the "let ' + ex.varName + ' =" part.', why:ex.why};
+      }
+      if (JSON.stringify(val) !== JSON.stringify(ex.expected)) {
+        return {pass:false, message:ex.varName + ' ended up as ' + JSON.stringify(val) + ' but we wanted ' + JSON.stringify(ex.expected) + '.', why:ex.why};
+      }
+      return {pass:true, message:'✓ ' + ex.varName + ' is ' + JSON.stringify(ex.expected) + ' — perfect!'};
+    }
+    if (ex.kind === 'fn') {
+      const fn = new Function(code + '\nreturn typeof ' + ex.fnName + ' === "function" ? ' + ex.fnName + ' : undefined;')();
+      if (typeof fn !== 'function') {
+        return {pass:false, message:'The function "' + ex.fnName + '" is missing — keep the "function ' + ex.fnName + '(...)" part.', why:ex.why};
+      }
+      for (const t of ex.tests) {
+        const r = fn(...JSON.parse(JSON.stringify(t.input)));
+        if (JSON.stringify(r) !== JSON.stringify(t.expected)) {
+          return {pass:false, message: ex.fnName + '(' + t.input.map(a => JSON.stringify(a)).join(', ') + ') gave back ' + JSON.stringify(r) + ' but should give back ' + JSON.stringify(t.expected) + '.', why:ex.why};
+        }
+      }
+      return {pass:true, message:'✓ All ' + ex.tests.length + ' checks passed — your code works!'};
+    }
+  } catch (err) {
+    return {pass:false, message:'Error: ' + err.message + '.', why:ex.why};
+  }
+  return {pass:false, message:'Unknown exercise type.'};
+}
+
+function checkLessonExercise() {
+  const ls = currentLesson;
+  if (!ls) return;
+  const ex = ls.exercises[lessonExIndex];
+  const code = document.getElementById('codeEditor').value;
+  const output = document.getElementById('outputPanel');
+  const res = evaluateLessonExercise(ex, code);
+
+  if (!res.pass) {
+    output.innerHTML = '<div class="output-label">Result</div>' +
+      '<div class="output-line fail">✗ ' + res.message + '</div>' +
+      (res.why ? '<div class="output-line info">💡 Why: ' + res.why + '</div>' : '');
+    return;
+  }
+
+  if (lessonExIndex < ls.exercises.length - 1) {
+    recordActivity(4); // lesson exercise passed
+    saveState();
+    lessonExIndex++;
+    renderLessonView(res.message + ' On to exercise ' + (lessonExIndex+1) + ' of ' + ls.exercises.length + '!');
+    return;
+  }
+
+  // Last exercise passed — lesson complete
+  recordActivity(4); // lesson exercise passed (completeLesson saves)
+  output.innerHTML = '<div class="output-label">Result</div><div class="output-line pass">' + res.message + '</div>';
+  completeLesson(ls);
+}
+
+function completeLesson(ls) {
+  const firstTime = !lessonsDone.has(ls.id);
+  const wasLocked = challengesLocked();
+  if (firstTime) {
+    lessonsDone.add(ls.id);
+    xpTotal += 5;
+  }
+  buildSidebar();
+  saveState();
+
+  const banner = document.getElementById('successBanner');
+  if (ls.id === 'l8') {
+    banner.innerHTML = `<h3>You know JavaScript basics! 🎉</h3>
+      <p>You just learned real <strong>JavaScript</strong> — the language that powers websites and browser games. (Not the same as Java — different language, similar name!)</p>
+      <p>You're ready for the arena: start with the green <strong>EASY</strong> challenges. They use exactly what you learned — functions in, answers out.</p>
+      <p style="margin-top:10px;"><button class="run-btn" style="margin:0 auto;" onclick="loadChallenge('fizzbuzz')">⚡ Try your first challenge</button></p>`;
+  } else {
+    const nIdx = LESSONS.indexOf(ls) + 1;
+    const next = LESSONS[nIdx];
+    const unlockedNow = wasLocked && !challengesLocked();
+    banner.innerHTML = `<h3>🎉 Lesson complete!</h3>
+      <p>${firstTime ? '+5 XP earned! ' : ''}${unlockedNow ? '🔓 Challenges are now unlocked! Keep going with the lessons, or jump into an easy challenge. ' : ''}${next ? 'Next up: Lesson ' + (nIdx+1) + ' — ' + next.title + '.' : ''}</p>
+      ${next ? `<p style="margin-top:10px;"><button class="run-btn" style="margin:0 auto;" onclick="loadLesson('${next.id}')">➡ Next lesson</button></p>` : ''}`;
+  }
+  banner.classList.add('show');
 }
 
 // ─── Run tests ───
@@ -426,7 +1006,10 @@ function runTests() {
   console.log = (...args) => { logs.push(args.map(a => JSON.stringify(a)).join(' ')); };
 
   try {
-    const fn = new Function(code + `\nreturn ${ch.id === 'fizzbuzz' ? 'fizzbuzz' : ch.id === 'palindrome' ? 'isPalindrome' : ch.id === 'fibonacci' ? 'fibonacci' : ch.id === 'caesar' ? 'caesar' : ch.id === 'max_finder' ? 'findMax' : ch.id === 'bubble_sort' ? 'bubbleSort' : ch.id === 'binary_search' ? 'binarySearch' : ch.id === 'temp_converter' ? 'convert' : ch.id === 'pixel_art' ? 'encode' : ch.id === 'robot_moves' ? 'navigate' : ch.id === 'stack_calc' ? 'calc' : ''};`)();
+    // Derive the expected function name from the challenge's starter code
+    const nameMatch = /function\s+([A-Za-z_$][\w$]*)/.exec(ch.starter);
+    const fnName = nameMatch ? nameMatch[1] : ch.id;
+    const fn = new Function(code + `\nreturn typeof ${fnName} === 'function' ? ${fnName} : undefined;`)();
 
     if (typeof fn !== 'function') {
       html += '<div class="output-line fail">✗ Error: No function found. Make sure your function is defined correctly.</div>';
@@ -462,22 +1045,32 @@ function runTests() {
 
   if (allPass) {
     html += `<div class="output-line pass" style="margin-top:8px;font-weight:600;">🎉 All ${ch.tests.length} tests passed!</div>`;
+    failCounts[ch.id] = 0;
     if (!solved.has(ch.id)) {
       solved.add(ch.id);
       streakCount++;
+      if (streakCount > bestStreak) bestStreak = streakCount;
       xpTotal += ch.xp;
+      recordActivity(6); // challenge solved (first time)
     }
     banner.classList.add('show');
-    buildSidebar();
   } else {
-    streakCount = 0;
-    buildSidebar();
+    // Only reset the streak after 3 consecutive failed submissions on this challenge
+    failCounts[ch.id] = (failCounts[ch.id] || 0) + 1;
+    if (failCounts[ch.id] >= 3) {
+      streakCount = 0;
+      failCounts[ch.id] = 0;
+    }
   }
+  recordRunAttempt(); // test-run attempt (capped at 10/day)
+  buildSidebar();
+  saveState();
 
   output.innerHTML = html;
 }
 
 // ─── Init ───
+loadState();
 buildSidebar();
 </script>
 </body>

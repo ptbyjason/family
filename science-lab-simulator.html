@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Science Lab Simulator</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&family=Patrick+Hand&display=swap');
+  *{margin:0;padding:0;box-sizing:border-box;}
+  :root{--bg:#0a1020;--card:#111a30;--border:rgba(6,182,212,0.2);--text:#e2efff;--muted:#8ba4c8;
+    --cyan:#06b6d4;--green:#10b981;--blue:#3b82f6;--purple:#8b5cf6;--pink:#ec4899;--gold:#f59e0b;--red:#ef4444;--lime:#84cc16;}
+  body{font-family:'Quicksand',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+  .container{max-width:860px;margin:0 auto;padding:16px;}
+
+  .header{text-align:center;padding:20px 0 12px;}
+  .header h1{font-size:2em;background:linear-gradient(135deg,var(--cyan),var(--green));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+  .header p{color:var(--muted);font-size:1em;margin-top:4px;}
+
+  /* Stats */
+  .stats-bar{display:flex;gap:10px;justify-content:center;margin:10px 0 18px;flex-wrap:wrap;}
+  .stat{background:rgba(6,182,212,0.08);border:1px solid rgba(6,182,212,0.2);border-radius:16px;padding:6px 16px;font-size:0.88em;display:flex;align-items:center;gap:5px;}
+  .stat .sv{color:var(--cyan);font-weight:700;}
+
+  .card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:28px;margin-bottom:14px;animation:fadeIn .4s ease;}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+
+  /* Experiment select */
+  .exp-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:16px 0;}
+  @media(max-width:600px){.exp-grid{grid-template-columns:1fr;}}
+  .exp-card{background:rgba(6,182,212,0.06);border:2px solid var(--border);border-radius:16px;padding:20px;cursor:pointer;transition:all .3s;position:relative;}
+  .exp-card:hover{border-color:var(--cyan);transform:translateY(-3px);box-shadow:0 6px 20px rgba(6,182,212,0.15);}
+  .exp-card.done{opacity:0.65;}
+  .exp-card .ec-icon{font-size:2.5em;margin-bottom:8px;}
+  .exp-card .ec-title{font-weight:700;font-size:1.05em;margin-bottom:3px;}
+  .exp-card .ec-desc{color:var(--muted);font-size:0.85em;line-height:1.4;}
+  .exp-card .ec-badge{position:absolute;top:10px;right:10px;font-size:0.72em;padding:3px 10px;border-radius:10px;font-weight:700;background:rgba(16,185,129,0.15);color:var(--green);}
+  .exp-card .ec-topic{font-size:0.75em;color:var(--cyan);margin-top:6px;}
+
+  /* Experiment view */
+  .exp-header{display:flex;align-items:center;gap:14px;margin-bottom:16px;}
+  .exp-header .eh-icon{font-size:2.5em;}
+  .exp-header h2{font-size:1.4em;}
+  .exp-header .eh-topic{color:var(--cyan);font-size:0.85em;}
+
+  .step-tracker{display:flex;gap:4px;margin:12px 0;justify-content:center;}
+  .st-dot{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.1);border:1px solid var(--border);transition:all .3s;}
+  .st-dot.done{background:var(--green);border-color:var(--green);}
+  .st-dot.active{background:var(--cyan);border-color:var(--cyan);box-shadow:0 0 8px rgba(6,182,212,0.5);}
+
+  .experiment-step{margin:16px 0;}
+  .es-label{font-size:0.75em;text-transform:uppercase;color:var(--cyan);letter-spacing:0.05em;margin-bottom:6px;display:flex;align-items:center;gap:6px;}
+  .es-content{background:rgba(6,182,212,0.05);border:1px solid var(--border);border-radius:14px;padding:18px;line-height:1.65;}
+  .es-content p{margin-bottom:10px;font-size:0.95em;}
+
+  /* Lab bench visual */
+  .lab-bench{background:linear-gradient(180deg,rgba(6,182,212,0.05),rgba(16,185,129,0.05));border:2px solid var(--border);border-radius:16px;padding:24px;text-align:center;margin:14px 0;min-height:180px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden;}
+  .lab-bench .bench-emoji{font-size:4em;margin-bottom:8px;transition:all .5s;}
+  .lab-bench .bench-label{color:var(--muted);font-size:0.9em;}
+
+  /* Animations */
+  .lab-bench.reacting .bench-emoji{animation:bounce 0.6s ease infinite;}
+  @keyframes bounce{0%,100%{transform:translateY(0);}50%{transform:translateY(-15px);}}
+  .lab-bench.exploding .bench-emoji{animation:spin 0.5s ease;}
+  @keyframes spin{0%{transform:rotate(0) scale(1);}50%{transform:rotate(180deg) scale(1.3);}100%{transform:rotate(360deg) scale(1);}}
+  .lab-bench.growing .bench-emoji{animation:grow 1s ease forwards;}
+  @keyframes grow{0%{transform:scale(0.5);}100%{transform:scale(1.5);}}
+  .lab-bench.cooling .bench-emoji{animation:shiver 0.3s ease infinite;}
+  @keyframes shiver{0%,100%{transform:translateX(0);}50%{transform:translateX(4px);}}
+
+  .bubbles{position:absolute;bottom:0;left:0;right:0;height:60px;pointer-events:none;overflow:hidden;}
+  .bubble{position:absolute;bottom:-10px;width:12px;height:12px;border-radius:50%;background:rgba(6,182,212,0.3);animation:rise var(--dur) ease-in infinite;}
+  @keyframes rise{0%{transform:translateY(0) scale(1);opacity:1;}100%{transform:translateY(-80px) scale(0.5);opacity:0;}}
+
+  /* Choice buttons */
+  .choice-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:12px 0;}
+  .choice-btn{background:rgba(6,182,212,0.08);border:2px solid var(--border);border-radius:12px;padding:14px;color:var(--text);font-family:'Quicksand',sans-serif;font-size:0.95em;cursor:pointer;transition:all .2s;text-align:left;display:flex;align-items:center;gap:10px;}
+  .choice-btn:hover{border-color:var(--cyan);background:rgba(6,182,212,0.15);transform:scale(1.02);}
+  .choice-btn.correct{border-color:var(--green);background:rgba(16,185,129,0.15);}
+  .choice-btn.wrong{border-color:var(--red);background:rgba(239,68,68,0.1);}
+  .choice-btn .cb-icon{font-size:1.3em;}
+
+  .prediction-input{width:100%;background:rgba(0,0,0,0.2);border:1px solid var(--border);border-radius:10px;padding:12px;color:var(--text);font-family:'Quicksand',sans-serif;font-size:0.95em;resize:vertical;min-height:60px;outline:none;}
+  .prediction-input:focus{border-color:var(--cyan);}
+
+  .action-btn{background:linear-gradient(135deg,var(--cyan),var(--green));border:none;border-radius:12px;padding:11px 24px;color:#000;font-family:'Quicksand',sans-serif;font-size:1em;font-weight:700;cursor:pointer;transition:all .3s;margin:4px;}
+  .action-btn:hover{transform:scale(1.03);box-shadow:0 0 15px rgba(6,182,212,0.3);}
+  .action-btn.secondary{background:rgba(6,182,212,0.15);color:var(--text);border:1px solid var(--border);}
+
+  .feedback-box{border-radius:12px;padding:16px;margin:12px 0;line-height:1.6;font-size:0.95em;animation:fadeIn .4s ease;}
+  .feedback-box.success{background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);color:var(--green);}
+  .feedback-box.info{background:rgba(6,182,212,0.08);border:1px solid rgba(6,182,212,0.2);color:var(--cyan);}
+  .feedback-box.oops{background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);color:var(--gold);}
+
+  .result-card{text-align:center;padding:20px;}
+  .result-card h2{color:var(--green);font-size:1.5em;margin-bottom:8px;}
+  .result-stats{display:flex;gap:12px;justify-content:center;margin:14px 0;flex-wrap:wrap;}
+  .rs{background:rgba(6,182,212,0.08);border:1px solid var(--border);border-radius:12px;padding:12px 18px;text-align:center;}
+  .rs .rs-val{font-size:1.4em;font-weight:700;color:var(--cyan);}
+  .rs .rs-label{font-size:0.78em;color:var(--muted);margin-top:2px;}
+
+  .conclusion-box{background:rgba(139,92,246,0.08);border:1px solid rgba(139,92,246,0.25);border-radius:12px;padding:16px;text-align:left;margin:12px 0;}
+  .conclusion-box h4{color:var(--purple);margin-bottom:6px;}
+  .conclusion-box p{color:var(--muted);font-size:0.92em;line-height:1.6;}
+
+  .notebook{background:rgba(245,158,11,0.06);border:1px solid rgba(245,158,11,0.2);border-radius:12px;padding:16px;margin:10px 0;}
+  .notebook h4{color:var(--gold);margin-bottom:6px;display:flex;align-items:center;gap:6px;}
+  .notebook p{color:var(--muted);font-size:0.9em;line-height:1.5;}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>🔬 Science Lab Simulator</h1>
+    <p>Run virtual experiments and discover how science works!</p>
+  </div>
+
+  <div class="stats-bar" id="statsBar" style="display:none;">
+    <div class="stat">🧪 Experiments: <span class="sv" id="expCount">0</span></div>
+    <div class="stat">🎯 Predictions: <span class="sv" id="predCount">0/0</span></div>
+    <div class="stat">⭐ Stars: <span class="sv" id="starCount">0</span></div>
+    <div class="stat">🔬 Scientist Level: <span class="sv" id="sciLevel">Beginner</span></div>
+  </div>
+
+  <div class="card" id="mainCard"></div>
+</div>
+
+<script>
+// ─── State ───
+let state = {
+  expsDone: [],
+  predictions: {right:0, total:0},
+  stars: 0,
+  currentExp: null,
+  currentStep: 0,
+  stepAnswers: {},
+  optionOrder: []
+};
+
+// ─── Persistence ───
+const SAVE_KEY = 'science-lab-simulator-save-v1';
+const HUB_KEY = 'hubSummary_science-lab-simulator';
+
+// ─── Daily effort tracking ───
+function todayStr() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+function ensureActivity(obj) {
+  if (!obj.activity || typeof obj.activity !== 'object') obj.activity = { date: todayStr(), actions: 0, earnedDates: [] };
+  if (typeof obj.activity.actions !== 'number') obj.activity.actions = 0;
+  if (!Array.isArray(obj.activity.earnedDates)) obj.activity.earnedDates = [];
+  return obj.activity;
+}
+
+function bumpActivity(weight) {
+  try {
+    const act = ensureActivity(state);
+    const today = todayStr();
+    if (act.date !== today) { act.date = today; act.actions = 0; }
+    act.actions += weight;
+    if (act.actions >= 20 && !act.earnedDates.includes(today)) {
+      act.earnedDates.push(today);
+      if (act.earnedDates.length > 30) act.earnedDates = act.earnedDates.slice(-30);
+    }
+    saveState();
+  } catch(e) { /* keep playing even if tracking fails */ }
+}
+
+function saveState() {
+  try {
+    const act = ensureActivity(state);
+    const today = todayStr();
+    localStorage.setItem(SAVE_KEY, JSON.stringify({
+      expsDone: state.expsDone,
+      predictions: state.predictions,
+      stars: state.stars,
+      level: getLevel(),
+      activity: act
+    }));
+    const pct = Math.round((state.expsDone.length / EXPERIMENTS.length) * 100);
+    localStorage.setItem(HUB_KEY, JSON.stringify({
+      app: 'science-lab-simulator',
+      kid: 'siena',
+      icon: '🔬',
+      label: `${state.expsDone.length}/${EXPERIMENTS.length} experiments • ⭐${state.stars} • ${getLevel()}`,
+      pct: pct,
+      streak: null,
+      stars: state.stars,
+      lastPlayed: new Date().toISOString(),
+      actionsToday: act.date === today ? act.actions : 0,
+      actionsDate: today,
+      earnedDates: act.earnedDates.slice()
+    }));
+  } catch (e) { /* localStorage unavailable — play on without saving */ }
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return;
+    const saved = JSON.parse(raw);
+    if (Array.isArray(saved.expsDone)) state.expsDone = saved.expsDone;
+    if (saved.predictions && typeof saved.predictions.right === 'number' && typeof saved.predictions.total === 'number') {
+      state.predictions = {right: saved.predictions.right, total: saved.predictions.total};
+    }
+    if (typeof saved.stars === 'number') state.stars = saved.stars;
+    if (saved.activity && typeof saved.activity === 'object') state.activity = saved.activity;
+    ensureActivity(state); // backward-compatible with saves lacking activity
+  } catch (e) { /* corrupt or unavailable save — start fresh */ }
+}
+
+function getLevel() {
+  if (state.stars >= 25) return 'Master Scientist';
+  if (state.stars >= 15) return 'Expert';
+  if (state.stars >= 8) return 'Apprentice';
+  return 'Beginner';
+}
+
+function updateStats() {
+  document.getElementById('statsBar').style.display = 'flex';
+  document.getElementById('expCount').textContent = state.expsDone.length;
+  document.getElementById('predCount').textContent = `${state.predictions.right}/${state.predictions.total}`;
+  document.getElementById('starCount').textContent = state.stars;
+  document.getElementById('sciLevel').textContent = getLevel();
+}
+
+// ─── EXPERIMENTS ───
+const EXPERIMENTS = [
+  {
+    id:'volcano', icon:'🌋', title:'Baking Soda Volcano',
+    topic:'Chemistry — Acids & Bases', desc:'Mix chemicals to create a fizzy eruption!',
+    steps:[
+      {
+        type:'intro',
+        label:'🧪 Setup',
+        text:'<p>In this experiment, we\'ll mix <strong>baking soda</strong> (a base) with <strong>vinegar</strong> (an acid) to create a chemical reaction! When an acid and a base mix, they react and produce something new.</p><p>You\'ll need to predict what happens before we try it.</p>',
+        bench:{emoji:'🧪🫗',label:'Baking soda + vinegar ready on the bench'}
+      },
+      {
+        type:'predict',
+        label:'🤔 Make a Prediction',
+        question:'What do you think will happen when we mix baking soda and vinegar together?',
+        options:[
+          {text:'Nothing will happen',icon:'😐',correct:false},
+          {text:'It will fizz and bubble up',icon:'🫧',correct:true},
+          {text:'It will change color to blue',icon:'🔵',correct:false},
+          {text:'It will freeze solid',icon:'🧊',correct:false}
+        ],
+        explanation:'Great prediction! When baking soda (a base) and vinegar (an acid) mix, they react to create carbon dioxide gas — that\'s what makes all the bubbles and fizzing!'
+      },
+      {
+        type:'action',
+        label:'🧪 Run the Experiment!',
+        text:'<p>Let\'s pour the vinegar into the baking soda...</p>',
+        bench:{emoji:'🌋💥',label:'FIZZZZZZ! The mixture erupts with bubbles!',animation:'reacting',bubbles:true},
+        result:'<p>WOW! The mixture is <strong>fizzing and bubbling</strong> like crazy! Foam is pouring over the sides!</p><p>This is a <strong>chemical reaction</strong> — the baking soda and vinegar are combining to create three new substances: water, a type of salt, and <strong>carbon dioxide gas</strong> (CO₂). The gas is what makes all those bubbles!</p>'
+      },
+      {
+        type:'quiz',
+        label:'📝 Check Understanding',
+        question:'The bubbles in our volcano are made of which gas?',
+        options:[
+          {text:'Oxygen',icon:'💨',correct:false},
+          {text:'Carbon dioxide (CO₂)',icon:'🫧',correct:true},
+          {text:'Helium',icon:'🎈',correct:false},
+          {text:'Nitrogen',icon:'💭',correct:false}
+        ],
+        explanation:'Carbon dioxide (CO₂) is the gas produced when an acid and base react. It\'s the same gas that makes soda fizzy! Plants actually breathe in CO₂ and use it to make food through photosynthesis.'
+      },
+      {
+        type:'conclusion',
+        label:'📓 Lab Notebook',
+        science:'This experiment demonstrates an <strong>acid-base reaction</strong>.</p><p>Vinegar is acetic acid. Baking soda is sodium bicarbonate (a base).</p><p>When they combine: Acetic acid + Sodium bicarbonate → Water + Sodium acetate + Carbon dioxide gas.',
+        realWorld:'This same type of reaction is used in fire extinguishers and antacid tablets (for upset stomachs).</p><p>It even shows up in baking — baking soda makes bread rise by creating CO₂ bubbles in the dough!'
+      }
+    ]
+  },
+  {
+    id:'plants', icon:'🌱', title:'What Do Plants Need to Grow?',
+    topic:'Biology — Photosynthesis', desc:'Test what plants need by changing their environment!',
+    steps:[
+      {
+        type:'intro',
+        label:'🌱 Setup',
+        text:'<p>We have <strong>four identical seedlings</strong> in small pots. We\'re going to give each plant different conditions to find out what plants really need to grow.</p><p>Plant A: Normal sunlight + water<br>Plant B: No sunlight (in a dark closet) + water<br>Plant C: Normal sunlight + NO water<br>Plant D: Normal sunlight + water + extra fertilizer</p>',
+        bench:{emoji:'🌱🌱🌱🌱',label:'Four identical seedlings ready for testing'}
+      },
+      {
+        type:'predict',
+        label:'🤔 Make a Prediction',
+        question:'After two weeks, which plant do you think will grow the MOST?',
+        options:[
+          {text:'Plant A (sun + water)',icon:'☀️💧',correct:false},
+          {text:'Plant B (dark + water)',icon:'🌑💧',correct:false},
+          {text:'Plant C (sun + no water)',icon:'☀️🏜️',correct:false},
+          {text:'Plant D (sun + water + fertilizer)',icon:'☀️💧✨',correct:true}
+        ],
+        explanation:'Plant D with sunlight, water, AND fertilizer will grow the most! Fertilizer gives plants extra nutrients (like nitrogen and phosphorus) that help them grow faster. But the key discovery is seeing what happens when you REMOVE something...'
+      },
+      {
+        type:'action',
+        label:'⏩ Fast Forward 2 Weeks!',
+        text:'<p>Let\'s fast forward to see the results after 14 days...</p>',
+        bench:{emoji:'🌿🥀🥀🌳',label:'Results are in! Check each plant!',animation:'growing'},
+        result:'<p><strong>Plant A</strong> (sun + water): Grew well! Healthy green leaves. 🌿<br><strong>Plant B</strong> (dark + water): Grew tall but pale yellow, thin and weak. 🥀<br><strong>Plant C</strong> (sun, no water): Wilted and dried out. Barely alive. 🥀<br><strong>Plant D</strong> (sun + water + fertilizer): Grew the TALLEST with the biggest, darkest green leaves! 🌳</p><p>This is called a <strong>controlled experiment</strong> — we only changed ONE thing at a time so we could see what made the difference!</p>'
+      },
+      {
+        type:'quiz',
+        label:'📝 Check Understanding',
+        question:'Why did Plant B grow tall but turn yellow?',
+        options:[
+          {text:'It got too much water',icon:'💧',correct:false},
+          {text:'Without sunlight, it couldn\'t make chlorophyll (the green color) properly',icon:'☀️',correct:true},
+          {text:'It was too cold in the closet',icon:'🥶',correct:false},
+          {text:'The soil was bad',icon:'🪨',correct:false}
+        ],
+        explanation:'Plants need sunlight to make chlorophyll — the green pigment that lets them turn sunlight into food (photosynthesis). Without light, Plant B grew tall trying to "reach" for light, but it was pale and weak because it couldn\'t make enough food!'
+      },
+      {
+        type:'conclusion',
+        label:'📓 Lab Notebook',
+        science:'This experiment tested <strong>variables</strong> that affect plant growth.</p><p>Plants need three things: sunlight (for photosynthesis), water (to transport nutrients and support cell structure), and nutrients from soil.</p><p><strong>Photosynthesis</strong> is the process: Sunlight + Water + CO₂ → Sugar (food) + Oxygen.',
+        realWorld:'Farmers use this exact science every day! They test soil nutrients, plan for sunlight exposure, and manage irrigation (watering) systems to grow the most food possible.</p><p>Greenhouses control all these variables precisely.'
+      }
+    ]
+  },
+  {
+    id:'density', icon:'🫧', title:'Density Tower Challenge',
+    topic:'Physics — Density & Buoyancy', desc:'Layer liquids and discover why things float or sink!',
+    steps:[
+      {
+        type:'intro',
+        label:'🧪 Setup',
+        text:'<p>We have a tall glass and four different liquids: <strong>honey</strong>, <strong>dish soap</strong>, <strong>water</strong> (dyed blue), and <strong>vegetable oil</strong>. We\'re going to pour them all into the same glass!</p><p>We also have small objects to test: a grape, a plastic bead, a cork, and a coin.</p>',
+        bench:{emoji:'🍯🧴💧🫗',label:'Four liquids ready to layer'}
+      },
+      {
+        type:'predict',
+        label:'🤔 Make a Prediction',
+        question:'If we carefully pour all four liquids into the same glass, what do you think will happen?',
+        options:[
+          {text:'They\'ll all mix together into one color',icon:'🎨',correct:false},
+          {text:'They\'ll form separate layers based on density',icon:'🏗️',correct:true},
+          {text:'The oil will sink to the bottom',icon:'⬇️',correct:false},
+          {text:'They\'ll react and fizz',icon:'🫧',correct:false}
+        ],
+        explanation:'They form layers! Each liquid has a different <strong>density</strong> (how heavy it is for its size). Heavier/denser liquids sink to the bottom, and lighter ones float on top. The order from bottom to top: honey → dish soap → water → oil.'
+      },
+      {
+        type:'action',
+        label:'🧪 Build the Tower!',
+        text:'<p>Carefully pouring each liquid into the glass...</p>',
+        bench:{emoji:'🏗️',label:'A beautiful density tower! Four distinct layers!',animation:'reacting'},
+        result:'<p>Look at that! <strong>Four perfect layers!</strong></p><p>🍯 <strong>Bottom: Honey</strong> — the densest (heaviest per volume)<br>🧴 <strong>Layer 2: Dish soap</strong> — denser than water<br>💧 <strong>Layer 3: Water</strong> — our reference point<br>🫗 <strong>Top: Vegetable oil</strong> — the least dense</p><p>Now let\'s drop in our objects and see where they land!</p>'
+      },
+      {
+        type:'quiz',
+        label:'📝 Check Understanding',
+        question:'A grape sinks through the oil and water but floats on the dish soap. What does this tell us?',
+        options:[
+          {text:'The grape is denser than water but less dense than dish soap',icon:'🍇',correct:true},
+          {text:'The grape is the lightest object',icon:'🪶',correct:false},
+          {text:'Grapes always float in soap',icon:'🧴',correct:false},
+          {text:'The grape is less dense than everything',icon:'⬆️',correct:false}
+        ],
+        explanation:'An object sinks through liquids that are LESS dense than it, and floats on liquids that are MORE dense. Since the grape sank through oil and water but stopped at the dish soap, the grape\'s density is between water and dish soap!'
+      },
+      {
+        type:'conclusion',
+        label:'📓 Lab Notebook',
+        science:'<strong>Density</strong> = mass ÷ volume (how much stuff is packed into a space).</p><p>Objects float in liquids that are denser than them and sink in liquids that are less dense. This is called <strong>buoyancy</strong>.',
+        realWorld:'Ships float because their overall density (including all the air inside) is less than water.</p><p>Submarines control their density by filling or emptying ballast tanks with water — more water makes them denser so they sink, pumping water out makes them float!'
+      }
+    ]
+  },
+  {
+    id:'static', icon:'⚡', title:'Static Electricity Lab',
+    topic:'Physics — Electric Charge', desc:'Make things move without touching them using static!',
+    steps:[
+      {
+        type:'intro',
+        label:'⚡ Setup',
+        text:'<p>We have a <strong>balloon</strong>, some <strong>tiny pieces of paper</strong>, an <strong>empty aluminum can</strong>, and a <strong>wool sweater</strong>. We\'re going to create <strong>static electricity</strong> — electric charge that builds up on surfaces!</p><p>When you rub certain materials together, electrons (tiny negative particles) jump from one material to the other.</p>',
+        bench:{emoji:'🎈🧶',label:'Balloon and wool sweater ready'}
+      },
+      {
+        type:'predict',
+        label:'🤔 Make a Prediction',
+        question:'After rubbing the balloon on the wool sweater, what will happen when we hold it near tiny paper pieces?',
+        options:[
+          {text:'Nothing — paper won\'t react to a balloon',icon:'😐',correct:false},
+          {text:'The paper will be pushed away from the balloon',icon:'💨',correct:false},
+          {text:'The paper pieces will jump up and stick to the balloon',icon:'🧲',correct:true},
+          {text:'The paper will change color',icon:'🎨',correct:false}
+        ],
+        explanation:'The paper pieces jump up and cling to the balloon! Rubbing the balloon on wool gives the balloon a negative electric charge. This charge attracts the uncharged paper through a process called <strong>induction</strong> — the balloon\'s charge rearranges the charges in the paper, pulling it up!'
+      },
+      {
+        type:'action',
+        label:'⚡ Rub and Test!',
+        text:'<p>Rubbing the balloon vigorously on the wool sweater... now bringing it near the paper...</p>',
+        bench:{emoji:'🎈✨📄',label:'ZAP! Paper pieces jumping up to the balloon!',animation:'reacting'},
+        result:'<p>The tiny paper pieces are <strong>leaping up</strong> and sticking to the balloon! Some are even dangling and swinging! ✨</p><p>Now let\'s try something even cooler — hold the charged balloon near the empty aluminum can lying on its side on the table...</p><p>The can <strong>rolls toward the balloon</strong> without you touching it! You\'re moving an object with invisible electric force! 🤯</p>'
+      },
+      {
+        type:'quiz',
+        label:'📝 Check Understanding',
+        question:'Why does the aluminum can roll toward the balloon?',
+        options:[
+          {text:'The balloon creates wind that pushes the can',icon:'💨',correct:false},
+          {text:'Magnets inside the balloon pull the can',icon:'🧲',correct:false},
+          {text:'The balloon\'s static charge attracts the metal in the can',icon:'⚡',correct:true},
+          {text:'Gravity pulls the can toward the balloon',icon:'⬇️',correct:false}
+        ],
+        explanation:'The negatively charged balloon attracts the electrons in the metal can. Since the can is light and can roll freely, the electrical attraction is strong enough to pull it! This is the same basic force that causes lightning — just on a much smaller scale.'
+      },
+      {
+        type:'conclusion',
+        label:'📓 Lab Notebook',
+        science:'<strong>Static electricity</strong> happens when electrons transfer between objects through friction.</p><p>Objects with opposite charges attract, and objects with the same charge repel.</p><p>This is one of the fundamental forces of nature — the <strong>electromagnetic force</strong>.',
+        realWorld:'Static electricity is related to lightning! During a storm, ice crystals in clouds rub together and build up massive electric charges.</p><p>When the charge is big enough, it jumps between the cloud and the ground — that\'s lightning!</p><p>Engineers use this knowledge to build lightning rods that protect buildings.'
+      }
+    ]
+  },
+  {
+    id:'rainbow', icon:'🌈', title:'Make a Rainbow',
+    topic:'Physics — Light & Color', desc:'Split white light into all its hidden colors!',
+    steps:[
+      {
+        type:'intro',
+        label:'🔦 Setup',
+        text:'<p>We have a <strong>flashlight</strong> (representing sunlight), a <strong>glass of water</strong>, and a <strong>white piece of paper</strong>. We\'re going to discover that white light is actually made of ALL the colors mixed together!</p><p>When light passes from air into water, something magical happens...</p>',
+        bench:{emoji:'🔦💧📄',label:'Flashlight, water glass, and white paper ready'}
+      },
+      {
+        type:'predict',
+        label:'🤔 Make a Prediction',
+        question:'What will happen when we shine white light through the glass of water onto the paper?',
+        options:[
+          {text:'The paper will glow white, just brighter',icon:'⬜',correct:false},
+          {text:'We\'ll see a rainbow of colors on the paper',icon:'🌈',correct:true},
+          {text:'The light will be completely blocked',icon:'⬛',correct:false},
+          {text:'Only blue light will come through',icon:'🔵',correct:false}
+        ],
+        explanation:'A rainbow appears on the paper! White light is actually ALL colors mixed together. When light enters water at an angle, each color bends by a slightly different amount — this is called <strong>refraction</strong>. The water separates white light into red, orange, yellow, green, blue, indigo, and violet!'
+      },
+      {
+        type:'action',
+        label:'🔦 Shine the Light!',
+        text:'<p>Positioning the flashlight at the edge of the water glass...</p>',
+        bench:{emoji:'🌈✨',label:'A beautiful rainbow appears on the paper!',animation:'reacting'},
+        result:'<p>A <strong>beautiful rainbow</strong> appears on the white paper! You can see all the colors: <span style="color:#ef4444">Red</span>, <span style="color:#f97316">Orange</span>, <span style="color:#eab308">Yellow</span>, <span style="color:#22c55e">Green</span>, <span style="color:#3b82f6">Blue</span>, <span style="color:#6366f1">Indigo</span>, and <span style="color:#a855f7">Violet</span>!</p><p>Each color of light has a different <strong>wavelength</strong>. Red light has the longest wavelength, and violet has the shortest. Water bends shorter wavelengths more than longer ones, spreading them apart!</p>'
+      },
+      {
+        type:'quiz',
+        label:'📝 Check Understanding',
+        question:'Why does a rainbow appear in the sky after it rains?',
+        options:[
+          {text:'The sun is painting the clouds',icon:'🎨',correct:false},
+          {text:'Raindrops act like tiny prisms, splitting sunlight into colors',icon:'💧',correct:true},
+          {text:'Rainbow-colored gas is released from the ground',icon:'💨',correct:false},
+          {text:'The atmosphere changes color when it\'s wet',icon:'🌍',correct:false}
+        ],
+        explanation:'Each raindrop in the sky acts like a tiny glass of water — a prism! Sunlight enters millions of raindrops, gets split into colors, and reflects back to your eyes. You see different colors from drops at different angles, creating the rainbow arc!'
+      },
+      {
+        type:'conclusion',
+        label:'📓 Lab Notebook',
+        science:'<strong>Refraction</strong> is the bending of light when it passes from one material to another (like air to water).</p><p>Different colors (wavelengths) bend by different amounts, spreading white light into a <strong>spectrum</strong>.</p><p>Isaac Newton discovered this in 1666 using a glass prism!',
+        realWorld:'Understanding light is essential for modern technology. Fiber optic cables use refraction to carry internet data as pulses of light.</p><p>Camera lenses use refraction to focus images.</p><p>Even your eyes use refraction — the lens in your eye bends light to focus images on your retina!'
+      }
+    ]
+  },
+  {
+    id:'magnet', icon:'🧲', title:'Magnetic Mystery',
+    topic:'Physics — Magnetism', desc:'Discover what magnets attract and why compasses work!',
+    steps:[
+      {
+        type:'intro',
+        label:'🧲 Setup',
+        text:'<p>We have a <strong>strong magnet</strong> and a collection of different objects: a <strong>paper clip</strong> (steel), a <strong>penny</strong> (copper/zinc), a <strong>piece of aluminum foil</strong>, a <strong>nail</strong> (iron), a <strong>wooden block</strong>, and a <strong>plastic spoon</strong>.</p><p>We\'ll test which ones the magnet attracts and discover WHY!</p>',
+        bench:{emoji:'🧲📎🪙🔩🪵🥄',label:'Magnet and test objects on the bench'}
+      },
+      {
+        type:'predict',
+        label:'🤔 Make a Prediction',
+        question:'How many of these 5 objects will the magnet attract? (paper clip, penny, aluminum foil, nail, wooden block, plastic spoon)',
+        options:[
+          {text:'All 6 — magnets attract everything metal',icon:'🧲',correct:false},
+          {text:'Only 2 — paper clip and nail (iron/steel objects)',icon:'✌️',correct:true},
+          {text:'4 — all the metal ones',icon:'4️⃣',correct:false},
+          {text:'None — magnets only stick to other magnets',icon:'0️⃣',correct:false}
+        ],
+        explanation:'Only the paper clip and nail! Magnets don\'t attract ALL metals — only metals containing iron, nickel, or cobalt. These are called <strong>ferromagnetic</strong> materials. The penny (copper/zinc), aluminum foil, wood, and plastic are NOT magnetic.'
+      },
+      {
+        type:'action',
+        label:'🧲 Test Each Object!',
+        text:'<p>Bringing the magnet close to each object one by one...</p>',
+        bench:{emoji:'🧲✨📎🔩',label:'Paper clip and nail snap to the magnet! Others don\'t budge!',animation:'reacting'},
+        result:'<p>Results:</p><p>📎 <strong>Paper clip: ATTRACTED!</strong> Snaps right to the magnet!<br>🔩 <strong>Nail: ATTRACTED!</strong> Jumps to the magnet!<br>🪙 <strong>Penny: Nothing.</strong> Not magnetic!<br>🫗 <strong>Aluminum foil: Nothing.</strong> Not magnetic!<br>🪵 <strong>Wood: Nothing.</strong><br>🥄 <strong>Plastic: Nothing.</strong></p><p>Only the <strong>iron and steel</strong> objects were attracted! Here\'s the cool part — now the nail has BECOME a magnet itself! It can pick up the paper clip! This is called <strong>induced magnetism</strong>.</p>'
+      },
+      {
+        type:'quiz',
+        label:'📝 Check Understanding',
+        question:'A compass needle always points north. Why?',
+        options:[
+          {text:'There\'s a giant magnet at the North Pole',icon:'🏔️',correct:false},
+          {text:'Earth itself acts like a giant magnet, and the compass needle aligns with Earth\'s magnetic field',icon:'🌍',correct:true},
+          {text:'The needle is pulled by gravity toward the North Pole',icon:'⬇️',correct:false},
+          {text:'Wind always blows from the north',icon:'💨',correct:false}
+        ],
+        explanation:'Earth has a molten iron core that creates a massive magnetic field around the whole planet! A compass needle is a tiny magnet that aligns with Earth\'s magnetic field, always pointing toward magnetic north. This is how sailors navigated the oceans for centuries!'
+      },
+      {
+        type:'conclusion',
+        label:'📓 Lab Notebook',
+        science:'<strong>Magnetism</strong> is caused by the alignment of tiny magnetic domains within certain metals.</p><p>In iron, these domains can all line up in the same direction, creating a strong magnetic force.</p><p><strong>Ferromagnetic</strong> materials (iron, nickel, cobalt) are the only ones attracted to magnets.',
+        realWorld:'Magnets are EVERYWHERE in modern technology! Electric motors (in cars, fans, toys) use magnets. Hard drives store data using magnetism.</p><p>MRI machines in hospitals use super-powerful magnets to take pictures of inside your body.</p><p>Even your phone\'s speaker uses a magnet!'
+      }
+    ]
+  },
+  {
+    id:'crystals', icon:'💎', title:'Grow Your Own Crystals',
+    topic:'Chemistry — Supersaturation', desc:'Turn plain salty water into sparkling crystals!',
+    steps:[
+      {
+        type:'intro',
+        label:'💎 Setup',
+        text:'<p>We have a jar of <strong>very hot water</strong>, a big box of <strong>salt</strong>, a <strong>spoon</strong>, and a <strong>string</strong> tied to a pencil. We\'re going to stir salt into the hot water until no more will dissolve — that\'s called a <strong>saturated</strong> solution.</p><p>Hot water can hold MORE salt than cold water. So what happens when our super-salty hot water cools down? Let\'s hang the string in the jar and find out!</p>',
+        bench:{emoji:'🫙🧂🥄',label:'Hot water, salt, and a string on a pencil — ready to go!'}
+      },
+      {
+        type:'predict',
+        label:'🤔 Make a Prediction',
+        question:'We stirred in LOTS of salt while the water was hot. What will happen to the string as the water slowly cools over a few days?',
+        options:[
+          {text:'The string will dissolve into the water',icon:'🧵',correct:false},
+          {text:'Sparkly crystals will grow on the string',icon:'💎',correct:true},
+          {text:'The water will turn bright pink',icon:'🩷',correct:false},
+          {text:'Nothing — the salt is gone forever',icon:'😐',correct:false}
+        ],
+        explanation:'Crystals grow on the string! When the water cools, it can\'t hold all that extra salt anymore — the solution becomes <strong>supersaturated</strong>. The extra salt has to go somewhere, so it comes out of the water and stacks up in neat, repeating patterns on the string. That\'s a crystal!'
+      },
+      {
+        type:'action',
+        label:'⏩ Fast Forward 3 Days!',
+        text:'<p>The jar has been sitting quietly on the windowsill. Let\'s pull up the string and look...</p>',
+        bench:{emoji:'💎✨🧵',label:'The string is COVERED in sparkling crystals!',animation:'growing'},
+        result:'<p>WOW! The string is covered in <strong>chunky, sparkly crystals</strong> — like tiny glass cubes stacked on top of each other! ✨</p><p>Here\'s what happened: hot water is great at holding dissolved salt. As the water cooled (and some evaporated), it couldn\'t hold all the salt anymore. The salt particles came out of the water and <strong>locked together in an organized pattern</strong>, layer by layer.</p><p>Look closely — salt crystals are shaped like little <strong>cubes</strong>! Every substance makes its own special crystal shape.</p>'
+      },
+      {
+        type:'quiz',
+        label:'📝 Check Understanding',
+        question:'Why did we use HOT water instead of cold water to start?',
+        options:[
+          {text:'Hot water can dissolve much more salt than cold water',icon:'🔥',correct:true},
+          {text:'Hot water is heavier than cold water',icon:'⚖️',correct:false},
+          {text:'Cold water would freeze the salt',icon:'🧊',correct:false},
+          {text:'Hot water turns salt into sugar',icon:'🍬',correct:false}
+        ],
+        explanation:'Hot water molecules move faster and have more room between them, so they can hold much more dissolved salt. That let us pack in extra salt — and when the water cooled, all that extra salt HAD to come out as crystals. No hot water, no supersaturation, no crystals!'
+      },
+      {
+        type:'conclusion',
+        label:'📓 Lab Notebook',
+        science:'A <strong>solution</strong> is made when something (like salt) dissolves in a liquid (like water). Warm water can hold more dissolved salt than cool water.</p><p>When a solution cools down, it becomes <strong>supersaturated</strong> — holding more salt than it normally could.</p><p>The extra salt comes out of the solution and builds <strong>crystals</strong>: particles stacked in a neat, repeating pattern.',
+        realWorld:'Nature grows crystals the same way! Gemstones like amethyst and quartz form when mineral-rich water slowly cools inside rocks over thousands of years.</p><p>Snowflakes are ice crystals — water particles stacking in a repeating six-sided pattern.</p><p>Even rock candy is just giant sugar crystals grown on a stick, exactly like our experiment!'
+      }
+    ]
+  },
+  {
+    id:'sinkfloat', icon:'🛁', title:'Sink or Float?',
+    topic:'Physics — Buoyancy', desc:'Test household objects and predict which ones float!',
+    steps:[
+      {
+        type:'intro',
+        label:'🛁 Setup',
+        text:'<p>We have a big <strong>tub of water</strong> and a basket of household objects: an <strong>apple</strong>, a <strong>metal spoon</strong>, a <strong>crayon</strong>, a <strong>cork</strong>, an <strong>orange</strong>, and a <strong>rock</strong>.</p><p>Some things float and some things sink — but it\'s NOT about how big or heavy they are! It\'s about <strong>density</strong>: how much stuff is packed into the space an object takes up. Less dense than water? It floats!</p>',
+        bench:{emoji:'🛁🍎🥄🖍️🍊🪨',label:'A tub of water and six mystery objects to test'}
+      },
+      {
+        type:'predict',
+        label:'🤔 Make a Prediction',
+        question:'The apple is way bigger and heavier than the crayon. What do you think happens when we drop them both in the water?',
+        options:[
+          {text:'The big apple sinks, the little crayon floats',icon:'⬇️',correct:false},
+          {text:'They both sink — everything sinks eventually',icon:'🌊',correct:false},
+          {text:'The apple floats and the crayon sinks',icon:'🍎',correct:true},
+          {text:'They both bounce off the water',icon:'🏀',correct:false}
+        ],
+        explanation:'The big apple FLOATS and the little crayon SINKS! Size doesn\'t decide floating — <strong>density</strong> does. An apple is full of air pockets, so it\'s less dense than water. A crayon is solid wax packed tight, so it\'s denser than water and sinks. Big can float and small can sink!'
+      },
+      {
+        type:'action',
+        label:'🛁 Drop Them All In!',
+        text:'<p>Splash! Dropping each object into the tub one at a time...</p>',
+        bench:{emoji:'🛁💦✨',label:'Splish splash! Some float, some sink!',animation:'reacting',bubbles:true},
+        result:'<p>Results:</p><p>🍎 <strong>Apple: FLOATS!</strong> Full of air pockets — less dense than water.<br>🥄 <strong>Metal spoon: SINKS.</strong> Metal is packed tight and dense.<br>🖍️ <strong>Crayon: SINKS.</strong> Solid wax, denser than water.<br>🪵 <strong>Cork: FLOATS!</strong> Cork is full of tiny air spaces.<br>🍊 <strong>Orange: FLOATS!</strong> Its thick, puffy peel is like a life jacket.<br>🪨 <strong>Rock: SINKS.</strong> Super dense!</p><p>Bonus discovery: if we <strong>peel the orange</strong>, it SINKS! Without its air-filled peel, the fruit inside is denser than water. The peel was its life jacket! 🦺</p>'
+      },
+      {
+        type:'quiz',
+        label:'📝 Check Understanding',
+        question:'Why does a peeled orange sink when an unpeeled orange floats?',
+        options:[
+          {text:'Peeling makes the orange heavier',icon:'⚖️',correct:false},
+          {text:'The peel is full of tiny air pockets that lower the orange\'s overall density',icon:'🦺',correct:true},
+          {text:'The water gets angry at peeled oranges',icon:'🌊',correct:false},
+          {text:'Peeled oranges soak up water like a sponge',icon:'🧽',correct:false}
+        ],
+        explanation:'The peel is packed with tiny air pockets — like a built-in life jacket! With the peel on, the orange\'s TOTAL density (fruit + air-filled peel) is less than water, so it floats. Take away the peel and only the dense fruit is left, so it sinks. Air makes all the difference!'
+      },
+      {
+        type:'conclusion',
+        label:'📓 Lab Notebook',
+        science:'Whether something sinks or floats depends on <strong>density</strong> — how much stuff is packed into its space — not on its size or weight alone.</p><p>Objects less dense than water float; objects denser than water sink. This pushing-up force from water is called <strong>buoyancy</strong>.</p><p>Adding air pockets (like an orange peel or a hollow hull) lowers an object\'s overall density.',
+        realWorld:'This is exactly why giant steel ships float! Steel is denser than water, but a ship\'s hull is shaped to hold LOTS of air, making its overall density less than water.</p><p>Life jackets work the same way — they\'re filled with light, air-trapping foam that lowers your overall density so you float.</p><p>And ducks? Their feathers trap air, turning them into fluffy little boats!'
+      }
+    ]
+  }
+];
+
+// ─── Render ───
+function showExpSelect() {
+  document.getElementById('statsBar').style.display = state.expsDone.length > 0 ? 'flex' : 'none';
+  if (state.expsDone.length > 0) updateStats();
+
+  const card = document.getElementById('mainCard');
+  let html = `<h2 style="text-align:center;font-size:1.3em;margin-bottom:6px;">🧪 Choose an Experiment!</h2>
+    <p style="text-align:center;color:var(--muted);margin-bottom:16px;">Each experiment teaches you real science through the scientific method: Question → Predict → Test → Observe → Conclude</p>
+    <div class="exp-grid">`;
+
+  EXPERIMENTS.forEach(exp => {
+    const done = state.expsDone.includes(exp.id);
+    html += `<div class="exp-card${done?' done':''}" onclick="startExperiment('${exp.id}')">
+      ${done?'<span class="ec-badge">✅ Done</span>':''}
+      <div class="ec-icon">${exp.icon}</div>
+      <div class="ec-title">${exp.title}</div>
+      <div class="ec-desc">${exp.desc}</div>
+      <div class="ec-topic">📘 ${exp.topic}</div>
+    </div>`;
+  });
+
+  html += '</div>';
+  card.innerHTML = html;
+}
+
+function startExperiment(id) {
+  const exp = EXPERIMENTS.find(e=>e.id===id);
+  state.currentExp = exp;
+  state.currentStep = 0;
+  state.stepAnswers = {};
+  document.getElementById('statsBar').style.display = 'flex';
+  updateStats();
+  renderStep();
+}
+
+function renderStep() {
+  const exp = state.currentExp;
+  const step = exp.steps[state.currentStep];
+  const card = document.getElementById('mainCard');
+
+  // Step tracker
+  let dots = exp.steps.map((s,i) => {
+    let cls = '';
+    if (i < state.currentStep) cls = 'done';
+    else if (i === state.currentStep) cls = 'active';
+    return `<div class="st-dot ${cls}"></div>`;
+  }).join('');
+
+  let html = `
+    <div class="exp-header">
+      <div class="eh-icon">${exp.icon}</div>
+      <div><h2>${exp.title}</h2><div class="eh-topic">📘 ${exp.topic}</div></div>
+    </div>
+    <div class="step-tracker">${dots}</div>
+    <div class="experiment-step">
+      <div class="es-label">${step.label}</div>`;
+
+  if (step.type === 'intro') {
+    html += `<div class="es-content">${step.text}</div>`;
+    if (step.bench) {
+      html += `<div class="lab-bench">
+        <div class="bench-emoji">${step.bench.emoji}</div>
+        <div class="bench-label">${step.bench.label}</div>
+      </div>`;
+    }
+    html += `<div style="text-align:center;margin-top:12px;">
+      <button class="action-btn" onclick="nextStep()">Let's Start! →</button>
+    </div>`;
+  }
+
+  else if (step.type === 'predict' || step.type === 'quiz') {
+    // Shuffle answer order so the correct one isn't always in the same spot
+    state.optionOrder = step.options.map((o,i) => i);
+    for (let i = state.optionOrder.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [state.optionOrder[i], state.optionOrder[j]] = [state.optionOrder[j], state.optionOrder[i]];
+    }
+    html += `<div class="es-content"><p><strong>${step.question}</strong></p></div>
+      <div class="choice-grid" id="choiceGrid">
+        ${state.optionOrder.map((oi) => {
+          const o = step.options[oi];
+          return `<button class="choice-btn" id="choice${oi}" onclick="submitChoice(${oi})">
+          <span class="cb-icon">${o.icon}</span> ${o.text}
+        </button>`;
+        }).join('')}
+      </div>
+      <div id="choiceFeedback"></div>`;
+  }
+
+  else if (step.type === 'action') {
+    html += `<div class="es-content">${step.text}</div>`;
+    if (step.bench) {
+      html += `<div class="lab-bench ${step.bench.animation||''}" id="labBench">
+        <div class="bench-emoji">${step.bench.emoji}</div>
+        <div class="bench-label">${step.bench.label}</div>
+        ${step.bench.bubbles ? '<div class="bubbles" id="bubbles"></div>':''}
+      </div>`;
+    }
+    html += `<div class="es-content" style="margin-top:12px;">${step.result}</div>`;
+    html += `<div style="text-align:center;margin-top:12px;">
+      <button class="action-btn" onclick="nextStep()">Continue →</button>
+    </div>`;
+
+    // Add bubbles
+    if (step.bench?.bubbles) {
+      setTimeout(() => {
+        const bubbles = document.getElementById('bubbles');
+        if (bubbles) {
+          for (let i = 0; i < 12; i++) {
+            const b = document.createElement('div');
+            b.className = 'bubble';
+            b.style.cssText = `left:${Math.random()*90+5}%;--dur:${Math.random()*2+1.5}s;animation-delay:${Math.random()*2}s;width:${Math.random()*8+6}px;height:${Math.random()*8+6}px;`;
+            bubbles.appendChild(b);
+          }
+        }
+      }, 100);
+    }
+  }
+
+  else if (step.type === 'conclusion') {
+    html += `<div class="conclusion-box">
+      <h4>🔬 The Science</h4>
+      <p>${step.science}</p>
+    </div>
+    <div class="notebook">
+      <h4>🌍 Real-World Connection</h4>
+      <p>${step.realWorld}</p>
+    </div>`;
+
+    // Calculate score
+    const predRight = Object.values(state.stepAnswers).filter(a=>a).length;
+    const predTotal = Object.keys(state.stepAnswers).length;
+    const earnedStars = predRight === predTotal ? 3 : predRight > 0 ? 2 : 1;
+
+    html += `<div class="result-card">
+      <h2>🧪 Experiment Complete!</h2>
+      <div class="result-stats">
+        <div class="rs"><div class="rs-val">${predRight}/${predTotal}</div><div class="rs-label">Predictions Correct</div></div>
+        <div class="rs"><div class="rs-val">${'⭐'.repeat(earnedStars)}</div><div class="rs-label">Stars Earned</div></div>
+      </div>
+      <button class="action-btn" onclick="finishExperiment(${earnedStars},${predRight},${predTotal})">🔬 Back to Lab</button>
+    </div>`;
+  }
+
+  html += '</div>';
+  card.innerHTML = html;
+  card.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function submitChoice(idx) {
+  const step = state.currentExp.steps[state.currentStep];
+  const correct = step.options[idx].correct;
+  state.stepAnswers[state.currentStep] = correct;
+  state.predictions.total++;
+  if (correct) state.predictions.right++;
+
+  const btns = document.querySelectorAll('.choice-btn');
+  btns.forEach((b,i) => {
+    const optIdx = state.optionOrder[i];
+    b.style.pointerEvents = 'none';
+    if (step.options[optIdx].correct) b.classList.add('correct');
+    else if (optIdx === idx && !correct) b.classList.add('wrong');
+  });
+
+  const fb = document.getElementById('choiceFeedback');
+  fb.innerHTML = `<div class="feedback-box ${correct?'success':'oops'}">
+    <strong>${correct?'✅ Great prediction!':'💡 Not quite — but that\'s how science works! We learn from being wrong.'}</strong><br>${step.explanation}
+  </div>
+  <div style="text-align:center;margin-top:10px;">
+    <button class="action-btn" onclick="nextStep()">Continue →</button>
+  </div>`;
+
+  updateStats();
+  bumpActivity(4); // predict/quiz answer submitted
+  saveState();
+}
+
+function nextStep() {
+  state.currentStep++;
+  renderStep();
+}
+
+function finishExperiment(stars, right, total) {
+  if (!state.expsDone.includes(state.currentExp.id)) {
+    state.expsDone.push(state.currentExp.id);
+    state.stars += stars;
+  }
+  bumpActivity(5); // experiment completed
+  updateStats();
+  saveState();
+  showExpSelect();
+}
+
+// ─── Init ───
+loadState();
+showExpSelect();
+</script>
+</body>
+</html>

@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Geometry Visualizer</title>
+<title>Geometry Prep Trainer</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap');
   * { margin:0; padding:0; box-sizing:border-box; }
   :root {
     --bg: #0a0e1a; --card: #111827; --border: #1e293b;
@@ -17,970 +17,1012 @@
 
   /* Top bar */
   .topbar {
-    display:flex; align-items:center; justify-content:space-between;
-    padding:10px 20px; background:var(--card); border-bottom:1px solid var(--border);
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:10px 20px; background:var(--card); border-bottom:1px solid var(--border); flex-wrap:wrap;
   }
-  .topbar h1 { font-size:1.2em; display:flex; align-items:center; gap:8px; }
+  .topbar h1 { font-size:1.15em; display:flex; align-items:center; gap:8px; }
   .topbar h1 span { color:var(--accent); }
+  .chips { display:flex; gap:6px; flex-wrap:wrap; }
+  .chip {
+    background:rgba(59,130,246,0.08); border:1px solid var(--border); border-radius:20px;
+    padding:4px 12px; font-size:0.82em; font-family:'JetBrains Mono',monospace; color:var(--text);
+  }
   .mode-tabs { display:flex; gap:4px; }
   .mode-tab {
     background:transparent; border:1px solid var(--border); color:var(--muted);
-    padding:6px 14px; border-radius:8px; font-family:'Inter',sans-serif;
-    font-size:0.85em; cursor:pointer; transition:all 0.2s;
+    padding:7px 16px; border-radius:8px; font-family:'Inter',sans-serif; font-weight:600;
+    font-size:0.88em; cursor:pointer; transition:all 0.2s;
   }
   .mode-tab:hover { border-color:var(--accent); color:var(--text); }
   .mode-tab.active { background:var(--accent); border-color:var(--accent); color:white; }
 
-  /* Main layout */
-  .main { display:flex; flex:1; overflow:hidden; }
+  .content { flex:1; overflow-y:auto; padding:18px; }
+  .wrap { max-width:860px; margin:0 auto; }
+  .tab { display:none; }
+  .tab.active { display:block; }
 
-  /* Left tools panel */
-  .tools-panel {
-    width:220px; background:var(--card); border-right:1px solid var(--border);
-    padding:12px; overflow-y:auto; flex-shrink:0;
-  }
-  .tool-section { margin-bottom:16px; }
-  .tool-section h3 { font-size:0.75em; text-transform:uppercase; color:var(--muted); letter-spacing:0.05em; margin-bottom:8px; }
-  .tool-btn {
-    display:flex; align-items:center; gap:8px; width:100%;
-    background:rgba(59,130,246,0.08); border:1px solid var(--border);
-    color:var(--text); padding:8px 10px; border-radius:8px;
-    font-family:'Inter',sans-serif; font-size:0.85em; cursor:pointer;
-    transition:all 0.2s; margin-bottom:4px;
-  }
-  .tool-btn:hover { border-color:var(--accent); background:rgba(59,130,246,0.15); }
-  .tool-btn.active { border-color:var(--accent); background:rgba(59,130,246,0.2); box-shadow:0 0 10px rgba(59,130,246,0.2); }
-  .tool-btn .ti { font-size:1.1em; width:20px; text-align:center; }
+  h2.sec { font-size:0.8em; text-transform:uppercase; letter-spacing:0.06em; color:var(--muted); margin:14px 0 8px; }
 
-  .color-row { display:flex; gap:4px; flex-wrap:wrap; margin-bottom:8px; }
-  .color-swatch {
-    width:24px; height:24px; border-radius:6px; cursor:pointer;
-    border:2px solid transparent; transition:all 0.2s;
+  /* Topic mastery bars */
+  .topic-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:8px; margin-bottom:14px; }
+  .topic-row {
+    background:var(--card); border:1px solid var(--border); border-radius:10px; padding:8px 12px;
   }
-  .color-swatch:hover, .color-swatch.active { border-color:white; transform:scale(1.15); }
+  .topic-row .tr-top { display:flex; justify-content:space-between; font-size:0.82em; margin-bottom:5px; }
+  .topic-row .tr-pct { font-family:'JetBrains Mono',monospace; color:var(--accent); }
+  .bar { height:6px; background:var(--border); border-radius:3px; overflow:hidden; }
+  .bar > div { height:100%; background:linear-gradient(90deg,var(--accent),var(--cyan)); border-radius:3px; transition:width .4s; }
 
-  /* Canvas area */
-  .canvas-area { flex:1; position:relative; overflow:hidden; }
-  canvas { display:block; width:100%; height:100%; }
+  /* Flashcard */
+  .flash { perspective:1200px; height:360px; cursor:pointer; margin-bottom:12px; }
+  .flash-inner { position:relative; width:100%; height:100%; transition:transform .5s; transform-style:preserve-3d; }
+  .flash.flipped .flash-inner { transform:rotateY(180deg); }
+  .flash-face {
+    position:absolute; inset:0; backface-visibility:hidden; -webkit-backface-visibility:hidden;
+    background:var(--card); border:1px solid var(--border); border-radius:16px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    padding:18px; gap:8px; text-align:center; overflow:hidden;
+  }
+  .flash-back { transform:rotateY(180deg); border-color:rgba(139,92,246,0.45); }
+  .flash-topic { font-size:0.72em; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted); }
+  .flash-title { font-size:1.25em; font-weight:700; }
+  .flash-hint { font-size:0.78em; color:var(--muted); }
+  .mdots { font-size:0.85em; letter-spacing:2px; color:var(--green); }
 
-  /* Info panel (right) */
-  .info-panel {
-    width:260px; background:var(--card); border-left:1px solid var(--border);
-    padding:12px; overflow-y:auto; flex-shrink:0;
-  }
-  .info-panel h3 { font-size:0.8em; text-transform:uppercase; color:var(--muted); letter-spacing:0.05em; margin-bottom:8px; }
-  .info-block {
-    background:rgba(59,130,246,0.05); border:1px solid var(--border);
-    border-radius:10px; padding:12px; margin-bottom:10px;
-  }
-  .info-row { display:flex; justify-content:space-between; margin-bottom:4px; font-size:0.88em; }
-  .info-row .label { color:var(--muted); }
-  .info-row .value { font-family:'JetBrains Mono',monospace; color:var(--accent); font-weight:500; }
+  .fig-box svg { width:100%; max-width:330px; height:auto; display:block; margin:0 auto; }
 
   .formula-box {
     background:rgba(139,92,246,0.08); border:1px solid rgba(139,92,246,0.3);
-    border-radius:8px; padding:10px; margin-top:8px; font-family:'JetBrains Mono',monospace;
-    font-size:0.82em; color:var(--purple); line-height:1.6;
+    border-radius:8px; padding:10px 16px; font-family:'JetBrains Mono',monospace;
+    font-size:1.05em; color:var(--purple); line-height:1.6;
   }
-
-  .tip-box {
+  .example-box {
     background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.3);
-    border-radius:8px; padding:10px; margin-top:8px; font-size:0.85em;
-    color:var(--green); line-height:1.5;
-  }
-
-  /* Lesson panel */
-  .lesson-panel {
-    display:none; position:absolute; bottom:0; left:0; right:0;
-    background:var(--card); border-top:2px solid var(--accent);
-    padding:16px 20px; max-height:40%; overflow-y:auto;
-    animation:slideUp 0.3s ease;
-  }
-  .lesson-panel.show { display:block; }
-  @keyframes slideUp { from{transform:translateY(100%);} to{transform:translateY(0);} }
-  .lesson-panel h3 { color:var(--accent); margin-bottom:8px; }
-  .lesson-panel p { color:var(--muted); line-height:1.6; margin-bottom:8px; font-size:0.92em; }
-  .lesson-close {
-    position:absolute; top:12px; right:16px;
-    background:var(--border); border:none; color:var(--text);
-    width:28px; height:28px; border-radius:50%; cursor:pointer;
-    font-size:1em; display:flex; align-items:center; justify-content:center;
-  }
-
-  /* Status bar */
-  .statusbar {
-    padding:6px 20px; background:var(--card); border-top:1px solid var(--border);
-    display:flex; justify-content:space-between; font-size:0.78em; color:var(--muted);
+    border-radius:8px; padding:10px 14px; font-size:0.9em; color:var(--green); line-height:1.6;
     font-family:'JetBrains Mono',monospace;
   }
 
-  /* Slider */
-  .slider-row { display:flex; align-items:center; gap:8px; margin:6px 0; }
-  .slider-row label { font-size:0.82em; color:var(--muted); min-width:50px; }
-  input[type="range"] {
-    flex:1; -webkit-appearance:none; height:4px; border-radius:2px;
-    background:var(--border); outline:none;
+  .btn {
+    background:rgba(59,130,246,0.12); border:1px solid var(--accent); color:var(--text);
+    padding:10px 20px; border-radius:10px; font-family:'Inter',sans-serif; font-weight:700;
+    font-size:0.95em; cursor:pointer; transition:all .15s;
   }
-  input[type="range"]::-webkit-slider-thumb {
-    -webkit-appearance:none; width:14px; height:14px; border-radius:50%;
-    background:var(--accent); cursor:pointer;
-  }
-  .slider-val { font-family:'JetBrains Mono',monospace; font-size:0.82em; color:var(--accent); min-width:35px; text-align:right; }
+  .btn:hover { background:rgba(59,130,246,0.25); }
+  .btn.green { border-color:var(--green); background:rgba(16,185,129,0.12); color:var(--green); }
+  .btn.green:hover { background:rgba(16,185,129,0.25); }
+  .btn.red { border-color:var(--red); background:rgba(239,68,68,0.1); color:var(--red); }
+  .btn.red:hover { background:rgba(239,68,68,0.22); }
+  .btn.big { font-size:1.1em; padding:14px 30px; }
+  .btn-row { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
 
-  .clear-btn {
-    background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3);
-    color:var(--red); padding:8px; border-radius:8px; width:100%;
-    font-family:'Inter',sans-serif; font-size:0.85em; cursor:pointer;
-    transition:all 0.2s; margin-top:8px;
+  /* Practice */
+  .level-row { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px; }
+  .lvl-btn {
+    flex:1; min-width:120px; background:var(--card); border:1px solid var(--border); color:var(--text);
+    padding:9px 8px; border-radius:10px; cursor:pointer; font-family:'Inter',sans-serif;
+    font-size:0.85em; text-align:center; transition:all .15s;
   }
-  .clear-btn:hover { background:rgba(239,68,68,0.2); }
+  .lvl-btn .lname { font-weight:700; }
+  .lvl-btn .lsub { display:block; font-size:0.78em; color:var(--muted); font-family:'JetBrains Mono',monospace; margin-top:2px; }
+  .lvl-btn.sel { border-color:var(--accent); background:rgba(59,130,246,0.15); box-shadow:0 0 12px rgba(59,130,246,0.25); }
+  .lvl-btn.locked { opacity:0.45; cursor:not-allowed; }
+
+  .prob-card {
+    background:var(--card); border:1px solid var(--border); border-radius:16px;
+    padding:20px; text-align:center;
+  }
+  .prob-q { font-size:1.05em; font-weight:600; margin:10px 0 14px; }
+  .ans-row { display:flex; gap:8px; justify-content:center; align-items:center; flex-wrap:wrap; }
+  .ans-row input {
+    background:var(--bg); border:1px solid var(--border); color:var(--text);
+    font-family:'JetBrains Mono',monospace; font-size:1.15em; padding:10px 14px;
+    border-radius:10px; width:150px; text-align:center; outline:none;
+  }
+  .ans-row input:focus { border-color:var(--accent); }
+  .ans-unit { font-family:'JetBrains Mono',monospace; color:var(--muted); font-size:1.05em; min-width:44px; text-align:left; }
+
+  .fb-good {
+    margin-top:14px; padding:12px; border-radius:10px; font-weight:700;
+    background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.4); color:var(--green);
+  }
+  .fb-bad {
+    margin-top:14px; padding:12px; border-radius:10px; text-align:left;
+    background:rgba(239,68,68,0.07); border:1px solid rgba(239,68,68,0.35);
+  }
+  .fb-bad .fb-head { color:var(--red); font-weight:700; margin-bottom:8px; }
+  .step {
+    font-family:'JetBrains Mono',monospace; font-size:0.9em; color:var(--text);
+    padding:5px 10px; margin:4px 0; background:rgba(139,92,246,0.08);
+    border-left:3px solid var(--purple); border-radius:4px;
+  }
+
+  .acc-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:8px; margin-top:8px; }
+
+  /* Challenge */
+  .chal-hero { text-align:center; padding:26px 16px; background:var(--card); border:1px solid var(--border); border-radius:16px; }
+  .chal-timer { font-family:'JetBrains Mono',monospace; font-size:2.4em; font-weight:700; color:var(--yellow); }
+  .chal-timer.low { color:var(--red); animation:pulse 1s infinite; }
+  @keyframes pulse { 50% { opacity:0.5; } }
+  .chal-stats { display:flex; gap:14px; justify-content:center; font-family:'JetBrains Mono',monospace; font-size:0.95em; margin:8px 0; flex-wrap:wrap; }
+  .chal-stats b { color:var(--accent); }
+  .chal-streak { color:var(--yellow); }
+  .chal-last { min-height:24px; font-family:'JetBrains Mono',monospace; font-size:0.9em; margin-top:8px; }
+  .pr-line { font-size:1.05em; margin:10px 0; }
+  .pr-line b { color:var(--yellow); font-family:'JetBrains Mono',monospace; }
+
+  /* PR overlay */
+  .pr-overlay {
+    display:none; position:fixed; inset:0; background:rgba(10,14,26,0.9); z-index:50;
+    align-items:center; justify-content:center;
+  }
+  .pr-overlay.show { display:flex; }
+  .pr-inner { text-align:center; animation:pop .4s ease; }
+  @keyframes pop { from { transform:scale(0.5); opacity:0; } to { transform:scale(1); opacity:1; } }
+  .pr-title { font-size:3em; font-weight:800; color:var(--yellow); text-shadow:0 0 30px rgba(245,158,11,0.6); margin-bottom:8px; }
+  .pr-sub { font-size:1.2em; color:var(--text); margin-bottom:18px; font-family:'JetBrains Mono',monospace; }
+  .confetti { position:absolute; top:-20px; font-size:1.4em; animation:fall linear forwards; }
+  @keyframes fall { to { transform:translateY(110vh) rotate(720deg); } }
+
+  @media (max-width:640px) {
+    .content { padding:10px; }
+    .flash { height:400px; }
+    .topbar { padding:8px 10px; }
+  }
 </style>
 </head>
 <body>
 
 <div class="topbar">
-  <h1>📐 <span>Geometry Visualizer</span></h1>
+  <h1>📐 <span>Geometry Prep Trainer</span></h1>
+  <div class="chips">
+    <span class="chip" id="chipPts" title="Points — earn them in Practice and Challenge to unlock levels">⭐ 0 pts</span>
+    <span class="chip" id="chipDay" title="Daily streak — train every day!">🔥 0</span>
+    <span class="chip" id="chipPR" title="Challenge all-time high score">🏆 PR 0</span>
+  </div>
   <div class="mode-tabs">
-    <button class="mode-tab active" onclick="setMode('create')">Create</button>
-    <button class="mode-tab" onclick="setMode('transform')">Transform</button>
-    <button class="mode-tab" onclick="setMode('measure')">Measure</button>
-    <button class="mode-tab" onclick="setMode('explore')">Explore</button>
+    <button class="mode-tab active" id="tabbtn-learn" onclick="showTab('learn')">Learn</button>
+    <button class="mode-tab" id="tabbtn-practice" onclick="showTab('practice')">Practice</button>
+    <button class="mode-tab" id="tabbtn-challenge" onclick="showTab('challenge')">Challenge</button>
   </div>
 </div>
 
-<div class="main">
-  <!-- Left panel -->
-  <div class="tools-panel" id="toolsPanel">
-    <!-- populated by JS -->
-  </div>
-
-  <!-- Canvas -->
-  <div class="canvas-area">
-    <canvas id="geoCanvas"></canvas>
-    <div class="lesson-panel" id="lessonPanel">
-      <button class="lesson-close" onclick="closeLesson()">×</button>
-      <div id="lessonContent"></div>
-    </div>
-  </div>
-
-  <!-- Right info -->
-  <div class="info-panel" id="infoPanel">
-    <h3>Properties</h3>
-    <div id="infoContent">
-      <div class="info-block">
-        <p style="color:var(--muted);font-size:0.9em;">Click on a shape to see its properties, or create a new shape using the tools on the left.</p>
-      </div>
-      <div class="tip-box">💡 Tip: Drag any vertex (corner point) to reshape a figure and watch the measurements update live!</div>
-    </div>
+<div class="content">
+  <div class="wrap">
+    <section class="tab active" id="tab-learn"></section>
+    <section class="tab" id="tab-practice"></section>
+    <section class="tab" id="tab-challenge"></section>
   </div>
 </div>
 
-<div class="statusbar">
-  <span id="statusCoords">Mouse: (0, 0)</span>
-  <span id="statusInfo">Ready — click a tool to begin</span>
-  <span id="statusShapes">Shapes: 0</span>
+<div class="pr-overlay" id="prOverlay">
+  <div class="pr-inner">
+    <div class="pr-title">🏆 NEW PR!</div>
+    <div class="pr-sub" id="prSub"></div>
+    <button class="btn big green" onclick="hidePR()">Let's go!</button>
+  </div>
 </div>
 
 <script>
-// ─── State ───
-let mode = 'create';
-let activeTool = null;
-let shapes = [];
-let selectedShape = null;
-let dragPoint = null;
-let dragShapeOffset = null;
-let currentColor = '#3b82f6';
-let gridSnap = true;
-let showGrid = true;
-let showAngles = true;
-let showLengths = true;
-let gridSize = 30;
-let panX = 0, panY = 0;
-let creatingPoints = [];
+// ════════════════════════════════════════════════════════════
+//  Geometry Prep Trainer — for Isaiah
+//  Learn formulas → Practice problems → Beat your PR
+// ════════════════════════════════════════════════════════════
 
-const COLORS = ['#3b82f6','#10b981','#ef4444','#f59e0b','#8b5cf6','#ec4899','#06b6d4','#f97316'];
+const SAVE_KEY = 'geometry-visualizer-save-v1';
+const LEVEL_PTS = [0, 100, 250, 500];
+const LEVEL_NAMES = ['Rookie', 'Skilled', 'Pro', 'Legend'];
 
-const canvas = document.getElementById('geoCanvas');
-const ctx = canvas.getContext('2d');
-
-// ─── Resize ───
-function resize() {
-  const area = canvas.parentElement;
-  canvas.width = area.clientWidth;
-  canvas.height = area.clientHeight;
-  draw();
-}
-window.addEventListener('resize', resize);
-
-// ─── Snap ───
-function snap(x, y) {
-  if (!gridSnap) return {x, y};
-  return {
-    x: Math.round((x - panX) / gridSize) * gridSize + panX,
-    y: Math.round((y - panY) / gridSize) * gridSize + panY
-  };
-}
-
-// ─── Shape class ───
-class Shape {
-  constructor(type, points, color) {
-    this.type = type; // 'triangle','rect','polygon','circle','line','angle'
-    this.points = points.map(p => ({...p}));
-    this.color = color;
-    this.id = Date.now() + Math.random();
-  }
-
-  getBounds() {
-    const xs = this.points.map(p=>p.x), ys = this.points.map(p=>p.y);
-    return { minX:Math.min(...xs), maxX:Math.max(...xs), minY:Math.min(...ys), maxY:Math.max(...ys) };
-  }
-
-  containsPoint(px, py) {
-    if (this.type === 'circle') {
-      const dx = px - this.points[0].x, dy = py - this.points[0].y;
-      const r = dist(this.points[0], this.points[1]);
-      return Math.sqrt(dx*dx+dy*dy) <= r + 5;
-    }
-    if (this.type === 'line') {
-      return distToSegment(px, py, this.points[0], this.points[1]) < 8;
-    }
-    // polygon point-in-polygon
-    let inside = false;
-    const pts = this.points;
-    for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
-      if ((pts[i].y > py) !== (pts[j].y > py) &&
-          px < (pts[j].x - pts[i].x) * (py - pts[i].y) / (pts[j].y - pts[i].y) + pts[i].x)
-        inside = !inside;
-    }
-    return inside;
-  }
-
-  nearestVertex(px, py) {
-    let best = -1, bestD = 20;
-    this.points.forEach((p, i) => {
-      const d = Math.sqrt((px-p.x)**2 + (py-p.y)**2);
-      if (d < bestD) { bestD = d; best = i; }
-    });
-    return best;
-  }
-
-  getProperties() {
-    const props = {};
-    if (this.type === 'circle') {
-      const r = dist(this.points[0], this.points[1]);
-      props['Radius'] = r.toFixed(1) + ' units';
-      props['Diameter'] = (2*r).toFixed(1) + ' units';
-      props['Circumference'] = (2*Math.PI*r).toFixed(1) + ' units';
-      props['Area'] = (Math.PI*r*r).toFixed(1) + ' sq units';
-      props['Center'] = `(${((this.points[0].x-panX)/gridSize).toFixed(1)}, ${(-(this.points[0].y-panY)/gridSize).toFixed(1)})`;
-    } else if (this.type === 'line') {
-      const d = dist(this.points[0], this.points[1]);
-      props['Length'] = d.toFixed(1) + ' units';
-      const dx = this.points[1].x - this.points[0].x;
-      const dy = this.points[1].y - this.points[0].y;
-      const angle = Math.atan2(-dy, dx) * 180 / Math.PI;
-      props['Angle'] = angle.toFixed(1) + '°';
-      if (dx !== 0) props['Slope'] = (-dy/dx).toFixed(2);
-      else props['Slope'] = 'undefined (vertical)';
-      props['Midpoint'] = `(${(((this.points[0].x+this.points[1].x)/2-panX)/gridSize).toFixed(1)}, ${(-((this.points[0].y+this.points[1].y)/2-panY)/gridSize).toFixed(1)})`;
-    } else {
-      // polygon
-      const pts = this.points;
-      const n = pts.length;
-      // perimeter
-      let perim = 0;
-      const sides = [];
-      for (let i = 0; i < n; i++) {
-        const d = dist(pts[i], pts[(i+1)%n]);
-        sides.push(d);
-        perim += d;
-      }
-      props['Sides'] = n;
-      props['Perimeter'] = perim.toFixed(1) + ' units';
-
-      // area (shoelace)
-      let area = 0;
-      for (let i = 0; i < n; i++) {
-        area += pts[i].x * pts[(i+1)%n].y - pts[(i+1)%n].x * pts[i].y;
-      }
-      area = Math.abs(area) / 2;
-      props['Area'] = area.toFixed(1) + ' sq units';
-
-      // angles
-      const angles = [];
-      for (let i = 0; i < n; i++) {
-        const p0 = pts[(i-1+n)%n], p1 = pts[i], p2 = pts[(i+1)%n];
-        const a = Math.atan2(p0.y-p1.y, p0.x-p1.x);
-        const b = Math.atan2(p2.y-p1.y, p2.x-p1.x);
-        let ang = (a - b) * 180 / Math.PI;
-        if (ang < 0) ang += 360;
-        if (ang > 180) ang = 360 - ang;
-        angles.push(ang);
-      }
-      props['Angles'] = angles.map(a => a.toFixed(1) + '°').join(', ');
-      props['Angle Sum'] = angles.reduce((s,a)=>s+a,0).toFixed(1) + '°';
-
-      if (n === 3) {
-        props['Type'] = classifyTriangle(sides, angles);
-      } else if (n === 4) {
-        props['Type'] = classifyQuadrilateral(sides, angles);
-      }
-
-      // side lengths
-      sides.forEach((s, i) => {
-        props[`Side ${i+1}`] = s.toFixed(1) + ' units';
-      });
-    }
-    return props;
-  }
-}
-
-function classifyTriangle(sides, angles) {
-  const s = sides.map(x=>Math.round(x*10));
-  const a = angles;
-  let type = [];
-  if (s[0]===s[1] && s[1]===s[2]) type.push('Equilateral');
-  else if (s[0]===s[1] || s[1]===s[2] || s[0]===s[2]) type.push('Isosceles');
-  else type.push('Scalene');
-  if (a.some(x => Math.abs(x-90) < 2)) type.push('Right');
-  else if (a.some(x => x > 90)) type.push('Obtuse');
-  else type.push('Acute');
-  return type.join(' ');
-}
-
-function classifyQuadrilateral(sides, angles) {
-  const s = sides.map(x=>Math.round(x*10));
-  const a = angles.map(x=>Math.round(x));
-  const allRight = a.every(x=>Math.abs(x-90)<3);
-  const oppEqual = s[0]===s[2] && s[1]===s[3];
-  const allEqual = s[0]===s[1] && s[1]===s[2] && s[2]===s[3];
-  if (allEqual && allRight) return 'Square';
-  if (allRight && oppEqual) return 'Rectangle';
-  if (allEqual) return 'Rhombus';
-  if (oppEqual) return 'Parallelogram';
-  return 'Quadrilateral';
-}
-
-function dist(a, b) { return Math.sqrt((a.x-b.x)**2 + (a.y-b.y)**2); }
-function distToSegment(px, py, a, b) {
-  const dx=b.x-a.x, dy=b.y-a.y;
-  const len2 = dx*dx+dy*dy;
-  if (len2===0) return Math.sqrt((px-a.x)**2+(py-a.y)**2);
-  let t = ((px-a.x)*dx+(py-a.y)*dy)/len2;
-  t = Math.max(0, Math.min(1, t));
-  return Math.sqrt((px-a.x-t*dx)**2 + (py-a.y-t*dy)**2);
-}
-
-// ─── Drawing ───
-function draw() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  // Grid
-  if (showGrid) {
-    ctx.strokeStyle = 'rgba(255,255,255,0.05)';
-    ctx.lineWidth = 1;
-    const startX = panX % gridSize;
-    const startY = panY % gridSize;
-    for (let x = startX; x < canvas.width; x += gridSize) {
-      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
-    }
-    for (let y = startY; y < canvas.height; y += gridSize) {
-      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
-    }
-    // Axes
-    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
-    ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(0, panY); ctx.lineTo(canvas.width, panY); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(panX, 0); ctx.lineTo(panX, canvas.height); ctx.stroke();
-
-    // Axis labels
-    ctx.fillStyle = 'rgba(255,255,255,0.25)';
-    ctx.font = '10px JetBrains Mono';
-    for (let x = panX % gridSize; x < canvas.width; x += gridSize * 2) {
-      const val = Math.round((x - panX) / gridSize);
-      if (val !== 0) ctx.fillText(val, x - 4, panY + 14);
-    }
-    for (let y = panY % gridSize; y < canvas.height; y += gridSize * 2) {
-      const val = -Math.round((y - panY) / gridSize);
-      if (val !== 0) ctx.fillText(val, panX + 6, y + 4);
-    }
-  }
-
-  // Shapes
-  shapes.forEach(shape => {
-    const isSelected = selectedShape && selectedShape.id === shape.id;
-    ctx.save();
-    ctx.strokeStyle = shape.color;
-    ctx.fillStyle = shape.color + '20';
-    ctx.lineWidth = isSelected ? 3 : 2;
-
-    if (shape.type === 'circle') {
-      const r = dist(shape.points[0], shape.points[1]);
-      ctx.beginPath();
-      ctx.arc(shape.points[0].x, shape.points[0].y, r, 0, Math.PI*2);
-      ctx.fill(); ctx.stroke();
-      // center dot
-      ctx.fillStyle = shape.color;
-      ctx.beginPath(); ctx.arc(shape.points[0].x, shape.points[0].y, 4, 0, Math.PI*2); ctx.fill();
-    } else if (shape.type === 'line') {
-      ctx.beginPath();
-      ctx.moveTo(shape.points[0].x, shape.points[0].y);
-      ctx.lineTo(shape.points[1].x, shape.points[1].y);
-      ctx.stroke();
-      if (showLengths) {
-        const mx = (shape.points[0].x+shape.points[1].x)/2;
-        const my = (shape.points[0].y+shape.points[1].y)/2;
-        const d = dist(shape.points[0], shape.points[1]);
-        drawLabel(mx, my-10, d.toFixed(1), shape.color);
-      }
-    } else {
-      // Polygon
-      ctx.beginPath();
-      shape.points.forEach((p, i) => i===0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
-      ctx.closePath();
-      ctx.fill(); ctx.stroke();
-
-      // Side lengths
-      if (showLengths) {
-        const pts = shape.points;
-        for (let i = 0; i < pts.length; i++) {
-          const a = pts[i], b = pts[(i+1)%pts.length];
-          const mx = (a.x+b.x)/2, my = (a.y+b.y)/2;
-          const d = dist(a, b);
-          drawLabel(mx, my - 8, d.toFixed(1), shape.color);
-        }
-      }
-
-      // Angles
-      if (showAngles) {
-        const pts = shape.points;
-        for (let i = 0; i < pts.length; i++) {
-          const p0 = pts[(i-1+pts.length)%pts.length], p1 = pts[i], p2 = pts[(i+1)%pts.length];
-          const a1 = Math.atan2(p0.y-p1.y, p0.x-p1.x);
-          const a2 = Math.atan2(p2.y-p1.y, p2.x-p1.x);
-          let ang = (a1 - a2) * 180 / Math.PI;
-          if (ang < 0) ang += 360;
-          if (ang > 180) ang = 360 - ang;
-
-          // Draw arc
-          ctx.beginPath();
-          const startA = Math.min(a1, a2);
-          const endA = Math.max(a1, a2);
-          ctx.arc(p1.x, p1.y, 20, a2, a1);
-          ctx.strokeStyle = shape.color + '80';
-          ctx.lineWidth = 1.5;
-          ctx.stroke();
-
-          // Right angle marker
-          if (Math.abs(ang - 90) < 3) {
-            const size = 12;
-            const mid = (a1 + a2) / 2;
-            ctx.strokeStyle = shape.color;
-            ctx.strokeRect(p1.x + Math.cos(a2)*size, p1.y + Math.sin(a2)*size,
-                          Math.cos(a1)*size, Math.sin(a1)*size);
-          }
-
-          // Angle label
-          const midA = (a1 + a2) / 2;
-          const lx = p1.x + Math.cos(midA) * 32;
-          const ly = p1.y + Math.sin(midA) * 32;
-          ctx.fillStyle = '#ffffff99';
-          ctx.font = '10px JetBrains Mono';
-          ctx.fillText(ang.toFixed(0) + '°', lx - 10, ly + 3);
-        }
-      }
-    }
-
-    // Vertices
-    shape.points.forEach((p, i) => {
-      ctx.fillStyle = isSelected ? '#fff' : shape.color;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, isSelected ? 6 : 5, 0, Math.PI*2);
-      ctx.fill();
-      ctx.strokeStyle = shape.color;
-      ctx.lineWidth = 2;
-      ctx.stroke();
-    });
-
-    if (isSelected) {
-      ctx.setLineDash([5, 5]);
-      ctx.strokeStyle = '#ffffff40';
-      ctx.lineWidth = 1;
-      const b = shape.getBounds();
-      ctx.strokeRect(b.minX-10, b.minY-10, b.maxX-b.minX+20, b.maxY-b.minY+20);
-      ctx.setLineDash([]);
-    }
-
-    ctx.restore();
-  });
-
-  // Creation preview
-  if (creatingPoints.length > 0 && activeTool) {
-    ctx.setLineDash([6, 4]);
-    ctx.strokeStyle = currentColor + '80';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    creatingPoints.forEach((p, i) => i===0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
-    ctx.stroke();
-    ctx.setLineDash([]);
-    creatingPoints.forEach(p => {
-      ctx.fillStyle = currentColor;
-      ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI*2); ctx.fill();
-    });
-  }
-}
-
-function drawLabel(x, y, text, color) {
-  ctx.font = '11px JetBrains Mono';
-  const w = ctx.measureText(text).width + 8;
-  ctx.fillStyle = 'rgba(0,0,0,0.7)';
-  ctx.beginPath();
-  ctx.roundRect(x - w/2, y - 8, w, 16, 4);
-  ctx.fill();
-  ctx.fillStyle = color;
-  ctx.fillText(text, x - w/2 + 4, y + 4);
-}
-
-// ─── Tools Panel ───
-const TOOLS = {
-  create: [
-    { section: 'Shapes', items: [
-      { id:'triangle', icon:'△', label:'Triangle', tip:'Click 3 points' },
-      { id:'rectangle', icon:'▭', label:'Rectangle', tip:'Click 2 corners' },
-      { id:'polygon', icon:'⬠', label:'Polygon', tip:'Click points, double-click to finish' },
-      { id:'circle', icon:'○', label:'Circle', tip:'Click center, then edge' },
-      { id:'line', icon:'╱', label:'Line Segment', tip:'Click 2 endpoints' },
-    ]},
-    { section: 'Options', items: [] }
-  ],
-  transform: [
-    { section: 'Transformations', items: [
-      { id:'translate', icon:'↗', label:'Translate', tip:'Drag to move' },
-      { id:'rotate', icon:'↻', label:'Rotate', tip:'Select shape, use slider' },
-      { id:'reflect_x', icon:'↔', label:'Reflect X-axis', tip:'Flip over x-axis' },
-      { id:'reflect_y', icon:'↕', label:'Reflect Y-axis', tip:'Flip over y-axis' },
-      { id:'scale_up', icon:'⊕', label:'Scale Up 1.5×', tip:'Make 1.5× bigger' },
-      { id:'scale_down', icon:'⊖', label:'Scale Down 0.67×', tip:'Make smaller' },
-      { id:'duplicate', icon:'⧉', label:'Duplicate', tip:'Copy selected shape' },
-    ]}
-  ],
-  measure: [
-    { section: 'Display', items: [
-      { id:'toggle_lengths', icon:'📏', label:'Side Lengths', tip:'Show/hide lengths' },
-      { id:'toggle_angles', icon:'📐', label:'Angles', tip:'Show/hide angles' },
-      { id:'toggle_grid', icon:'#', label:'Grid', tip:'Show/hide grid' },
-      { id:'toggle_snap', icon:'🧲', label:'Grid Snap', tip:'Snap to grid on/off' },
-    ]},
-    { section: 'Actions', items: [
-      { id:'midpoint', icon:'·', label:'Add Midpoints', tip:'Add midpoints to selected shape' },
-    ]}
-  ],
-  explore: [
-    { section: 'Lessons', items: [
-      { id:'lesson_angles', icon:'📐', label:'Angle Relationships', tip:'Learn about angles' },
-      { id:'lesson_triangles', icon:'△', label:'Triangle Types', tip:'Explore triangle properties' },
-      { id:'lesson_pythagorean', icon:'²', label:'Pythagorean Theorem', tip:'a² + b² = c²' },
-      { id:'lesson_area', icon:'▦', label:'Area Formulas', tip:'Calculate areas' },
-      { id:'lesson_transforms', icon:'↻', label:'Transformations', tip:'Slides, flips, turns' },
-      { id:'lesson_congruence', icon:'≅', label:'Congruence', tip:'When shapes are identical' },
-    ]}
-  ]
+const TOPIC_META = {
+  area:        { name:'Area',                 icon:'▦'  },
+  perimeter:   { name:'Perimeter & Circles',  icon:'📏' },
+  angles:      { name:'Angles',               icon:'📐' },
+  pythagorean: { name:'Pythagorean',          icon:'²'  },
+  volume:      { name:'Volume & Surface Area',icon:'🧊' },
+  shapes:      { name:'Shapes & Types',       icon:'△'  },
 };
+const PRACTICE_TOPICS = ['area','perimeter','angles','pythagorean','volume'];
 
-const LESSONS = {
-  lesson_angles: {
-    title: '📐 Angle Relationships',
-    content: `<p><strong>Complementary angles</strong> add up to 90°. <strong>Supplementary angles</strong> add up to 180°.</p>
-    <p><strong>Vertical angles</strong> are formed when two lines cross — they're always equal!</p>
-    <p><strong>Try it:</strong> Create two intersecting lines and measure the angles. Notice how opposite angles are always equal.</p>
-    <div class="formula-box">Complementary: a + b = 90°<br>Supplementary: a + b = 180°<br>Triangle angle sum: a + b + c = 180°<br>Quadrilateral angle sum: a + b + c + d = 360°</div>`
-  },
-  lesson_triangles: {
-    title: '△ Triangle Types',
-    content: `<p><strong>By sides:</strong> Equilateral (all equal), Isosceles (two equal), Scalene (none equal)</p>
-    <p><strong>By angles:</strong> Acute (all < 90°), Right (one = 90°), Obtuse (one > 90°)</p>
-    <p><strong>Try it:</strong> Create different triangles and drag the vertices. Watch how the classification changes in the properties panel!</p>
-    <div class="formula-box">All triangle angles sum to 180°<br>Equilateral: all angles = 60°<br>Isosceles: base angles are equal</div>`
-  },
-  lesson_pythagorean: {
-    title: '² Pythagorean Theorem',
-    content: `<p>In a <strong>right triangle</strong>, the square of the longest side (hypotenuse) equals the sum of squares of the other two sides.</p>
-    <p><strong>Try it:</strong> Create a right triangle (like 3-4-5). Check that a² + b² = c² using the side lengths shown!</p>
-    <div class="formula-box">a² + b² = c²<br><br>Common right triangles:<br>3-4-5, 5-12-13, 8-15-17<br>Any multiple works too: 6-8-10</div>`
-  },
-  lesson_area: {
-    title: '▦ Area Formulas',
-    content: `<p>Create shapes and see their areas calculated live!</p>
-    <div class="formula-box">Triangle: A = ½ × base × height<br>Rectangle: A = length × width<br>Circle: A = π × r²<br>Parallelogram: A = base × height<br>Trapezoid: A = ½(b₁ + b₂) × h</div>
-    <p><strong>Try it:</strong> Create a rectangle and a triangle with the same base and height. The triangle's area is always exactly half!</p>`
-  },
-  lesson_transforms: {
-    title: '↻ Transformations',
-    content: `<p><strong>Translation</strong> — sliding a shape without rotating or flipping it.</p>
-    <p><strong>Rotation</strong> — turning a shape around a point.</p>
-    <p><strong>Reflection</strong> — flipping a shape over a line (like a mirror).</p>
-    <p><strong>Dilation</strong> — making a shape bigger or smaller while keeping the same proportions.</p>
-    <p><strong>Try it:</strong> Create a shape, then switch to Transform mode. Try each transformation and see what changes (and what stays the same)!</p>
-    <div class="formula-box">Rigid transformations preserve:<br>• Side lengths ✓<br>• Angle measures ✓<br>• Area ✓<br><br>Dilations preserve:<br>• Angle measures ✓<br>• Shape proportions ✓<br>• Side lengths ✗ (they scale)</div>`
-  },
-  lesson_congruence: {
-    title: '≅ Congruence & Similarity',
-    content: `<p><strong>Congruent shapes</strong> are exactly the same size and shape. You can slide, rotate, or flip one to match the other perfectly.</p>
-    <p><strong>Similar shapes</strong> have the same shape but can be different sizes. All angles are equal, and sides are proportional.</p>
-    <p><strong>Try it:</strong> Create a triangle, duplicate it, then try translating, rotating, and reflecting. The duplicate stays congruent! Now try scaling — it becomes similar but not congruent.</p>
-    <div class="formula-box">Congruence tests (triangles):<br>SSS: all 3 sides equal<br>SAS: 2 sides + included angle<br>ASA: 2 angles + included side<br>AAS: 2 angles + any side</div>`
+// ─── State + persistence ───
+let S = { cards:{}, topics:{}, points:0, best:0, day:{ last:'', count:0 }, activity:{ date:'', actions:0, earnedDates:[] } };
+
+// ─── Daily effort tracking ───
+function localToday() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+function normActivity(a) {
+  const n = { date:'', actions:0, earnedDates:[] };
+  if (a && typeof a === 'object') {
+    if (typeof a.date === 'string') n.date = a.date;
+    if (Number.isFinite(a.actions)) n.actions = a.actions;
+    if (Array.isArray(a.earnedDates)) n.earnedDates = a.earnedDates.slice(-30);
   }
-};
+  return n;
+}
+function recordActivity(weight) {
+  try {
+    S.activity = normActivity(S.activity);
+    const today = localToday();
+    if (S.activity.date !== today) { S.activity.date = today; S.activity.actions = 0; }
+    S.activity.actions += weight;
+    if (S.activity.actions >= 20 && S.activity.earnedDates.indexOf(today) === -1) {
+      S.activity.earnedDates.push(today);
+      if (S.activity.earnedDates.length > 30) S.activity.earnedDates = S.activity.earnedDates.slice(-30);
+    }
+  } catch (e) { /* tracking must never break the app */ }
+}
 
-function buildToolsPanel() {
-  const panel = document.getElementById('toolsPanel');
-  const sections = TOOLS[mode] || [];
-  let html = '';
+function load() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (raw) {
+      const d = JSON.parse(raw);
+      if (d && typeof d === 'object') {
+        S.cards  = (d.cards && typeof d.cards === 'object') ? d.cards : {};
+        S.topics = (d.topics && typeof d.topics === 'object') ? d.topics : {};
+        S.points = Number.isFinite(d.points) ? d.points : 0;
+        S.best   = Number.isFinite(d.best) ? d.best : 0;
+        S.day    = (d.day && typeof d.day === 'object') ? { last:d.day.last||'', count:d.day.count||0 } : { last:'', count:0 };
+        S.activity = normActivity(d.activity); // older saves have no activity field
+      }
+    }
+  } catch (e) { /* corrupt or unavailable save — start fresh */ }
+}
 
-  sections.forEach(sec => {
-    html += `<div class="tool-section"><h3>${sec.section}</h3>`;
-    sec.items.forEach(item => {
-      const isActive = activeTool === item.id;
-      const isToggle = item.id.startsWith('toggle_');
-      let activeClass = isActive ? ' active' : '';
-      if (item.id === 'toggle_lengths' && showLengths) activeClass = ' active';
-      if (item.id === 'toggle_angles' && showAngles) activeClass = ' active';
-      if (item.id === 'toggle_grid' && showGrid) activeClass = ' active';
-      if (item.id === 'toggle_snap' && gridSnap) activeClass = ' active';
-      html += `<button class="tool-btn${activeClass}" onclick="selectTool('${item.id}')" title="${item.tip}">
-        <span class="ti">${item.icon}</span> ${item.label}
-      </button>`;
-    });
-    html += '</div>';
+function save() {
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify(S)); } catch (e) {}
+  writeHubSummary();
+  updateChips();
+}
+
+function overallMastery() {
+  let s = 0;
+  CARDS.forEach(c => s += Math.min(2, S.cards[c.id] || 0));
+  return CARDS.length ? Math.round(s / (CARDS.length * 2) * 100) : 0;
+}
+
+function unlockedLevel() {
+  let l = 1;
+  for (let i = 1; i < 4; i++) if (S.points >= LEVEL_PTS[i]) l = i + 1;
+  return l;
+}
+
+function writeHubSummary() {
+  try {
+    const act = normActivity(S.activity);
+    const today = localToday();
+    localStorage.setItem('hubSummary_geometry-visualizer', JSON.stringify({
+      app: 'geometry-visualizer', kid: 'isaiah', icon: '📐',
+      label: `Level ${unlockedLevel()} • ${overallMastery()}% mastery • PR ${S.best}`,
+      pct: overallMastery(),
+      streak: S.day.count || null,
+      stars: null,
+      lastPlayed: new Date().toISOString(),
+      actionsToday: act.date === today ? act.actions : 0,
+      actionsDate: today,
+      earnedDates: act.earnedDates
+    }));
+  } catch (e) {}
+}
+
+function markPlayed() {
+  const today = new Date().toISOString().slice(0, 10);
+  if (S.day.last === today) return;
+  const yest = new Date(Date.now() - 864e5).toISOString().slice(0, 10);
+  S.day.count = (S.day.last === yest) ? (S.day.count || 0) + 1 : 1;
+  S.day.last = today;
+}
+
+function updateChips() {
+  document.getElementById('chipPts').textContent = `⭐ ${S.points} pts`;
+  document.getElementById('chipDay').textContent = `🔥 ${S.day.count || 0}`;
+  document.getElementById('chipPR').textContent = `🏆 PR ${S.best}`;
+}
+
+// ═══GEN-BEGIN═══ (pure figure + problem-generator code; node-testable)
+
+function R(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function round2(x) { return Math.round(x * 100) / 100; }
+const UNITS = ['cm', 'm', 'in', 'ft'];
+
+// ─── SVG figure helpers (schematic, dimensions labeled) ───
+function svgWrap(inner) {
+  return `<svg viewBox="0 0 320 190" xmlns="http://www.w3.org/2000/svg">${inner}</svg>`;
+}
+const SHAPE_ST = 'stroke="var(--accent)" stroke-width="2.5" fill="rgba(59,130,246,0.12)" stroke-linejoin="round"';
+const DASH_ST  = 'stroke="var(--yellow)" stroke-width="2" stroke-dasharray="6,4" fill="none"';
+function T(x, y, s, anchor, size, fill) {
+  return `<text x="${x}" y="${y}" fill="${fill||'var(--text)'}" font-size="${size||15}" text-anchor="${anchor||'middle'}" font-family="'JetBrains Mono',monospace">${s}</text>`;
+}
+
+function figRect(wL, hL) {
+  return svgWrap(
+    `<rect x="80" y="42" width="170" height="105" ${SHAPE_ST}/>` +
+    T(165, 172, wL) + T(258, 100, hL, 'start')
+  );
+}
+function figTri(bL, hL) {
+  return svgWrap(
+    `<polygon points="60,158 265,158 175,38" ${SHAPE_ST}/>` +
+    `<line x1="175" y1="38" x2="175" y2="158" ${DASH_ST}/>` +
+    `<path d="M175,146 h10 v12" stroke="var(--yellow)" fill="none" stroke-width="1.5"/>` +
+    T(160, 180, bL) + T(184, 105, hL, 'start', 15, 'var(--yellow)')
+  );
+}
+function figTriSides(aL, bL, cL) {
+  // aL = bottom, bL = left, cL = right
+  return svgWrap(
+    `<polygon points="60,158 270,158 150,42" ${SHAPE_ST}/>` +
+    T(165, 180, aL) + T(88, 95, bL, 'end') + T(228, 95, cL, 'start')
+  );
+}
+function figPara(bL, hL) {
+  return svgWrap(
+    `<polygon points="55,152 215,152 270,52 110,52" ${SHAPE_ST}/>` +
+    `<line x1="110" y1="52" x2="110" y2="152" ${DASH_ST}/>` +
+    `<path d="M110,140 h10 v12" stroke="var(--yellow)" fill="none" stroke-width="1.5"/>` +
+    T(135, 176, bL) + T(119, 108, hL, 'start', 15, 'var(--yellow)')
+  );
+}
+function figTrap(topL, botL, hL) {
+  return svgWrap(
+    `<polygon points="50,152 275,152 215,48 110,48" ${SHAPE_ST}/>` +
+    `<line x1="160" y1="48" x2="160" y2="152" ${DASH_ST}/>` +
+    T(162, 38, topL) + T(162, 176, botL) + T(169, 106, hL, 'start', 15, 'var(--yellow)')
+  );
+}
+function figCircle(label, kind) {
+  const line = kind === 'd'
+    ? `<line x1="92" y1="98" x2="228" y2="98" stroke="var(--yellow)" stroke-width="2"/>`
+    : `<line x1="160" y1="98" x2="228" y2="98" stroke="var(--yellow)" stroke-width="2"/>`;
+  return svgWrap(
+    `<circle cx="160" cy="98" r="68" ${SHAPE_ST}/>` + line +
+    `<circle cx="160" cy="98" r="3.5" fill="var(--accent)"/>` +
+    T(kind === 'd' ? 160 : 194, 88, label, 'middle', 15, 'var(--yellow)')
+  );
+}
+function figRightTri(aL, bL, cL) {
+  // aL = vertical leg, bL = horizontal leg, cL = hypotenuse
+  return svgWrap(
+    `<polygon points="75,160 260,160 75,45" ${SHAPE_ST}/>` +
+    `<path d="M75,144 h16 v16" stroke="var(--accent)" fill="none" stroke-width="1.5"/>` +
+    T(64, 105, aL, 'end') + T(168, 180, bL) + T(180, 92, cL, 'start')
+  );
+}
+function figTriAngles(leftL, rightL, topL) {
+  return svgWrap(
+    `<polygon points="60,160 270,160 150,45" ${SHAPE_ST}/>` +
+    `<path d="M84,160 A24,24 0 0 0 76,144" stroke="var(--green)" fill="none" stroke-width="1.5"/>` +
+    `<path d="M246,160 A24,24 0 0 1 254,146" stroke="var(--green)" fill="none" stroke-width="1.5"/>` +
+    `<path d="M138,64 A22,22 0 0 1 163,65" stroke="var(--green)" fill="none" stroke-width="1.5"/>` +
+    T(97, 150, leftL, 'start', 14) + T(238, 150, rightL, 'end', 14) + T(150, 88, topL, 'middle', 14, 'var(--yellow)')
+  );
+}
+function figStraight(rightL, leftL) {
+  return svgWrap(
+    `<line x1="30" y1="150" x2="290" y2="150" stroke="var(--accent)" stroke-width="2.5"/>` +
+    `<line x1="160" y1="150" x2="235" y2="58" stroke="var(--accent)" stroke-width="2.5"/>` +
+    `<circle cx="160" cy="150" r="3.5" fill="var(--accent)"/>` +
+    `<path d="M186,150 A26,26 0 0 0 176,130" stroke="var(--green)" fill="none" stroke-width="1.5"/>` +
+    `<path d="M134,150 A26,26 0 0 1 145,128" stroke="var(--green)" fill="none" stroke-width="1.5"/>` +
+    T(206, 134, rightL, 'start', 14) + T(118, 134, leftL, 'end', 14, 'var(--yellow)')
+  );
+}
+function figVertical(leftL, rightL) {
+  return svgWrap(
+    `<line x1="50" y1="160" x2="270" y2="40" stroke="var(--accent)" stroke-width="2.5"/>` +
+    `<line x1="50" y1="40" x2="270" y2="160" stroke="var(--accent)" stroke-width="2.5"/>` +
+    `<circle cx="160" cy="100" r="3.5" fill="var(--accent)"/>` +
+    T(84, 106, leftL, 'end', 14) + T(238, 106, rightL, 'start', 14, 'var(--yellow)')
+  );
+}
+function figComp(lowerL, upperL) {
+  return svgWrap(
+    `<line x1="70" y1="160" x2="275" y2="160" stroke="var(--accent)" stroke-width="2.5"/>` +
+    `<line x1="70" y1="160" x2="70" y2="38" stroke="var(--accent)" stroke-width="2.5"/>` +
+    `<line x1="70" y1="160" x2="215" y2="70" stroke="var(--accent)" stroke-width="2.5"/>` +
+    T(160, 138, lowerL, 'middle', 14) + T(102, 82, upperL, 'middle', 14, 'var(--yellow)')
+  );
+}
+function figQuadAngles(l1, l2, l3, l4) {
+  // l1=bottom-left, l2=bottom-right, l3=top-right, l4=top-left
+  return svgWrap(
+    `<polygon points="70,155 265,160 235,45 100,40" ${SHAPE_ST}/>` +
+    T(100, 138, l1, 'middle', 14) + T(232, 143, l2, 'middle', 14) +
+    T(215, 68, l3, 'middle', 14) + T(115, 63, l4, 'middle', 14, 'var(--yellow)')
+  );
+}
+function figQuadSides(botL, rightL, topL, leftL) {
+  return svgWrap(
+    `<polygon points="70,150 265,155 235,45 100,40" ${SHAPE_ST}/>` +
+    T(167, 176, botL) + T(258, 100, rightL, 'start') +
+    T(167, 32, topL) + T(78, 98, leftL, 'end')
+  );
+}
+function figPrism(lL, wL, hL) {
+  return svgWrap(
+    `<polygon points="70,85 205,85 250,50 115,50" ${SHAPE_ST}/>` +
+    `<polygon points="205,85 250,50 250,130 205,165" ${SHAPE_ST}/>` +
+    `<rect x="70" y="85" width="135" height="80" ${SHAPE_ST}/>` +
+    T(137, 184, lL) + T(62, 128, hL, 'end') + T(240, 160, wL, 'start')
+  );
+}
+function figCylinder(rL, hL) {
+  return svgWrap(
+    `<path d="M95,52 v98 A65,16 0 0 0 225,150 v-98" ${SHAPE_ST}/>` +
+    `<ellipse cx="160" cy="52" rx="65" ry="16" ${SHAPE_ST}/>` +
+    `<line x1="160" y1="52" x2="225" y2="52" stroke="var(--yellow)" stroke-width="2"/>` +
+    T(192, 44, rL, 'middle', 14, 'var(--yellow)') + T(233, 105, hL, 'start')
+  );
+}
+
+// ─── Problem generators ───
+// Each returns { topic, q, fig, ans, unit, steps, tol }
+function P(topic, q, fig, ans, unit, steps, tol) {
+  return { topic, q, fig, ans, unit, steps, tol: (tol === undefined ? 0.01 : tol) };
+}
+const TRIPLES = [[3,4,5],[6,8,10],[5,12,13],[9,12,15],[8,15,17],[12,16,20],[7,24,25],[20,21,29]];
+
+const GENS = [
+  // ── Level 1 ──
+  { id:'rect_area', topic:'area', lvl:1, gen(L) {
+      const u = pick(UNITS), w = R(3, 4 + 3*L), h = R(2, 3 + 2*L);
+      return P('area', 'Find the area of the rectangle.', figRect(`${w} ${u}`, `${h} ${u}`),
+        w*h, `${u}²`,
+        ['Area of a rectangle: A = l × w', `A = ${w} × ${h}`, `A = ${w*h} ${u}²`]);
+  }},
+  { id:'tri_area', topic:'area', lvl:1, gen(L) {
+      const u = pick(UNITS), b = 2 * R(2, 2 + 2*L), h = R(2, 3 + 2*L);
+      return P('area', 'Find the area of the triangle.', figTri(`${b} ${u}`, `${h} ${u}`),
+        b*h/2, `${u}²`,
+        ['Area of a triangle: A = ½ × b × h', `A = ½ × ${b} × ${h}`, `A = ½ × ${b*h}`, `A = ${b*h/2} ${u}²`]);
+  }},
+  { id:'rect_perim', topic:'perimeter', lvl:1, gen(L) {
+      const u = pick(UNITS), w = R(3, 5 + 3*L), h = R(2, 4 + 2*L);
+      return P('perimeter', 'Find the perimeter of the rectangle.', figRect(`${w} ${u}`, `${h} ${u}`),
+        2*(w+h), u,
+        ['Perimeter of a rectangle: P = 2l + 2w', `P = 2(${w}) + 2(${h})`, `P = ${2*w} + ${2*h}`, `P = ${2*(w+h)} ${u}`]);
+  }},
+  { id:'tri_perim', topic:'perimeter', lvl:1, gen(L) {
+      const u = pick(UNITS), a = R(4, 6 + 2*L), b = R(4, 6 + 2*L);
+      const c = R(Math.max(3, Math.abs(a-b) + 2), a + b - 2);
+      return P('perimeter', 'Find the perimeter of the triangle.', figTriSides(`${a} ${u}`, `${b} ${u}`, `${c} ${u}`),
+        a+b+c, u,
+        ['Perimeter = add up all the sides', `P = ${a} + ${b} + ${c}`, `P = ${a+b+c} ${u}`]);
+  }},
+  { id:'tri_angle', topic:'angles', lvl:1, gen(L) {
+      const A = R(25, 95), B = R(20, 150 - A), C = 180 - A - B;
+      return P('angles', 'Find the missing angle.', figTriAngles(`${A}°`, `${B}°`, '?'),
+        C, '°',
+        ['Angles in a triangle add up to 180°', `? = 180 − ${A} − ${B}`, `? = ${C}°`]);
+  }},
+  { id:'straight_angle', topic:'angles', lvl:1, gen(L) {
+      const a = R(25, 155);
+      return P('angles', 'The two angles sit on a straight line. Find the missing angle.', figStraight(`${a}°`, '?'),
+        180 - a, '°',
+        ['Angles on a straight line add up to 180°', `? = 180 − ${a}`, `? = ${180 - a}°`]);
+  }},
+
+  // ── Level 2 ──
+  { id:'para_area', topic:'area', lvl:2, gen(L) {
+      const u = pick(UNITS), b = R(4, 6 + 2*L), h = R(2, 4 + L);
+      return P('area', 'Find the area of the parallelogram.', figPara(`${b} ${u}`, `${h} ${u}`),
+        b*h, `${u}²`,
+        ['Area of a parallelogram: A = b × h', `A = ${b} × ${h}`, `A = ${b*h} ${u}² (h is the straight-up height, not the slanted side!)`]);
+  }},
+  { id:'comp_angle', topic:'angles', lvl:2, gen(L) {
+      const a = R(15, 75);
+      return P('angles', 'The two angles are complementary (they make a right angle). Find the missing angle.', figComp(`${a}°`, '?'),
+        90 - a, '°',
+        ['Complementary angles add up to 90°', `? = 90 − ${a}`, `? = ${90 - a}°`]);
+  }},
+  { id:'vert_angle', topic:'angles', lvl:2, gen(L) {
+      const a = R(35, 145);
+      return P('angles', 'Two lines cross. Find the missing angle.', figVertical(`${a}°`, '?'),
+        a, '°',
+        ['Vertical (opposite) angles are always EQUAL', `? = ${a}°`]);
+  }},
+  { id:'circ_circumference', topic:'perimeter', lvl:2, gen(L) {
+      const u = pick(UNITS), r = R(2, 4 + 2*L), ans = round2(2 * 3.14 * r);
+      return P('perimeter', 'Find the circumference. Use π ≈ 3.14.', figCircle(`r = ${r} ${u}`, 'r'),
+        ans, u,
+        ['Circumference: C = 2πr', `C = 2 × 3.14 × ${r}`, `C = ${ans} ${u}`],
+        Math.max(0.5, ans * 0.002));
+  }},
+  { id:'circ_area', topic:'area', lvl:2, gen(L) {
+      const u = pick(UNITS), r = R(2, 3 + L), ans = round2(3.14 * r * r);
+      return P('area', 'Find the area of the circle. Use π ≈ 3.14.', figCircle(`r = ${r} ${u}`, 'r'),
+        ans, `${u}²`,
+        ['Area of a circle: A = πr²', `A = 3.14 × ${r}² = 3.14 × ${r*r}`, `A = ${ans} ${u}²`],
+        Math.max(0.5, ans * 0.002));
+  }},
+  { id:'quad_perim', topic:'perimeter', lvl:2, gen(L) {
+      const u = pick(UNITS), s = [R(3, 6+2*L), R(3, 6+2*L), R(3, 6+2*L), R(3, 6+2*L)];
+      return P('perimeter', 'Find the perimeter of the quadrilateral.',
+        figQuadSides(`${s[0]} ${u}`, `${s[1]} ${u}`, `${s[2]} ${u}`, `${s[3]} ${u}`),
+        s[0]+s[1]+s[2]+s[3], u,
+        ['Perimeter = add up all the sides', `P = ${s[0]} + ${s[1]} + ${s[2]} + ${s[3]}`, `P = ${s[0]+s[1]+s[2]+s[3]} ${u}`]);
+  }},
+
+  // ── Level 3 ──
+  { id:'trap_area', topic:'area', lvl:3, gen(L) {
+      const u = pick(UNITS), a = R(3, 7 + L), b = a + R(2, 6), h = 2 * R(1, 3);
+      const ans = (a + b) * h / 2;
+      return P('area', 'Find the area of the trapezoid.', figTrap(`${a} ${u}`, `${b} ${u}`, `${h} ${u}`),
+        ans, `${u}²`,
+        ['Area of a trapezoid: A = ½(b₁ + b₂) × h', `A = ½(${a} + ${b}) × ${h}`, `A = ½ × ${a+b} × ${h}`, `A = ${ans} ${u}²`]);
+  }},
+  { id:'pyth_hyp', topic:'pythagorean', lvl:3, gen(L) {
+      const u = pick(UNITS), t = pick(TRIPLES), a = t[0], b = t[1], c = t[2];
+      return P('pythagorean', 'Find the length of the hypotenuse.', figRightTri(`${a} ${u}`, `${b} ${u}`, '?'),
+        c, u,
+        ['Pythagorean theorem: a² + b² = c²', `${a}² + ${b}² = c²`, `${a*a} + ${b*b} = ${c*c}`, `c = √${c*c} = ${c} ${u}`]);
+  }},
+  { id:'prism_vol', topic:'volume', lvl:3, gen(L) {
+      const u = pick(UNITS), l = R(2, 4 + L), w = R(2, 3 + L), h = R(2, 3 + L);
+      return P('volume', 'Find the volume of the rectangular prism.', figPrism(`${l} ${u}`, `${w} ${u}`, `${h} ${u}`),
+        l*w*h, `${u}³`,
+        ['Volume of a prism: V = l × w × h', `V = ${l} × ${w} × ${h}`, `V = ${l*w*h} ${u}³`]);
+  }},
+  { id:'quad_angle', topic:'angles', lvl:3, gen(L) {
+      const A = R(70, 120), B = R(60, 110), C = R(60, 110), D = 360 - A - B - C;
+      return P('angles', 'Find the missing angle of the quadrilateral.', figQuadAngles(`${A}°`, `${B}°`, `${C}°`, '?'),
+        D, '°',
+        ['Angles in a quadrilateral add up to 360°', `? = 360 − ${A} − ${B} − ${C}`, `? = 360 − ${A+B+C}`, `? = ${D}°`]);
+  }},
+
+  // ── Level 4 ──
+  { id:'pyth_leg', topic:'pythagorean', lvl:4, gen(L) {
+      const u = pick(UNITS), t = pick(TRIPLES), a = t[0], b = t[1], c = t[2];
+      return P('pythagorean', 'Find the missing leg of the right triangle.', figRightTri('?', `${b} ${u}`, `${c} ${u}`),
+        a, u,
+        ['Pythagorean theorem: a² + b² = c²', `a² + ${b}² = ${c}²`, `a² = ${c*c} − ${b*b} = ${c*c - b*b}`, `a = √${a*a} = ${a} ${u}`]);
+  }},
+  { id:'cyl_vol', topic:'volume', lvl:4, gen(L) {
+      const u = pick(UNITS), r = R(2, 5), h = R(4, 10), ans = round2(3.14 * r * r * h);
+      return P('volume', 'Find the volume of the cylinder. Use π ≈ 3.14.', figCylinder(`r = ${r} ${u}`, `${h} ${u}`),
+        ans, `${u}³`,
+        ['Volume of a cylinder: V = πr²h', `V = 3.14 × ${r}² × ${h}`, `V = 3.14 × ${r*r} × ${h}`, `V = ${ans} ${u}³`],
+        Math.max(1, ans * 0.002));
+  }},
+  { id:'prism_sa', topic:'volume', lvl:4, gen(L) {
+      const u = pick(UNITS), l = R(2, 7), w = R(2, 6), h = R(2, 6);
+      const ans = 2 * (l*w + l*h + w*h);
+      return P('volume', 'Find the surface area of the rectangular prism.', figPrism(`${l} ${u}`, `${w} ${u}`, `${h} ${u}`),
+        ans, `${u}²`,
+        ['Surface area of a prism: SA = 2(lw + lh + wh)', `SA = 2(${l}×${w} + ${l}×${h} + ${w}×${h})`, `SA = 2(${l*w} + ${l*h} + ${w*h})`, `SA = 2 × ${l*w + l*h + w*h} = ${ans} ${u}²`]);
+  }},
+  { id:'circ_area_d', topic:'area', lvl:4, gen(L) {
+      const u = pick(UNITS), r = R(3, 9), d = 2 * r, ans = round2(3.14 * r * r);
+      return P('area', 'You are given the DIAMETER. Find the area of the circle. Use π ≈ 3.14.', figCircle(`d = ${d} ${u}`, 'd'),
+        ans, `${u}²`,
+        ['First find the radius: r = d ÷ 2', `r = ${d} ÷ 2 = ${r}`, 'A = πr²', `A = 3.14 × ${r}² = 3.14 × ${r*r}`, `A = ${ans} ${u}²`],
+        Math.max(0.5, ans * 0.002));
+  }},
+];
+
+function makeProblem(level) {
+  const pool = GENS.filter(g => g.lvl <= level);
+  const weighted = [];
+  pool.forEach(g => { const w = (g.lvl === level) ? 3 : 1; for (let i = 0; i < w; i++) weighted.push(g); });
+  const g = pick(weighted);
+  const p = g.gen(level);
+  p.genLvl = g.lvl;
+  return p;
+}
+
+function checkAnswer(problem, value) {
+  return Number.isFinite(value) && Math.abs(value - problem.ans) <= problem.tol;
+}
+
+// ═══GEN-END═══
+
+// ─── Flashcards (front = concept + diagram, back = formula + worked example) ───
+const CARDS = [
+  { id:'c_rect_area', topic:'area', title:'Area of a Rectangle', fig:figRect('l','w'),
+    formula:'A = l × w', ex:'l = 8, w = 5<br>A = 8 × 5 = 40 sq units' },
+  { id:'c_tri_area', topic:'area', title:'Area of a Triangle', fig:figTri('b','h'),
+    formula:'A = ½ × b × h', ex:'b = 10, h = 6<br>A = ½ × 10 × 6 = 30 sq units' },
+  { id:'c_para_area', topic:'area', title:'Area of a Parallelogram', fig:figPara('b','h'),
+    formula:'A = b × h', ex:'b = 9, h = 4<br>A = 9 × 4 = 36 sq units<br>(h = straight-up height!)' },
+  { id:'c_trap_area', topic:'area', title:'Area of a Trapezoid', fig:figTrap('b₁','b₂','h'),
+    formula:'A = ½(b₁ + b₂) × h', ex:'b₁ = 6, b₂ = 10, h = 4<br>A = ½ × 16 × 4 = 32 sq units' },
+  { id:'c_circ_area', topic:'area', title:'Area of a Circle', fig:figCircle('r','r'),
+    formula:'A = πr²', ex:'r = 5, π ≈ 3.14<br>A = 3.14 × 25 = 78.5 sq units' },
+
+  { id:'c_rect_perim', topic:'perimeter', title:'Perimeter of a Rectangle', fig:figRect('l','w'),
+    formula:'P = 2l + 2w', ex:'l = 8, w = 5<br>P = 16 + 10 = 26 units' },
+  { id:'c_poly_perim', topic:'perimeter', title:'Perimeter of Any Polygon', fig:figQuadSides('7','4','6','5'),
+    formula:'P = add ALL the sides', ex:'P = 7 + 4 + 6 + 5 = 22 units' },
+  { id:'c_circumference', topic:'perimeter', title:'Circumference of a Circle', fig:figCircle('r','r'),
+    formula:'C = 2πr  (= πd)', ex:'r = 4, π ≈ 3.14<br>C = 2 × 3.14 × 4 = 25.12 units' },
+
+  { id:'c_prism_vol', topic:'volume', title:'Volume of a Rectangular Prism', fig:figPrism('l','w','h'),
+    formula:'V = l × w × h', ex:'5 × 3 × 4 = 60 cubic units' },
+  { id:'c_cyl_vol', topic:'volume', title:'Volume of a Cylinder', fig:figCylinder('r','h'),
+    formula:'V = πr²h', ex:'r = 3, h = 5<br>V = 3.14 × 9 × 5 = 141.3 cubic units' },
+  { id:'c_prism_sa', topic:'volume', title:'Surface Area of a Prism', fig:figPrism('l','w','h'),
+    formula:'SA = 2(lw + lh + wh)', ex:'l=5, w=3, h=4<br>SA = 2(15 + 20 + 12) = 94 sq units' },
+  { id:'c_cyl_sa', topic:'volume', title:'Surface Area of a Cylinder', fig:figCylinder('r','h'),
+    formula:'SA = 2πr² + 2πrh', ex:'r = 3, h = 5<br>SA = 56.52 + 94.2 = 150.72 sq units' },
+
+  { id:'c_pyth', topic:'pythagorean', title:'Pythagorean Theorem', fig:figRightTri('a','b','c'),
+    formula:'a² + b² = c²', ex:'a = 3, b = 4<br>9 + 16 = 25 → c = √25 = 5' },
+  { id:'c_pyth_leg', topic:'pythagorean', title:'Finding a Missing Leg', fig:figRightTri('a','b','c'),
+    formula:'b² = c² − a²', ex:'c = 13, a = 5<br>b² = 169 − 25 = 144 → b = 12' },
+
+  { id:'c_tri_sum', topic:'angles', title:'Triangle Angle Sum', fig:figTriAngles('a°','b°','c°'),
+    formula:'a + b + c = 180°', ex:'a = 60°, b = 70°<br>c = 180 − 130 = 50°' },
+  { id:'c_quad_sum', topic:'angles', title:'Quadrilateral Angle Sum', fig:figQuadAngles('a°','b°','c°','d°'),
+    formula:'a + b + c + d = 360°', ex:'90 + 85 + 95 = 270<br>d = 360 − 270 = 90°' },
+  { id:'c_straight', topic:'angles', title:'Angles on a Straight Line', fig:figStraight('a°','b°'),
+    formula:'a + b = 180°', ex:'a = 115°<br>b = 180 − 115 = 65°' },
+  { id:'c_vertical', topic:'angles', title:'Vertical Angles', fig:figVertical('a°','b°'),
+    formula:'a = b  (always equal!)', ex:'Two lines cross, a = 40°<br>→ opposite angle b = 40°' },
+  { id:'c_comp', topic:'angles', title:'Complementary Angles', fig:figComp('a°','b°'),
+    formula:'a + b = 90°', ex:'a = 35°<br>b = 90 − 35 = 55°' },
+  { id:'c_supp', topic:'angles', title:'Supplementary Angles', fig:figStraight('a°','b°'),
+    formula:'a + b = 180°', ex:'a = 70°<br>b = 180 − 70 = 110°<br>(C for Corner 90°, S for Straight 180°)' },
+
+  { id:'c_tri_types', topic:'shapes', title:'Triangle Types', fig:figTriSides('8','5','5'),
+    formula:'Sides: Equilateral 3= / Isosceles 2= / Scalene 0=<br>Angles: Acute &lt;90° / Right =90° / Obtuse &gt;90°',
+    ex:'Sides 5, 5, 8 → Isosceles<br>Angles 30°, 60°, 90° → Right' },
+  { id:'c_quads', topic:'shapes', title:'Special Quadrilaterals', fig:figQuadSides('','','',''),
+    formula:'Square: 4 = sides + 4 right angles<br>Rectangle: 4 right angles<br>Rhombus: 4 = sides<br>Parallelogram: 2 pairs ∥ sides<br>Trapezoid: exactly 1 pair ∥ sides',
+    ex:'A square is also a rectangle,<br>a rhombus, AND a parallelogram!' },
+];
+
+// ─── Tab switching ───
+let curTab = 'learn';
+function showTab(t) {
+  curTab = t;
+  ['learn','practice','challenge'].forEach(x => {
+    document.getElementById('tab-' + x).classList.toggle('active', x === t);
+    document.getElementById('tabbtn-' + x).classList.toggle('active', x === t);
   });
+  if (t === 'learn') renderLearn();
+  if (t === 'practice') { if (!curProblem) practiceNew(); else renderPractice(); }
+  if (t === 'challenge') renderChallenge();
+}
 
-  // Color palette for create mode
-  if (mode === 'create') {
-    html += '<div class="tool-section"><h3>Color</h3><div class="color-row">';
-    COLORS.forEach(c => {
-      html += `<div class="color-swatch${c===currentColor?' active':''}" style="background:${c}" onclick="setColor('${c}')"></div>`;
-    });
-    html += '</div></div>';
-  }
+// ═══ LEARN ═══
+let curCard = null, flipped = false;
 
-  // Transform slider
-  if (mode === 'transform') {
-    html += `<div class="tool-section"><h3>Rotation</h3>
-      <div class="slider-row"><label>Angle</label>
-        <input type="range" min="0" max="360" value="0" id="rotSlider" oninput="updateRotLabel()">
-        <span class="slider-val" id="rotVal">0°</span>
+function cardLevel(id) { return Math.min(2, S.cards[id] || 0); }
+
+function topicMastery(t) {
+  const cs = CARDS.filter(c => c.topic === t);
+  if (!cs.length) return 0;
+  let s = 0; cs.forEach(c => s += cardLevel(c.id));
+  return Math.round(s / (cs.length * 2) * 100);
+}
+
+function nextCard() {
+  const pool = [];
+  CARDS.forEach(c => {
+    const w = [6, 3, 1][cardLevel(c.id)];  // "still learning" cards show up way more
+    for (let i = 0; i < w; i++) pool.push(c);
+  });
+  let c, guard = 0;
+  do { c = pool[Math.floor(Math.random() * pool.length)]; guard++; }
+  while (curCard && c.id === curCard.id && guard < 30);
+  return c;
+}
+
+function renderLearn() {
+  if (!curCard) curCard = nextCard();
+  const el = document.getElementById('tab-learn');
+  let bars = '';
+  Object.keys(TOPIC_META).forEach(t => {
+    const m = topicMastery(t);
+    bars += `<div class="topic-row">
+      <div class="tr-top"><span>${TOPIC_META[t].icon} ${TOPIC_META[t].name}</span><span class="tr-pct">${m}%</span></div>
+      <div class="bar"><div style="width:${m}%"></div></div>
+    </div>`;
+  });
+  const lv = cardLevel(curCard.id);
+  const dots = '●'.repeat(lv) + '○'.repeat(2 - lv);
+  el.innerHTML = `
+    <h2 class="sec">Formula mastery — ${overallMastery()}% overall</h2>
+    <div class="topic-grid">${bars}</div>
+    <h2 class="sec">Flashcard — tap the card to flip it</h2>
+    <div class="flash" id="flashCard" onclick="flipCard()">
+      <div class="flash-inner">
+        <div class="flash-face flash-front">
+          <div class="flash-topic">${TOPIC_META[curCard.topic].icon} ${TOPIC_META[curCard.topic].name} <span class="mdots">${dots}</span></div>
+          <div class="flash-title">${curCard.title}</div>
+          <div class="fig-box">${curCard.fig}</div>
+          <div class="flash-hint">tap to see the formula →</div>
+        </div>
+        <div class="flash-face flash-back">
+          <div class="flash-topic">${curCard.title}</div>
+          <div class="formula-box">${curCard.formula}</div>
+          <div class="example-box">${curCard.ex}</div>
+          <div class="flash-hint">Be honest — it makes you faster in Challenge mode!</div>
+        </div>
       </div>
-      <button class="tool-btn" onclick="applyRotation()"><span class="ti">✓</span> Apply Rotation</button>
-    </div>`;
-  }
-
-  html += '<button class="clear-btn" onclick="clearAll()">🗑 Clear All Shapes</button>';
-  panel.innerHTML = html;
-}
-
-function updateRotLabel() {
-  document.getElementById('rotVal').textContent = document.getElementById('rotSlider').value + '°';
-}
-
-function applyRotation() {
-  if (!selectedShape) { setStatus('Select a shape first!'); return; }
-  const deg = parseInt(document.getElementById('rotSlider').value);
-  const rad = deg * Math.PI / 180;
-  const cx = selectedShape.points.reduce((s,p)=>s+p.x,0) / selectedShape.points.length;
-  const cy = selectedShape.points.reduce((s,p)=>s+p.y,0) / selectedShape.points.length;
-  selectedShape.points.forEach(p => {
-    const dx = p.x - cx, dy = p.y - cy;
-    p.x = cx + dx*Math.cos(rad) - dy*Math.sin(rad);
-    p.y = cy + dx*Math.sin(rad) + dy*Math.cos(rad);
-  });
-  draw();
-  updateInfo();
-}
-
-// ─── Tool actions ───
-function selectTool(id) {
-  // Toggle display options
-  if (id === 'toggle_lengths') { showLengths = !showLengths; buildToolsPanel(); draw(); return; }
-  if (id === 'toggle_angles') { showAngles = !showAngles; buildToolsPanel(); draw(); return; }
-  if (id === 'toggle_grid') { showGrid = !showGrid; buildToolsPanel(); draw(); return; }
-  if (id === 'toggle_snap') { gridSnap = !gridSnap; buildToolsPanel(); draw(); return; }
-
-  // Transform actions
-  if (id === 'reflect_x' && selectedShape) {
-    const cy = panY;
-    selectedShape.points.forEach(p => p.y = 2*cy - p.y);
-    draw(); updateInfo(); return;
-  }
-  if (id === 'reflect_y' && selectedShape) {
-    const cx = panX;
-    selectedShape.points.forEach(p => p.x = 2*cx - p.x);
-    draw(); updateInfo(); return;
-  }
-  if (id === 'scale_up' && selectedShape) {
-    scaleShape(selectedShape, 1.5); draw(); updateInfo(); return;
-  }
-  if (id === 'scale_down' && selectedShape) {
-    scaleShape(selectedShape, 0.667); draw(); updateInfo(); return;
-  }
-  if (id === 'duplicate' && selectedShape) {
-    const newPts = selectedShape.points.map(p => ({x: p.x + 40, y: p.y + 40}));
-    const ns = new Shape(selectedShape.type, newPts, selectedShape.color);
-    shapes.push(ns);
-    selectedShape = ns;
-    draw(); updateInfo(); updateShapeCount(); return;
-  }
-  if (id === 'midpoint' && selectedShape && selectedShape.type !== 'circle') {
-    const pts = selectedShape.points;
-    const mids = [];
-    for (let i = 0; i < pts.length; i++) {
-      const a = pts[i], b = pts[(i+1)%pts.length];
-      mids.push({x:(a.x+b.x)/2, y:(a.y+b.y)/2});
-    }
-    mids.forEach(m => {
-      shapes.push(new Shape('circle', [m, {x:m.x+3, y:m.y}], '#ffffff'));
-    });
-    draw(); updateShapeCount(); return;
-  }
-
-  // Lessons
-  if (id.startsWith('lesson_')) {
-    showLesson(id); return;
-  }
-
-  // Transform actions that need selection
-  if (['reflect_x','reflect_y','scale_up','scale_down','duplicate','midpoint'].includes(id) && !selectedShape) {
-    setStatus('Select a shape first!'); return;
-  }
-
-  activeTool = activeTool === id ? null : id;
-  creatingPoints = [];
-  buildToolsPanel();
-  if (activeTool) setStatus(`Tool: ${id} — ${TOOLS[mode].flatMap(s=>s.items).find(i=>i.id===id)?.tip || ''}`);
-  else setStatus('Ready');
-}
-
-function scaleShape(shape, factor) {
-  const cx = shape.points.reduce((s,p)=>s+p.x,0) / shape.points.length;
-  const cy = shape.points.reduce((s,p)=>s+p.y,0) / shape.points.length;
-  shape.points.forEach(p => {
-    p.x = cx + (p.x-cx)*factor;
-    p.y = cy + (p.y-cy)*factor;
-  });
-}
-
-function showLesson(id) {
-  const lesson = LESSONS[id];
-  if (!lesson) return;
-  document.getElementById('lessonContent').innerHTML = `<h3>${lesson.title}</h3>${lesson.content}`;
-  document.getElementById('lessonPanel').classList.add('show');
-}
-function closeLesson() {
-  document.getElementById('lessonPanel').classList.remove('show');
-}
-
-// ─── Mode switch ───
-function setMode(m) {
-  mode = m;
-  activeTool = null;
-  creatingPoints = [];
-  document.querySelectorAll('.mode-tab').forEach(t => t.classList.toggle('active', t.textContent.toLowerCase() === m));
-  buildToolsPanel();
-  if (m === 'transform' && !selectedShape && shapes.length > 0) {
-    setStatus('Click a shape to select it, then use transform tools');
-  }
-}
-
-function setColor(c) {
-  currentColor = c;
-  buildToolsPanel();
-}
-
-function clearAll() {
-  shapes = []; selectedShape = null; creatingPoints = [];
-  draw(); updateInfo(); updateShapeCount();
-}
-
-// ─── Mouse handling ───
-canvas.addEventListener('mousedown', e => {
-  const rect = canvas.getBoundingClientRect();
-  const mx = e.clientX - rect.left, my = e.clientY - rect.top;
-  const snapped = snap(mx, my);
-
-  // Check for vertex drag on selected shape
-  if (selectedShape) {
-    const vi = selectedShape.nearestVertex(mx, my);
-    if (vi >= 0) { dragPoint = { shape: selectedShape, index: vi }; return; }
-  }
-
-  // Check for shape click
-  for (let i = shapes.length - 1; i >= 0; i--) {
-    if (shapes[i].containsPoint(mx, my)) {
-      // Check vertex first
-      const vi = shapes[i].nearestVertex(mx, my);
-      if (vi >= 0) {
-        selectedShape = shapes[i];
-        dragPoint = { shape: shapes[i], index: vi };
-        updateInfo(); draw(); return;
-      }
-      // Shape body drag
-      if (mode === 'transform' || !activeTool) {
-        selectedShape = shapes[i];
-        dragShapeOffset = { dx: mx - shapes[i].points[0].x, dy: my - shapes[i].points[0].y };
-        updateInfo(); draw(); return;
-      }
-    }
-  }
-
-  // Creating new shape
-  if (mode === 'create' && activeTool) {
-    creatingPoints.push(snapped);
-    const tool = activeTool;
-
-    if (tool === 'triangle' && creatingPoints.length === 3) {
-      shapes.push(new Shape('triangle', creatingPoints, currentColor));
-      creatingPoints = [];
-      updateShapeCount();
-    } else if (tool === 'rectangle' && creatingPoints.length === 2) {
-      const [a, b] = creatingPoints;
-      const pts = [{x:a.x,y:a.y},{x:b.x,y:a.y},{x:b.x,y:b.y},{x:a.x,y:b.y}];
-      shapes.push(new Shape('rect', pts, currentColor));
-      creatingPoints = [];
-      updateShapeCount();
-    } else if (tool === 'circle' && creatingPoints.length === 2) {
-      shapes.push(new Shape('circle', creatingPoints, currentColor));
-      creatingPoints = [];
-      updateShapeCount();
-    } else if (tool === 'line' && creatingPoints.length === 2) {
-      shapes.push(new Shape('line', creatingPoints, currentColor));
-      creatingPoints = [];
-      updateShapeCount();
-    }
-    draw();
-    return;
-  }
-
-  // Deselect
-  selectedShape = null;
-  updateInfo();
-  draw();
-});
-
-canvas.addEventListener('dblclick', e => {
-  if (activeTool === 'polygon' && creatingPoints.length >= 3) {
-    shapes.push(new Shape('polygon', creatingPoints, currentColor));
-    creatingPoints = [];
-    draw();
-    updateShapeCount();
-  }
-});
-
-canvas.addEventListener('mousemove', e => {
-  const rect = canvas.getBoundingClientRect();
-  const mx = e.clientX - rect.left, my = e.clientY - rect.top;
-  const snapped = snap(mx, my);
-
-  // Coordinate display
-  const gx = ((mx - panX) / gridSize).toFixed(1);
-  const gy = (-(my - panY) / gridSize).toFixed(1);
-  document.getElementById('statusCoords').textContent = `Mouse: (${gx}, ${gy})`;
-
-  if (dragPoint) {
-    dragPoint.shape.points[dragPoint.index] = snapped;
-    draw();
-    if (selectedShape) updateInfo();
-    return;
-  }
-
-  if (dragShapeOffset && selectedShape) {
-    const dx = mx - dragShapeOffset.dx - selectedShape.points[0].x;
-    const dy = my - dragShapeOffset.dy - selectedShape.points[0].y;
-    selectedShape.points.forEach(p => { p.x += dx; p.y += dy; });
-    dragShapeOffset.dx = mx - selectedShape.points[0].x;
-    dragShapeOffset.dy = my - selectedShape.points[0].y;
-    draw();
-    updateInfo();
-    return;
-  }
-
-  // Hover cursor
-  let onVertex = false;
-  shapes.forEach(s => { if (s.nearestVertex(mx, my) >= 0) onVertex = true; });
-  canvas.style.cursor = onVertex ? 'grab' : (activeTool ? 'crosshair' : 'default');
-});
-
-canvas.addEventListener('mouseup', () => {
-  dragPoint = null;
-  dragShapeOffset = null;
-});
-
-// Delete key
-document.addEventListener('keydown', e => {
-  if ((e.key === 'Delete' || e.key === 'Backspace') && selectedShape) {
-    shapes = shapes.filter(s => s.id !== selectedShape.id);
-    selectedShape = null;
-    draw(); updateInfo(); updateShapeCount();
-  }
-  if (e.key === 'Escape') {
-    creatingPoints = [];
-    activeTool = null;
-    buildToolsPanel();
-    draw();
-  }
-});
-
-// ─── Info panel update ───
-function updateInfo() {
-  const el = document.getElementById('infoContent');
-  if (!selectedShape) {
-    el.innerHTML = `<div class="info-block">
-      <p style="color:var(--muted);font-size:0.9em;">Click on a shape to see its properties, or create a new shape using the tools on the left.</p>
     </div>
-    <div class="tip-box">💡 Tip: Drag any vertex (corner point) to reshape a figure and watch the measurements update live!</div>`;
+    <div class="btn-row" id="flashActions" style="visibility:${flipped ? 'visible' : 'hidden'}">
+      <button class="btn red" onclick="gradeCard(0)">😅 Still learning</button>
+      <button class="btn green" onclick="gradeCard(1)">💪 Got it</button>
+    </div>`;
+  if (flipped) document.getElementById('flashCard').classList.add('flipped');
+}
+
+function flipCard() {
+  flipped = !flipped;
+  document.getElementById('flashCard').classList.toggle('flipped', flipped);
+  document.getElementById('flashActions').style.visibility = flipped ? 'visible' : 'hidden';
+}
+
+function gradeCard(got) {
+  if (got) S.cards[curCard.id] = Math.min(2, (S.cards[curCard.id] || 0) + 1);
+  else S.cards[curCard.id] = 0;
+  markPlayed();
+  recordActivity(1); // flashcard rated
+  save();
+  curCard = nextCard();
+  flipped = false;
+  renderLearn();
+}
+
+// ═══ PRACTICE ═══
+let curLevel = 1, curProblem = null, answered = false, lastFeedback = '';
+
+function pickLevel(l) {
+  if (l > unlockedLevel()) return;
+  curLevel = l;
+  practiceNew();
+}
+
+function practiceNew() {
+  curLevel = Math.min(curLevel, unlockedLevel());
+  curProblem = makeProblem(curLevel);
+  answered = false;
+  lastFeedback = '';
+  renderPractice();
+  const inp = document.getElementById('ansIn');
+  if (inp) inp.focus();
+}
+
+function topicAcc(t) {
+  const s = S.topics[t] || { r: 0, w: 0 };
+  const tot = s.r + s.w;
+  return { r: s.r, tot, pct: tot ? Math.round(s.r / tot * 100) : 0 };
+}
+
+function renderPractice() {
+  const el = document.getElementById('tab-practice');
+  const ul = unlockedLevel();
+  let lvls = '';
+  for (let i = 1; i <= 4; i++) {
+    const locked = i > ul;
+    lvls += `<button class="lvl-btn${i === curLevel ? ' sel' : ''}${locked ? ' locked' : ''}" onclick="pickLevel(${i})">
+      <span class="lname">${locked ? '🔒' : (i === curLevel ? '▶' : '')} Level ${i} · ${LEVEL_NAMES[i-1]}</span>
+      <span class="lsub">${locked ? `unlock at ${LEVEL_PTS[i-1]} pts` : `+${10*i} pts per correct`}</span>
+    </button>`;
+  }
+
+  let probHTML = '';
+  if (curProblem) {
+    probHTML = `<div class="prob-card">
+      <div class="fig-box">${curProblem.fig}</div>
+      <div class="prob-q">${curProblem.q}</div>
+      <div class="ans-row">
+        <input type="number" step="any" id="ansIn" placeholder="?" ${answered ? 'disabled' : ''}
+          onkeydown="if(event.key==='Enter')practiceCheck()">
+        <span class="ans-unit">${curProblem.unit}</span>
+        ${answered
+          ? '<button class="btn green" onclick="practiceNew()">Next problem ▶</button>'
+          : '<button class="btn" onclick="practiceCheck()">Check ✓</button>'}
+      </div>
+      ${lastFeedback}
+    </div>`;
+  }
+
+  let acc = '';
+  PRACTICE_TOPICS.forEach(t => {
+    const a = topicAcc(t);
+    acc += `<div class="topic-row">
+      <div class="tr-top"><span>${TOPIC_META[t].icon} ${TOPIC_META[t].name}</span>
+      <span class="tr-pct">${a.tot ? `${a.r}/${a.tot} (${a.pct}%)` : '—'}</span></div>
+      <div class="bar"><div style="width:${a.pct}%"></div></div>
+    </div>`;
+  });
+
+  el.innerHTML = `
+    <h2 class="sec">Difficulty — earn points to unlock higher levels</h2>
+    <div class="level-row">${lvls}</div>
+    ${probHTML}
+    <h2 class="sec">Accuracy by topic</h2>
+    <div class="acc-grid">${acc}</div>`;
+}
+
+function practiceCheck() {
+  if (answered || !curProblem) return;
+  const inp = document.getElementById('ansIn');
+  const val = parseFloat(String(inp.value).replace(',', '.'));
+  if (!Number.isFinite(val)) { inp.focus(); return; }
+  answered = true;
+  const t = curProblem.topic;
+  if (!S.topics[t]) S.topics[t] = { r: 0, w: 0 };
+  if (checkAnswer(curProblem, val)) {
+    const pts = 10 * curLevel;
+    S.topics[t].r++;
+    const before = unlockedLevel();
+    S.points += pts;
+    const after = unlockedLevel();
+    lastFeedback = `<div class="fb-good">✓ Correct! +${pts} pts${after > before ? ` &nbsp;🔓 LEVEL ${after} UNLOCKED!` : ''}</div>`;
+  } else {
+    S.topics[t].w++;
+    const steps = curProblem.steps.map(s => `<div class="step">${s}</div>`).join('');
+    lastFeedback = `<div class="fb-bad">
+      <div class="fb-head">✗ Not quite — the answer is ${curProblem.ans} ${curProblem.unit}. Here's how:</div>
+      ${steps}
+    </div>`;
+  }
+  markPlayed();
+  recordActivity(2); // practice problem answered (right or wrong)
+  save();
+  renderPractice();
+}
+
+// ═══ CHALLENGE (PR mode) ═══
+const CHAL_TIME = 120;
+let chal = { running: false, done: false, time: CHAL_TIME, score: 0, solved: 0, streak: 0, best: 0, prob: null, timer: null, last: '' };
+
+function renderChallenge() {
+  const el = document.getElementById('tab-challenge');
+  if (!chal.running && !chal.done) {
+    el.innerHTML = `<div class="chal-hero">
+      <div style="font-size:2.6em">⚡</div>
+      <h2 style="margin:6px 0">2-Minute Sprint</h2>
+      <p style="color:var(--muted);max-width:420px;margin:6px auto 4px;line-height:1.5">
+        Solve as many problems as you can in 2 minutes.<br>
+        Correct = <b style="color:var(--accent)">10 pts</b> + <b style="color:var(--yellow)">streak bonus</b> (+2 per answer in a row, up to +20).<br>
+        Wrong answers kill your streak. Problems come from all your unlocked levels.
+      </p>
+      <div class="pr-line">All-time PR: <b>🏆 ${S.best}</b></div>
+      <button class="btn big green" onclick="startChallenge()">START ▶</button>
+    </div>`;
     return;
   }
-
-  const props = selectedShape.getProperties();
-  let html = `<div class="info-block">
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
-      <div style="width:14px;height:14px;border-radius:4px;background:${selectedShape.color};"></div>
-      <strong>${selectedShape.type.charAt(0).toUpperCase() + selectedShape.type.slice(1)}</strong>
+  if (chal.done) {
+    el.innerHTML = `<div class="chal-hero">
+      <div style="font-size:2.6em">${chal.newPR ? '🏆' : '⏱'}</div>
+      <h2 style="margin:6px 0">${chal.newPR ? 'NEW PERSONAL RECORD!' : 'Time!'}</h2>
+      <div class="chal-stats">
+        <span>Score: <b>${chal.score}</b></span>
+        <span>Solved: <b>${chal.solved}</b></span>
+        <span class="chal-streak">Best streak: ${chal.maxStreak}</span>
+      </div>
+      <div class="pr-line">All-time PR: <b>🏆 ${S.best}</b>${chal.newPR ? '' : ` — ${S.best - chal.score} pts away, you got this`}</div>
+      <div class="btn-row">
+        <button class="btn big green" onclick="startChallenge()">Run it back ▶</button>
+        <button class="btn" onclick="chal.done=false;renderChallenge()">Done</button>
+      </div>
     </div>`;
-
-  for (const [key, val] of Object.entries(props)) {
-    html += `<div class="info-row"><span class="label">${key}</span><span class="value">${val}</span></div>`;
+    return;
   }
-  html += '</div>';
-
-  // Formulas
-  if (selectedShape.type === 'circle') {
-    html += `<div class="formula-box">C = 2πr<br>A = πr²</div>`;
-  } else if (selectedShape.type === 'triangle' || selectedShape.points?.length === 3) {
-    html += `<div class="formula-box">A = ½ × base × height<br>Angle sum = 180°</div>`;
-  } else if (selectedShape.points?.length === 4) {
-    html += `<div class="formula-box">Rectangle: A = l × w<br>Angle sum = 360°</div>`;
-  }
-
-  html += `<div class="tip-box">💡 Press Delete/Backspace to remove this shape. Drag vertices to reshape.</div>`;
-  el.innerHTML = html;
+  // running
+  el.innerHTML = `<div class="chal-hero">
+    <div class="chal-timer${chal.time <= 15 ? ' low' : ''}" id="chalTimer">${fmtTime(chal.time)}</div>
+    <div class="chal-stats">
+      <span>Score: <b id="chalScore">${chal.score}</b></span>
+      <span>Solved: <b>${chal.solved}</b></span>
+      <span class="chal-streak">🔥 Streak: ${chal.streak}${chal.streak >= 2 ? ` (+${Math.min(20, 2*chal.streak)} bonus)` : ''}</span>
+    </div>
+    <div class="fig-box">${chal.prob.fig}</div>
+    <div class="prob-q">${chal.prob.q}</div>
+    <div class="ans-row">
+      <input type="number" step="any" id="chalIn" placeholder="?" autocomplete="off"
+        onkeydown="if(event.key==='Enter')chalCheck()">
+      <span class="ans-unit">${chal.prob.unit}</span>
+      <button class="btn" onclick="chalCheck()">Go ✓</button>
+      <button class="btn red" onclick="chalSkip()" title="Skipping resets your streak">Skip</button>
+    </div>
+    <div class="chal-last">${chal.last}</div>
+  </div>`;
+  const inp = document.getElementById('chalIn');
+  if (inp) inp.focus();
 }
 
-function updateShapeCount() {
-  document.getElementById('statusShapes').textContent = `Shapes: ${shapes.length}`;
+function fmtTime(s) { return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`; }
+
+function startChallenge() {
+  chal = { running: true, done: false, time: CHAL_TIME, score: 0, solved: 0, streak: 0, maxStreak: 0, newPR: false,
+           prob: makeProblem(unlockedLevel()), timer: null, last: '' };
+  chal.timer = setInterval(() => {
+    chal.time--;
+    const t = document.getElementById('chalTimer');
+    if (t) { t.textContent = fmtTime(chal.time); t.classList.toggle('low', chal.time <= 15); }
+    if (chal.time <= 0) endChallenge();
+  }, 1000);
+  renderChallenge();
 }
 
-function setStatus(msg) {
-  document.getElementById('statusInfo').textContent = msg;
+function chalNext() {
+  chal.prob = makeProblem(unlockedLevel());
+  renderChallenge();
+}
+
+function chalCheck() {
+  if (!chal.running) return;
+  const inp = document.getElementById('chalIn');
+  const val = parseFloat(String(inp.value).replace(',', '.'));
+  if (!Number.isFinite(val)) { inp.focus(); return; }
+  const t = chal.prob.topic;
+  if (!S.topics[t]) S.topics[t] = { r: 0, w: 0 };
+  if (checkAnswer(chal.prob, val)) {
+    const bonus = Math.min(20, 2 * chal.streak);
+    const gain = 10 + bonus;
+    chal.score += gain;
+    chal.solved++;
+    chal.streak++;
+    chal.maxStreak = Math.max(chal.maxStreak, chal.streak);
+    S.topics[t].r++;
+    chal.last = `<span style="color:var(--green)">✓ +${gain}${bonus ? ` (streak +${bonus})` : ''}</span>`;
+  } else {
+    chal.streak = 0;
+    S.topics[t].w++;
+    chal.last = `<span style="color:var(--red)">✗ Answer was ${chal.prob.ans} ${chal.prob.unit} — streak reset!</span>`;
+  }
+  chalNext();
+}
+
+function chalSkip() {
+  if (!chal.running) return;
+  chal.streak = 0;
+  chal.last = `<span style="color:var(--muted)">Skipped (answer: ${chal.prob.ans} ${chal.prob.unit})</span>`;
+  chalNext();
+}
+
+function endChallenge() {
+  clearInterval(chal.timer);
+  chal.running = false;
+  chal.done = true;
+  S.points += chal.score;
+  if (chal.score > S.best) {
+    chal.newPR = true;
+    const old = S.best;
+    S.best = chal.score;
+    showPR(chal.score, old);
+  }
+  markPlayed();
+  recordActivity(8); // challenge sprint completed
+  save();
+  renderChallenge();
+}
+
+// ─── PR celebration ───
+function showPR(score, old) {
+  document.getElementById('prSub').innerHTML = `${score} points!${old ? `<br>Old PR: ${old} — crushed it 💪` : '<br>First PR on the board!'}`;
+  const ov = document.getElementById('prOverlay');
+  ov.classList.add('show');
+  // confetti
+  const bits = ['🎉','⭐','🏆','📐','✨','🔥'];
+  for (let i = 0; i < 26; i++) {
+    const sp = document.createElement('span');
+    sp.className = 'confetti';
+    sp.textContent = bits[i % bits.length];
+    sp.style.left = Math.random() * 100 + 'vw';
+    sp.style.animationDuration = (2 + Math.random() * 2.5) + 's';
+    sp.style.animationDelay = (Math.random() * 0.8) + 's';
+    ov.appendChild(sp);
+  }
+}
+function hidePR() {
+  const ov = document.getElementById('prOverlay');
+  ov.classList.remove('show');
+  ov.querySelectorAll('.confetti').forEach(c => c.remove());
 }
 
 // ─── Init ───
-function init() {
-  panX = Math.round(canvas.width * 0.4);
-  panY = Math.round(canvas.height * 0.5);
-  buildToolsPanel();
-  draw();
-}
-resize();
-setTimeout(init, 50);
+load();
+updateChips();
+writeHubSummary();
+renderLearn();
 </script>
 </body>
 </html>

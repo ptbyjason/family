@@ -168,11 +168,91 @@ let player = {
   name:'Hero', avatar:'⚔️', class:'',
   hp:100, maxHp:100,
   xp:0, xpNeeded:50, level:1,
-  gold:0, wins:0, streak:0,
+  gold:0, wins:0, streak:0, bestStreak:0,
   attack:10, defense:5,
   inventory:[],
-  worldProgress:{} // worldId -> {battlesWon, stars, complete}
+  worldProgress:{}, // worldId -> {battlesWon, stars, complete}
+  missedFacts:{} // "axb" -> miss count
 };
+
+// ─── Persistence ───
+const SAVE_KEY = 'multiplication-quest-save-v1';
+const HUB_KEY = 'hubSummary_multiplication-quest';
+
+// ─── Daily effort tracking ───
+function todayStr() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+function ensureActivity(obj) {
+  if (!obj.activity || typeof obj.activity !== 'object') obj.activity = { date: todayStr(), actions: 0, earnedDates: [] };
+  if (typeof obj.activity.actions !== 'number') obj.activity.actions = 0;
+  if (!Array.isArray(obj.activity.earnedDates)) obj.activity.earnedDates = [];
+  return obj.activity;
+}
+
+function bumpActivity(weight) {
+  try {
+    const act = ensureActivity(player);
+    const today = todayStr();
+    if (act.date !== today) { act.date = today; act.actions = 0; }
+    act.actions += weight;
+    if (act.actions >= 20 && !act.earnedDates.includes(today)) {
+      act.earnedDates.push(today);
+      if (act.earnedDates.length > 30) act.earnedDates = act.earnedDates.slice(-30);
+    }
+    saveGame();
+  } catch(e) { /* keep playing even if tracking fails */ }
+}
+
+function saveGame() {
+  try {
+    localStorage.setItem(SAVE_KEY, JSON.stringify(player));
+    writeHubSummary();
+  } catch(e) { /* localStorage unavailable */ }
+}
+
+function writeHubSummary() {
+  try {
+    const totalStars = WORLDS.reduce((s,w)=>s+(player.worldProgress[w.id]?.stars||0),0);
+    const worldNum = Math.min(WORLDS.length, getWorldsUnlocked()+1);
+    const act = ensureActivity(player);
+    const today = todayStr();
+    const summary = {
+      app:'multiplication-quest', kid:'siena', icon:'⚔️',
+      label:`World ${worldNum} • Lv ${player.level} • ⭐${totalStars}`,
+      pct: Math.min(100, Math.round(Math.min(25, player.wins)/25*100)),
+      streak: player.bestStreak,
+      stars: totalStars,
+      lastPlayed: new Date().toISOString(),
+      actionsToday: act.date === today ? act.actions : 0,
+      actionsDate: today,
+      earnedDates: act.earnedDates.slice()
+    };
+    localStorage.setItem(HUB_KEY, JSON.stringify(summary));
+  } catch(e) { /* localStorage unavailable */ }
+}
+
+function loadGame() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return false;
+    const data = JSON.parse(raw);
+    if (!data || !data.class) return false;
+    Object.assign(player, data);
+    if (!player.missedFacts) player.missedFacts = {};
+    if (!player.bestStreak) player.bestStreak = 0;
+    ensureActivity(player); // backward-compatible with saves lacking activity
+    return true;
+  } catch(e) { return false; }
+}
+
+function recordMiss(problem) {
+  if (!problem) return;
+  const key = `${Math.min(problem.a,problem.b)}x${Math.max(problem.a,problem.b)}`;
+  player.missedFacts[key] = (player.missedFacts[key]||0)+1;
+}
 
 // ─── DATA ───
 const CHARACTERS = [
@@ -300,7 +380,7 @@ function addXP(amount) {
     player.hp = player.maxHp;
     player.attack += 2;
     player.defense += 1;
-    player.xpNeeded = Math.floor(player.xpNeeded * 1.4);
+    player.xpNeeded = Math.floor(player.xpNeeded * 1.3);
   }
 }
 
@@ -342,6 +422,7 @@ function selectCharacter(id) {
   player.maxHp = c.hp;
   player.attack = c.attack;
   player.defense = c.defense;
+  saveGame();
   showWorldMap();
 }
 
@@ -380,6 +461,9 @@ function showWorldMap() {
     </div>`;
   });
   html += '</div>';
+  html += `<div style="text-align:center;margin-top:8px;">
+    <button class="action-btn secondary" onclick="showPracticeSelect()">🎯 Practice</button>
+  </div>`;
   card.innerHTML = html;
 }
 
@@ -509,6 +593,7 @@ function askQuestion() {
 
 function submitAnswer(answer, btnIdx) {
   clearInterval(battle.timerInterval);
+  bumpActivity(1); // battle answer
   const correct = answer === battle.currentProblem.answer;
   const btns = document.querySelectorAll('.answer-btn');
   btns.forEach(b => b.style.pointerEvents = 'none');
@@ -556,6 +641,8 @@ function handleHit() {
   if (battle.timeLeft > 70) bonus += ' ⚡SPEED BONUS!';
   fb.className = 'battle-feedback hit';
   fb.textContent = `${msg} -${dmg} damage!${bonus}`;
+  if (battle.correctInRow === 5) fb.textContent += ' 🎉🎉 5 IN A ROW! 🎉🎉';
+  else if (battle.correctInRow === 10) fb.textContent += ' 🌟✨ 10 STREAK! LEGENDARY! ✨🌟';
 
   if (battle.monsterHp <= 0) {
     setTimeout(monsterDefeated, 800);
@@ -566,6 +653,7 @@ function handleHit() {
 
 function handleMiss() {
   battle.correctInRow = 0;
+  recordMiss(battle.currentProblem);
 
   // Monster attacks player
   let dmg = Math.max(1, battle.currentMonster.attack - player.defense + Math.floor(Math.random()*3));
@@ -606,7 +694,10 @@ function monsterDefeated() {
   battle.xpEarned += xpReward;
   player.wins++;
   player.streak++;
+  if (player.streak > player.bestStreak) player.bestStreak = player.streak;
+  bumpActivity(battle.monsterQueue.length === 0 ? 5 : 2); // boss vs monster defeated
   updateHUD();
+  saveGame();
 
   if (battle.monsterQueue.length === 0) {
     // World complete!
@@ -647,6 +738,7 @@ function showVictory() {
   // Heal
   player.hp = player.maxHp;
   updateHUD();
+  saveGame();
 
   const card = document.getElementById('mainCard');
   card.innerHTML = `
@@ -676,6 +768,7 @@ function showDefeat() {
   player.streak = 0;
   player.hp = Math.floor(player.maxHp * 0.5); // revive with half HP
   updateHUD();
+  saveGame();
 
   const card = document.getElementById('mainCard');
   card.innerHTML = `
@@ -694,8 +787,146 @@ function showDefeat() {
     </div>`;
 }
 
+// ─── Practice Mode ───
+let practice = { table: null, correct: 0, total: 0, streak: 0, problem: null, timeout: null };
+
+function showPracticeSelect() {
+  document.getElementById('hud').style.display = 'flex';
+  updateHUD();
+  const card = document.getElementById('mainCard');
+  const weakCount = Object.keys(player.missedFacts||{}).length;
+  let html = `<h2 class="section-title">🎯 Practice Arena</h2>
+    <p class="subtitle">No HP loss — just training! Pick a times table to drill. +2 XP per correct answer.</p>
+    <div class="answer-grid" style="grid-template-columns:repeat(4,1fr);max-width:480px;">`;
+  for (let t=1;t<=12;t++) html += `<button class="answer-btn" onclick="startPractice(${t})">×${t}</button>`;
+  html += `</div><div style="text-align:center;margin-top:14px;">`;
+  if (weakCount>0) html += `<button class="action-btn" onclick="startPractice('weak')">💪 Weak Facts (${weakCount})</button>`;
+  html += `<button class="action-btn secondary" onclick="showWorldMap()">🗺️ Back</button></div>`;
+  card.innerHTML = html;
+}
+
+function startPractice(table) {
+  clearTimeout(practice.timeout);
+  practice = { table, correct:0, total:0, streak:0, problem:null, timeout:null };
+  practiceQuestion();
+}
+
+function practiceProblem() {
+  if (practice.table === 'weak') {
+    const keys = Object.keys(player.missedFacts);
+    if (keys.length) {
+      const k = keys[Math.floor(Math.random()*keys.length)];
+      let [a,b] = k.split('x').map(Number);
+      if (Math.random()>0.5) [a,b]=[b,a];
+      return {a, b, answer: a*b};
+    }
+    return genProblem([0]);
+  }
+  return genProblem([practice.table]);
+}
+
+function practiceQuestion() {
+  practice.problem = practiceProblem();
+  practice.total++;
+  const answers = genAnswers(practice.problem.answer);
+  const label = practice.table==='weak' ? '💪 Weak Facts' : `×${practice.table} Table`;
+  const card = document.getElementById('mainCard');
+  card.innerHTML = `
+    <div class="battle-arena">
+      <p class="subtitle" style="margin-bottom:4px;">🎯 Practice — ${label} · ✅ ${practice.correct}/${practice.total-1} · 🔥 ${practice.streak}</p>
+      <div class="battle-question">
+        <div class="bq-problem">${practice.problem.a} × ${practice.problem.b} = ?</div>
+        <div class="answer-grid">
+          ${answers.map((a,i)=>`<button class="answer-btn" id="ans${i}" onclick="submitPractice(${a},${i})">${a}</button>`).join('')}
+        </div>
+      </div>
+      <div class="battle-feedback" id="battleFeedback"></div>
+      <button class="action-btn secondary" onclick="exitPractice()">🚪 Exit Practice</button>
+    </div>`;
+}
+
+function submitPractice(answer, btnIdx) {
+  bumpActivity(1); // practice answer
+  const correct = answer === practice.problem.answer;
+  const btns = document.querySelectorAll('.answer-btn');
+  btns.forEach(b => b.style.pointerEvents = 'none');
+  btns.forEach((b, i) => {
+    const val = parseInt(b.textContent);
+    if (val === practice.problem.answer) b.classList.add('correct');
+    else if (i === btnIdx && !correct) b.classList.add('wrong');
+  });
+
+  const fb = document.getElementById('battleFeedback');
+  if (correct) {
+    practice.correct++;
+    practice.streak++;
+    addXP(2);
+    const key = `${Math.min(practice.problem.a,practice.problem.b)}x${Math.max(practice.problem.a,practice.problem.b)}`;
+    if (player.missedFacts[key]) {
+      player.missedFacts[key]--;
+      if (player.missedFacts[key] <= 0) delete player.missedFacts[key];
+    }
+    fb.className = 'battle-feedback hit';
+    let msg = `${BATTLE_MESSAGES_HIT[Math.floor(Math.random()*BATTLE_MESSAGES_HIT.length)]} +2 XP`;
+    if (practice.streak === 5) msg += ' 🎉🎉 5 IN A ROW! 🎉🎉';
+    else if (practice.streak === 10) msg += ' 🌟✨ 10 STREAK! LEGENDARY! ✨🌟';
+    fb.textContent = msg;
+  } else {
+    practice.streak = 0;
+    recordMiss(practice.problem);
+    fb.className = 'battle-feedback miss';
+    fb.textContent = `Not quite! ${practice.problem.a} × ${practice.problem.b} = ${practice.problem.answer} 💪`;
+  }
+  updateHUD();
+  practice.timeout = setTimeout(practiceQuestion, correct ? 900 : 1600);
+}
+
+function exitPractice() {
+  clearTimeout(practice.timeout);
+  saveGame();
+  showWorldMap();
+}
+
+// ─── Continue / New Game ───
+function showContinueScreen() {
+  document.getElementById('hud').style.display = 'none';
+  const totalStars = WORLDS.reduce((s,w)=>s+(player.worldProgress[w.id]?.stars||0),0);
+  const card = document.getElementById('mainCard');
+  card.innerHTML = `
+    <h2 class="section-title">⚔️ Multiplication Quest ⚔️</h2>
+    <p class="subtitle">Welcome back, ${player.name}! Your adventure awaits.</p>
+    <div class="result-stats">
+      <div class="rs-item"><div class="rs-val">${player.avatar}</div><div class="rs-label">Lv ${player.level} ${player.name}</div></div>
+      <div class="rs-item"><div class="rs-val">${player.gold}</div><div class="rs-label">🪙 Gold</div></div>
+      <div class="rs-item"><div class="rs-val">⭐${totalStars}</div><div class="rs-label">Stars</div></div>
+      <div class="rs-item"><div class="rs-val">${player.bestStreak}</div><div class="rs-label">🔥 Best Streak</div></div>
+    </div>
+    <div style="text-align:center;margin-top:16px;">
+      <button class="action-btn" onclick="showWorldMap()">▶️ Continue</button>
+      <button class="action-btn secondary" onclick="newGame()">🆕 New Game</button>
+    </div>`;
+}
+
+function newGame() {
+  try { localStorage.removeItem(SAVE_KEY); } catch(e) {}
+  const prevActivity = player.activity; // keep daily effort history across resets
+  player = {
+    name:'Hero', avatar:'⚔️', class:'',
+    hp:100, maxHp:100,
+    xp:0, xpNeeded:50, level:1,
+    gold:0, wins:0, streak:0, bestStreak:0,
+    attack:10, defense:5,
+    inventory:[],
+    worldProgress:{},
+    missedFacts:{}
+  };
+  if (prevActivity) player.activity = prevActivity;
+  showCharSelect();
+}
+
 // ─── Init ───
-showCharSelect();
+if (loadGame()) showContinueScreen();
+else showCharSelect();
 </script>
 </body>
 </html>

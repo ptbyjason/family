@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Math Puppy 🐶</title>
+<style>
+  :root{
+    --purple:#7c3aed;
+    --purple-soft:#ede9fe;
+    --purple-mid:#c4b5fd;
+    --pink:#fbcfe8;
+    --peach:#fde68a;
+    --mint:#bbf7d0;
+    --sky:#dbeafe;
+    --ink:#4c1d95;
+    --ink-soft:#6d28d9;
+    --card:#ffffff;
+    --happy:#f472b6;
+    --energy:#fbbf24;
+    --good:#22c55e;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:'Quicksand','Comfortaa','Varela Round',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+    background:linear-gradient(180deg,#fdf4ff 0%,#ede9fe 55%,#e0e7ff 100%);
+    min-height:100vh;
+    color:var(--ink);
+    display:flex;justify-content:center;
+  }
+  #app{width:100%;max-width:520px;padding:14px 14px 40px;}
+  .hidden{display:none !important;}
+  .card{
+    background:var(--card);
+    border-radius:24px;
+    padding:18px;
+    box-shadow:0 6px 20px rgba(124,58,237,.10);
+    margin-bottom:14px;
+  }
+  h1{font-size:1.5rem;margin:.2em 0;text-align:center;}
+  h2{font-size:1.2rem;margin:.2em 0;}
+  .center{text-align:center;}
+  .muted{color:#8b7bb8;font-size:.9rem;}
+  button{
+    font-family:inherit;font-weight:700;color:var(--ink);
+    border:none;border-radius:18px;cursor:pointer;
+    transition:transform .08s ease, box-shadow .08s ease;
+  }
+  button:active{transform:scale(.95);}
+  .btn-big{
+    display:block;width:100%;padding:16px;font-size:1.15rem;
+    background:var(--purple);color:#fff;border-radius:20px;
+    box-shadow:0 4px 0 #5b21b6;margin-top:10px;
+  }
+  .btn-big:disabled{opacity:.45;box-shadow:none;}
+  .btn-soft{
+    background:var(--purple-soft);color:var(--ink);
+    padding:10px 14px;font-size:1rem;border-radius:16px;
+  }
+  /* ---------- ADOPT ---------- */
+  #adopt-dog{font-size:84px;text-align:center;line-height:1.1;animation:bob 2s ease-in-out infinite;}
+  #nameInput{
+    width:100%;padding:14px;font-size:1.2rem;font-family:inherit;font-weight:700;
+    border:3px solid var(--purple-mid);border-radius:16px;color:var(--ink);
+    text-align:center;outline:none;background:#faf5ff;
+  }
+  #nameInput:focus{border-color:var(--purple);}
+  .breed-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px;}
+  .breed-card{
+    background:#faf5ff;border:3px solid transparent;border-radius:18px;
+    padding:10px 4px;text-align:center;font-size:.72rem;font-weight:700;color:var(--ink);
+  }
+  .breed-card .be{font-size:40px;display:block;line-height:1.2;}
+  .breed-card.sel{border-color:var(--purple);background:var(--purple-soft);box-shadow:0 3px 10px rgba(124,58,237,.25);}
+  .name-ideas{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:8px;}
+  .name-ideas button{background:var(--pink);padding:6px 12px;border-radius:999px;font-size:.85rem;}
+  /* ---------- HOME ---------- */
+  #topbar{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+  #pupName{font-size:1.3rem;font-weight:700;}
+  #stageLabel{font-size:.8rem;background:var(--purple-soft);padding:3px 10px;border-radius:999px;color:var(--ink-soft);font-weight:700;}
+  .lvl-badge{
+    background:var(--purple);color:#fff;border-radius:999px;
+    padding:6px 12px;font-weight:700;font-size:.95rem;white-space:nowrap;
+  }
+  .bar-wrap{background:#f3e8ff;border-radius:999px;height:16px;overflow:hidden;margin-top:6px;}
+  .bar{height:100%;border-radius:999px;transition:width .5s ease;}
+  #xpBar{background:linear-gradient(90deg,var(--purple-mid),var(--purple));}
+  #hapBar{background:linear-gradient(90deg,#f9a8d4,var(--happy));}
+  #enBar{background:linear-gradient(90deg,#fde68a,var(--energy));}
+  .meter-row{display:flex;align-items:center;gap:8px;margin-top:8px;}
+  .meter-row .mi{width:26px;text-align:center;font-size:1.1rem;}
+  .meter-row .bar-wrap{flex:1;margin-top:0;}
+  .meter-row .mv{width:42px;font-size:.8rem;font-weight:700;text-align:right;color:#8b7bb8;}
+  #streakLine{text-align:center;font-size:.95rem;margin-top:10px;color:var(--ink-soft);font-weight:700;}
+  /* scene */
+  #scene{
+    position:relative;height:230px;border-radius:22px;overflow:hidden;
+    background:linear-gradient(180deg,#dbeafe 0%,#e0f2fe 55%,#bbf7d0 55%,#a7f3d0 100%);
+  }
+  #scene .sun{position:absolute;top:12px;right:16px;font-size:30px;}
+  #scene .cloud{position:absolute;font-size:24px;opacity:.9;animation:drift 14s linear infinite;}
+  #scene .flower{position:absolute;bottom:8px;font-size:18px;}
+  #dogWrap{
+    position:absolute;left:50%;bottom:16px;transform:translateX(-50%);
+    text-align:center;cursor:pointer;user-select:none;-webkit-user-select:none;
+  }
+  #dogBody{position:relative;display:inline-block;line-height:1;transform-origin:50% 90%;}
+  #dogEmoji{display:inline-block;filter:drop-shadow(0 6px 6px rgba(0,0,0,.15));}
+  .acc{position:absolute;pointer-events:none;line-height:1;}
+  .acc-hat{top:-0.52em;left:50%;transform:translateX(-50%) rotate(-8deg);font-size:.42em;}
+  .acc-bow{top:-0.30em;right:-0.05em;transform:rotate(15deg);font-size:.36em;}
+  .acc-sun{top:.16em;left:50%;transform:translateX(-50%);font-size:.34em;}
+  .acc-band{bottom:.02em;left:50%;transform:translateX(-50%);font-size:.36em;}
+  .acc-cape{top:.18em;left:-.30em;transform:rotate(-18deg);font-size:.44em;}
+  #bubble{
+    position:absolute;top:10px;left:12px;max-width:65%;
+    background:#fff;border-radius:16px;border-bottom-left-radius:4px;
+    padding:8px 12px;font-size:.85rem;font-weight:700;color:var(--ink);
+    box-shadow:0 3px 10px rgba(0,0,0,.12);opacity:0;transition:opacity .3s;
+  }
+  #bubble.show{opacity:1;}
+  #ballHome{position:absolute;bottom:26px;left:-40px;font-size:26px;opacity:0;}
+  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+  @keyframes drift{from{transform:translateX(-60px)}to{transform:translateX(560px)}}
+  .bobbing{animation:bob 2.2s ease-in-out infinite;}
+  /* trick animations (applied to #dogBody) */
+  @keyframes tr-sit{0%,100%{transform:none}40%,70%{transform:translateY(10%) scale(1,.8)}}
+  @keyframes tr-shake{0%,100%{transform:none}20%{transform:rotate(-16deg)}40%{transform:rotate(14deg)}60%{transform:rotate(-12deg)}80%{transform:rotate(10deg)}}
+  @keyframes tr-roll{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+  @keyframes tr-spin{from{transform:rotateY(0)}to{transform:rotateY(720deg)}}
+  @keyframes tr-high5{0%,100%{transform:none}35%{transform:translateY(-26%) rotate(-14deg)}60%{transform:translateY(-10%) rotate(6deg)}}
+  @keyframes tr-backflip{0%{transform:none}45%{transform:translateY(-42%) rotate(-180deg)}85%{transform:translateY(0) rotate(-360deg)}100%{transform:rotate(-360deg)}}
+  @keyframes tr-nom{0%,100%{transform:none}25%,75%{transform:translateY(6%) rotate(-6deg) scale(1.05)}50%{transform:translateY(6%) rotate(6deg) scale(1.05)}}
+  @keyframes tr-happy{0%,100%{transform:none}25%{transform:translateY(-16%) rotate(-8deg)}50%{transform:none}75%{transform:translateY(-16%) rotate(8deg)}}
+  .anim-sit{animation:tr-sit 1.2s ease;}
+  .anim-shake{animation:tr-shake 1s ease;}
+  .anim-roll{animation:tr-roll 1s ease;}
+  .anim-spin{animation:tr-spin 1.1s ease;}
+  .anim-high5{animation:tr-high5 1s ease;}
+  .anim-backflip{animation:tr-backflip 1.3s ease;}
+  .anim-nom{animation:tr-nom 1.4s ease;}
+  .anim-happy{animation:tr-happy 1s ease;}
+  @keyframes ballfly{
+    0%{left:-40px;bottom:26px;opacity:1}
+    50%{left:45%;bottom:130px;opacity:1}
+    100%{left:82%;bottom:26px;opacity:1}
+  }
+  .ball-fly{animation:ballfly .9s ease-in forwards;}
+  /* floating hearts on pet */
+  .float-heart{
+    position:absolute;font-size:20px;pointer-events:none;
+    animation:floatup 1.1s ease-out forwards;
+  }
+  @keyframes floatup{from{opacity:1;transform:translateY(0) scale(.8)}to{opacity:0;transform:translateY(-70px) scale(1.4)}}
+  /* tricks + accessories rows */
+  .chip-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
+  .chip{
+    background:var(--purple-soft);padding:9px 13px;border-radius:999px;
+    font-size:.9rem;font-weight:700;color:var(--ink);
+  }
+  .chip.locked{background:#f1f0f5;color:#b3a8d0;}
+  .chip.worn{background:var(--purple);color:#fff;box-shadow:0 3px 8px rgba(124,58,237,.35);}
+  .section-title{font-size:.85rem;font-weight:700;color:#8b7bb8;text-transform:uppercase;letter-spacing:.06em;margin-top:14px;}
+  /* action buttons */
+  .actions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:4px;}
+  .act-btn{
+    padding:14px 6px;border-radius:20px;font-size:.95rem;font-weight:700;color:var(--ink);
+    display:flex;flex-direction:column;align-items:center;gap:4px;
+  }
+  .act-btn .ae{font-size:30px;line-height:1;}
+  .act-btn small{font-size:.68rem;font-weight:600;color:rgba(76,29,149,.7);}
+  #btnFeed{background:var(--peach);box-shadow:0 4px 0 #f59e0b55;}
+  #btnFetch{background:var(--mint);box-shadow:0 4px 0 #22c55e44;}
+  #btnTrain{background:var(--pink);box-shadow:0 4px 0 #ec489944;}
+  /* ---------- ACTIVITY ---------- */
+  #actHeader{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+  #actTitle{font-size:1.1rem;font-weight:700;}
+  #actProgress{font-size:1rem;font-weight:700;color:var(--ink-soft);letter-spacing:2px;}
+  #timerWrap{font-size:1.15rem;font-weight:700;background:var(--purple-soft);border-radius:999px;padding:5px 14px;color:var(--ink-soft);}
+  #miniScene{position:relative;height:64px;margin-top:8px;overflow:visible;}
+  #miniDog{position:absolute;left:8px;bottom:0;font-size:44px;transition:transform .2s;}
+  #miniBall{position:absolute;left:70px;bottom:8px;font-size:22px;opacity:0;}
+  @keyframes miniThrow{0%{left:70px;bottom:8px;opacity:1}50%{left:55%;bottom:44px}100%{left:88%;bottom:4px;opacity:1}}
+  .mini-throw{animation:miniThrow .8s ease-in forwards;}
+  #problemBox{
+    text-align:center;background:#faf5ff;border-radius:20px;padding:18px 10px 10px;margin-top:10px;
+  }
+  #problemText{font-size:2.4rem;font-weight:700;letter-spacing:1px;}
+  #answerShow{
+    font-size:2rem;font-weight:700;min-height:1.3em;margin-top:4px;
+    color:var(--purple);border-bottom:4px dotted var(--purple-mid);
+    display:inline-block;min-width:110px;
+  }
+  #feedback{
+    min-height:44px;margin-top:10px;text-align:center;font-weight:700;font-size:.98rem;
+    padding:6px;border-radius:14px;
+  }
+  #feedback.hint{background:#fef9c3;color:#92400e;}
+  #feedback.good{background:#dcfce7;color:#166534;}
+  #feedback.tell{background:#fce7f3;color:#9d174d;}
+  #numpad{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:12px;}
+  #numpad button{
+    padding:16px 0;font-size:1.5rem;font-weight:700;border-radius:18px;
+    background:#fff;box-shadow:0 3px 0 #ddd6fe;color:var(--ink);
+  }
+  #numpad .np-ok{background:var(--good);color:#fff;box-shadow:0 3px 0 #15803d;}
+  #numpad .np-del{background:var(--pink);box-shadow:0 3px 0 #f9a8d4;}
+  #quitAct{margin-top:14px;width:100%;padding:12px;background:transparent;color:#8b7bb8;font-size:.9rem;text-decoration:underline;}
+  /* ---------- CELEBRATION ---------- */
+  #overlay{
+    position:fixed;inset:0;background:rgba(76,29,149,.45);z-index:50;
+    display:flex;align-items:center;justify-content:center;padding:20px;
+  }
+  #ovCard{
+    background:#fff;border-radius:28px;padding:28px 22px;text-align:center;
+    max-width:380px;width:100%;box-shadow:0 12px 40px rgba(0,0,0,.3);
+    animation:pop .4s cubic-bezier(.2,1.6,.4,1);position:relative;overflow:hidden;
+  }
+  @keyframes pop{from{transform:scale(.5);opacity:0}to{transform:scale(1);opacity:1}}
+  #ovEmoji{font-size:64px;line-height:1.2;}
+  #ovTitle{font-size:1.4rem;font-weight:700;margin-top:6px;}
+  #ovMsg{margin-top:6px;color:#7c6aa6;font-weight:600;}
+  .confetti{position:absolute;top:-30px;font-size:20px;animation:fall 1.8s linear infinite;}
+  @keyframes fall{to{transform:translateY(460px) rotate(300deg);}}
+  @media (max-width:380px){
+    #problemText{font-size:2rem;}
+    .breed-card .be{font-size:34px;}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ============ ADOPT ============ -->
+  <div id="screen-adopt" class="screen">
+    <div class="card">
+      <div id="adopt-dog">🐶</div>
+      <h1>Adopt Your Math Puppy!</h1>
+      <p class="center muted">Feed it, play fetch, and teach it tricks — all by doing math! 🐾</p>
+      <div class="section-title">Pick your puppy</div>
+      <div class="breed-row" id="breedRow"></div>
+      <div class="section-title">Name your puppy</div>
+      <input id="nameInput" type="text" maxlength="14" placeholder="Type a name…" autocomplete="off">
+      <div class="name-ideas">
+        <button data-n="Biscuit">Biscuit</button>
+        <button data-n="Sprinkles">Sprinkles</button>
+        <button data-n="Luna">Luna</button>
+        <button data-n="Peanut">Peanut</button>
+      </div>
+      <button class="btn-big" id="adoptBtn">Adopt! 💜</button>
+    </div>
+  </div>
+
+  <!-- ============ HOME ============ -->
+  <div id="screen-home" class="screen hidden">
+    <div class="card">
+      <div id="topbar">
+        <div>
+          <span id="pupName">Puppy</span>
+          <span id="stageLabel">Puppy</span>
+        </div>
+        <div class="lvl-badge" id="lvlBadge">Lv 1</div>
+      </div>
+      <div class="bar-wrap"><div class="bar" id="xpBar" style="width:0%"></div></div>
+      <div class="muted center" id="xpText" style="margin-top:4px;font-size:.8rem;"></div>
+      <div id="streakLine"></div>
+    </div>
+
+    <div class="card" style="padding:10px;">
+      <div id="scene">
+        <span class="sun">🌤️</span>
+        <span class="cloud" style="top:26px;left:10%;">☁️</span>
+        <span class="cloud" style="top:52px;left:40%;animation-delay:-7s;">☁️</span>
+        <span class="flower" style="left:8%;">🌼</span>
+        <span class="flower" style="left:22%;">🌷</span>
+        <span class="flower" style="right:10%;">🌸</span>
+        <div id="bubble"></div>
+        <span id="ballHome">🎾</span>
+        <div id="dogWrap">
+          <div id="dogBody" class="bobbing">
+            <span id="dogEmoji">🐶</span>
+            <span class="acc acc-hat hidden" id="acc-hat">🎩</span>
+            <span class="acc acc-bow hidden" id="acc-bow">🎀</span>
+            <span class="acc acc-sun hidden" id="acc-sunglasses">🕶️</span>
+            <span class="acc acc-band hidden" id="acc-bandana">🧣</span>
+            <span class="acc acc-cape hidden" id="acc-cape">🦸</span>
+          </div>
+        </div>
+      </div>
+      <div class="meter-row">
+        <span class="mi">💗</span>
+        <div class="bar-wrap"><div class="bar" id="hapBar"></div></div>
+        <span class="mv" id="hapVal"></span>
+      </div>
+      <div class="meter-row">
+        <span class="mi">⚡</span>
+        <div class="bar-wrap"><div class="bar" id="enBar"></div></div>
+        <span class="mv" id="enVal"></span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="actions">
+        <button class="act-btn" id="btnFeed"><span class="ae">🍖</span>Feed<small>5 problems</small></button>
+        <button class="act-btn" id="btnFetch"><span class="ae">🎾</span>Fetch<small>60 seconds</small></button>
+        <button class="act-btn" id="btnTrain"><span class="ae">⭐</span>Train<small>8 in a row</small></button>
+      </div>
+      <div class="section-title">Tricks</div>
+      <div class="chip-row" id="trickRow"></div>
+      <div class="section-title">Accessories</div>
+      <div class="chip-row" id="accRow"></div>
+    </div>
+  </div>
+
+  <!-- ============ ACTIVITY ============ -->
+  <div id="screen-activity" class="screen hidden">
+    <div class="card">
+      <div id="actHeader">
+        <span id="actTitle">Feeding time!</span>
+        <span id="actProgress"></span>
+        <span id="timerWrap" class="hidden">60</span>
+      </div>
+      <div id="miniScene">
+        <span id="miniDog">🐶</span>
+        <span id="miniBall">🎾</span>
+      </div>
+      <div id="problemBox">
+        <div id="problemText">3 + 4</div>
+        <div><span id="answerShow">&nbsp;</span></div>
+      </div>
+      <div id="feedback"></div>
+      <div id="numpad"></div>
+      <button id="quitAct">← back home</button>
+    </div>
+  </div>
+
+  <!-- ============ CELEBRATION ============ -->
+  <div id="overlay" class="hidden">
+    <div id="ovCard">
+      <div id="ovEmoji">🎉</div>
+      <div id="ovTitle"></div>
+      <div id="ovMsg"></div>
+      <button class="btn-big" id="ovBtn">Yay! 🐾</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+"use strict";
+/* ================= MATH PUPPY — for Siena ================= */
+
+var SAVE_KEY = 'math-puppy-save-v1';
+var HUB_KEY  = 'hubSummary_math-puppy';
+
+/* ---------- helpers ---------- */
+function rnd(n){ return Math.floor(Math.random()*n); }
+function ri(a,b){ return a + rnd(b - a + 1); }
+function clamp(v,lo,hi){ return Math.max(lo, Math.min(hi, v)); }
+function todayStr(){
+  var d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+function daysBetween(a,b){
+  if(!a || !b) return 0;
+  var da = new Date(a + 'T00:00:00'), db = new Date(b + 'T00:00:00');
+  return Math.round((db - da) / 86400000);
+}
+
+/* ---------- MATH ENGINE (pure, testable) ---------- */
+function levelBands(level){
+  if(level <= 2) return { ops:['add','sub'],               max:20,  mulMax:0,  divMax:0  };
+  if(level <= 4) return { ops:['add','sub','mul'],         max:50,  mulMax:5,  divMax:0  };
+  if(level <= 6) return { ops:['add','sub','mul'],         max:100, mulMax:10, divMax:0  };
+  if(level <= 8) return { ops:['add','sub','mul','div'],   max:100, mulMax:12, divMax:10 };
+  return           { ops:['add','sub','mul','div'],        max:100, mulMax:12, divMax:12 };
+}
+function genProblem(level){
+  var b = levelBands(level);
+  var op = b.ops[rnd(b.ops.length)];
+  var x, y, a, q;
+  if(op === 'add'){
+    x = ri(1, b.max - 1); y = ri(1, b.max - x); a = x + y; q = x + ' + ' + y;
+  } else if(op === 'sub'){
+    x = ri(2, b.max); y = ri(1, x - 1); a = x - y; q = x + ' − ' + y;
+  } else if(op === 'mul'){
+    x = ri(1, 12); y = ri(1, b.mulMax); a = x * y; q = x + ' × ' + y;
+  } else {
+    y = ri(2, b.divMax); a = ri(1, 12); x = y * a; q = x + ' ÷ ' + y;
+  }
+  return { q:q, a:a, op:op, x:x, y:y, key: x + op + y };
+}
+function hintFor(p){
+  if(p.op === 'add') return '💡 Start at ' + Math.max(p.x,p.y) + ' and count up ' + Math.min(p.x,p.y) + ' more!';
+  if(p.op === 'sub') return '💡 Start at ' + p.x + ' and count back ' + p.y + '.';
+  if(p.op === 'mul') return '💡 Think of ' + p.x + ' groups of ' + p.y + '. Try skip-counting by ' + p.y + '!';
+  return '💡 Ask yourself: ' + p.y + ' times what makes ' + p.x + '?';
+}
+function explainFor(p){
+  if(p.op === 'add') return p.x + ' + ' + p.y + ' = ' + p.a + ' — counting up works every time!';
+  if(p.op === 'sub') return p.x + ' − ' + p.y + ' = ' + p.a + ' — take ' + p.y + ' away and ' + p.a + ' are left.';
+  if(p.op === 'mul') return p.x + ' × ' + p.y + ' = ' + p.a + ' — that\'s ' + p.x + ' groups of ' + p.y + '.';
+  return p.x + ' ÷ ' + p.y + ' = ' + p.a + ' because ' + p.y + ' × ' + p.a + ' = ' + p.x + '.';
+}
+
+/* ---------- GAME DATA ---------- */
+var BREEDS = [
+  { id:'classic', emoji:'🐶', label:'Classic' },
+  { id:'golden',  emoji:'🦮', label:'Golden'  },
+  { id:'helper',  emoji:'🐕‍🦺', label:'Helper' },
+  { id:'poodle',  emoji:'🐩', label:'Poodle'  }
+];
+var TRICKS = [
+  { id:'sit',      name:'Sit',       emoji:'🪑' },
+  { id:'shake',    name:'Shake',     emoji:'🤝' },
+  { id:'roll',     name:'Roll Over', emoji:'🔄' },
+  { id:'spin',     name:'Spin',      emoji:'🌀' },
+  { id:'high5',    name:'High Five', emoji:'🖐️' },
+  { id:'backflip', name:'Backflip',  emoji:'🤸' }
+];
+var ACCESSORIES = [
+  { id:'bandana',    name:'Bandana',    emoji:'🧣',  lvl:2 },
+  { id:'bow',        name:'Bow',        emoji:'🎀',  lvl:3 },
+  { id:'hat',        name:'Hat',        emoji:'🎩',  lvl:4 },
+  { id:'sunglasses', name:'Sunglasses', emoji:'🕶️', lvl:5 },
+  { id:'cape',       name:'Cape',       emoji:'🦸',  lvl:6 }
+];
+function stageFor(level){
+  if(level <= 3) return { name:'Puppy',     size:72  };
+  if(level <= 6) return { name:'Young Dog', size:96  };
+  return              { name:'Big Dog',   size:118 };
+}
+function xpNeeded(level){ return level * 100; }
+
+/* ---------- STATE ---------- */
+var S = null;
+function freshState(name, breed){
+  return {
+    name: name, breed: breed,
+    level: 1, xp: 0,
+    happiness: 80, energy: 80,
+    tricks: [], worn: {},
+    careStreak: 0, lastFed: null, lastVisit: todayStr(),
+    weakFacts: [], fastRefill: false
+  };
+}
+function load(){
+  try{
+    var raw = localStorage.getItem(SAVE_KEY);
+    if(!raw) return null;
+    var s = JSON.parse(raw);
+    if(!s || !s.name) return null;
+    return s;
+  } catch(e){ return null; }
+}
+function save(){
+  try{
+    localStorage.setItem(SAVE_KEY, JSON.stringify(S));
+    localStorage.setItem(HUB_KEY, JSON.stringify({
+      app: 'math-puppy', kid: 'siena', icon: '🐶',
+      label: S.name + ' • Lv ' + S.level + ' • ' + S.tricks.length + ' trick' + (S.tricks.length === 1 ? '' : 's'),
+      pct: Math.min(100, S.level * 10),
+      streak: S.careStreak,
+      stars: null,
+      lastPlayed: new Date().toISOString(),
+      actionsToday: (function(){
+        var t = todayStr();
+        return (S.activity && S.activity.date === t) ? (S.activity.actions | 0) : 0;
+      })(),
+      actionsDate: todayStr(),
+      earnedDates: (S.activity && Array.isArray(S.activity.earnedDates)) ? S.activity.earnedDates : []
+    }));
+  } catch(e){ /* private mode etc — game still plays */ }
+}
+
+/* ---------- DAILY EFFORT TRACKING ---------- */
+function recordEffort(weight){
+  try{
+    if(!S) return;
+    if(!S.activity || typeof S.activity !== 'object'){
+      S.activity = { date: todayStr(), actions: 0, earnedDates: [] };
+    }
+    if(!Array.isArray(S.activity.earnedDates)) S.activity.earnedDates = [];
+    var t = todayStr();
+    if(S.activity.date !== t){ S.activity.date = t; S.activity.actions = 0; }
+    S.activity.actions += weight;
+    if(S.activity.actions >= 20 && S.activity.earnedDates.indexOf(t) === -1){
+      S.activity.earnedDates.push(t);
+      if(S.activity.earnedDates.length > 30) S.activity.earnedDates = S.activity.earnedDates.slice(-30);
+    }
+    save();
+  } catch(e){ /* never break gameplay */ }
+}
+
+/* ---------- DOM ---------- */
+function $(id){ return document.getElementById(id); }
+
+var selectedBreed = 0;
+var celebrateQueue = [];
+var act = null;          // current activity state
+var actTimer = null;
+
+/* ---------- ADOPT ---------- */
+function buildAdopt(){
+  var row = $('breedRow');
+  row.innerHTML = '';
+  BREEDS.forEach(function(b, i){
+    var d = document.createElement('button');
+    d.className = 'breed-card' + (i === selectedBreed ? ' sel' : '');
+    d.innerHTML = '<span class="be">' + b.emoji + '</span>' + b.label;
+    d.onclick = function(){
+      selectedBreed = i;
+      buildAdopt();
+      $('adopt-dog').textContent = b.emoji;
+    };
+    row.appendChild(d);
+  });
+  var ideas = document.querySelectorAll('.name-ideas button');
+  for(var k = 0; k < ideas.length; k++){
+    ideas[k].onclick = (function(btn){ return function(){ $('nameInput').value = btn.getAttribute('data-n'); }; })(ideas[k]);
+  }
+  $('adoptBtn').onclick = function(){
+    var name = $('nameInput').value.trim() || 'Biscuit';
+    S = freshState(name, BREEDS[selectedBreed].id);
+    save();
+    showScreen('home');
+    renderHome();
+    speak(name + ' is SO happy to be adopted! 🐾💜');
+    queueCelebrate('🐶', 'Welcome, ' + name + '!', 'Do math to feed, play, and teach tricks. Your puppy grows as you grow!');
+    runCelebrates();
+  };
+}
+
+/* ---------- SCREENS ---------- */
+function showScreen(which){
+  $('screen-adopt').classList.toggle('hidden', which !== 'adopt');
+  $('screen-home').classList.toggle('hidden', which !== 'home');
+  $('screen-activity').classList.toggle('hidden', which !== 'activity');
+}
+
+/* ---------- HOME RENDER ---------- */
+function breedEmoji(){
+  for(var i = 0; i < BREEDS.length; i++) if(BREEDS[i].id === S.breed) return BREEDS[i].emoji;
+  return '🐶';
+}
+function renderHome(){
+  var st = stageFor(S.level);
+  $('pupName').textContent = S.name;
+  $('stageLabel').textContent = st.name;
+  $('lvlBadge').textContent = 'Lv ' + S.level;
+  var need = xpNeeded(S.level);
+  $('xpBar').style.width = clamp(Math.round(S.xp / need * 100), 0, 100) + '%';
+  $('xpText').textContent = S.xp + ' / ' + need + ' XP to level ' + (S.level + 1);
+  $('hapBar').style.width = S.happiness + '%';
+  $('enBar').style.width = S.energy + '%';
+  $('hapVal').textContent = S.happiness + '%';
+  $('enVal').textContent = S.energy + '%';
+  $('dogEmoji').textContent = breedEmoji();
+  $('dogEmoji').style.fontSize = st.size + 'px';
+  // streak hearts
+  var hearts = '';
+  var n = Math.min(S.careStreak, 7);
+  for(var i = 0; i < n; i++) hearts += '💗';
+  $('streakLine').innerHTML = S.careStreak > 0
+    ? hearts + ' ' + S.careStreak + '-day care streak!'
+    : 'Feed ' + S.name + ' today to start a care streak! 💗';
+  // accessories on the dog
+  ACCESSORIES.forEach(function(a){
+    $('acc-' + a.id).classList.toggle('hidden', !S.worn[a.id]);
+  });
+  renderTricks();
+  renderAccChips();
+}
+function renderTricks(){
+  var row = $('trickRow');
+  row.innerHTML = '';
+  if(S.tricks.length === 0){
+    var s = document.createElement('span');
+    s.className = 'muted';
+    s.textContent = 'No tricks yet — hit Train! Next up: Sit';
+    row.appendChild(s);
+  }
+  S.tricks.forEach(function(tid){
+    var t = TRICKS.filter(function(x){ return x.id === tid; })[0];
+    if(!t) return;
+    var b = document.createElement('button');
+    b.className = 'chip';
+    b.textContent = t.emoji + ' ' + t.name;
+    b.onclick = function(){ doTrick(t.id); };
+    row.appendChild(b);
+  });
+}
+function renderAccChips(){
+  var row = $('accRow');
+  row.innerHTML = '';
+  ACCESSORIES.forEach(function(a){
+    var b = document.createElement('button');
+    var unlocked = S.level >= a.lvl;
+    if(!unlocked){
+      b.className = 'chip locked';
+      b.textContent = '🔒 ' + a.name + ' (Lv ' + a.lvl + ')';
+    } else {
+      b.className = 'chip' + (S.worn[a.id] ? ' worn' : '');
+      b.textContent = a.emoji + ' ' + a.name;
+      b.onclick = function(){
+        S.worn[a.id] = !S.worn[a.id];
+        save();
+        renderHome();
+        if(S.worn[a.id]) speak('Ooh, lookin\' fancy! ' + a.emoji);
+      };
+    }
+    row.appendChild(b);
+  });
+}
+var bubbleTimer = null;
+function speak(msg){
+  var b = $('bubble');
+  b.textContent = msg;
+  b.classList.add('show');
+  if(bubbleTimer) clearTimeout(bubbleTimer);
+  bubbleTimer = setTimeout(function(){ b.classList.remove('show'); }, 3500);
+}
+function doTrick(id){
+  var body = $('dogBody');
+  body.classList.remove('bobbing','anim-sit','anim-shake','anim-roll','anim-spin','anim-high5','anim-backflip','anim-nom','anim-happy');
+  void body.offsetWidth;
+  body.classList.add('anim-' + id);
+  var t = TRICKS.filter(function(x){ return x.id === id; })[0];
+  speak(t ? t.name + '! ' + t.emoji + ' Good dog!' : 'Woof!');
+  setTimeout(function(){
+    body.classList.remove('anim-' + id);
+    body.classList.add('bobbing');
+  }, 1400);
+}
+function petDog(ev){
+  var scene = $('scene');
+  var h = document.createElement('span');
+  h.className = 'float-heart';
+  h.textContent = ['💜','💗','✨','🐾'][rnd(4)];
+  h.style.left = (35 + rnd(30)) + '%';
+  h.style.bottom = '90px';
+  scene.appendChild(h);
+  setTimeout(function(){ h.remove(); }, 1200);
+  var msgs = ['Woof woof! 💜','*happy tail wags*','You\'re the best!','Ruff! Let\'s do math!','*puppy eyes* 🥺','Zoomies incoming!'];
+  speak(msgs[rnd(msgs.length)]);
+}
+
+/* ---------- CELEBRATION ---------- */
+function queueCelebrate(emoji, title, msg){ celebrateQueue.push({ e:emoji, t:title, m:msg }); }
+function runCelebrates(){
+  if(celebrateQueue.length === 0){ $('overlay').classList.add('hidden'); return; }
+  var c = celebrateQueue.shift();
+  $('ovEmoji').textContent = c.e;
+  $('ovTitle').textContent = c.t;
+  $('ovMsg').textContent = c.m;
+  var card = $('ovCard');
+  var olds = card.querySelectorAll('.confetti');
+  for(var i = 0; i < olds.length; i++) olds[i].remove();
+  var bits = ['🎉','⭐','💜','🐾','✨','🎊'];
+  for(var j = 0; j < 10; j++){
+    var s = document.createElement('span');
+    s.className = 'confetti';
+    s.textContent = bits[rnd(bits.length)];
+    s.style.left = rnd(95) + '%';
+    s.style.animationDelay = (Math.random() * 1.6) + 's';
+    card.appendChild(s);
+  }
+  $('overlay').classList.remove('hidden');
+}
+
+/* ---------- XP / LEVELS ---------- */
+function addXp(amount){
+  S.xp += amount;
+  var need = xpNeeded(S.level);
+  while(S.xp >= need){
+    S.xp -= need;
+    var oldStage = stageFor(S.level).name;
+    S.level++;
+    var newStage = stageFor(S.level).name;
+    queueCelebrate('🎉', 'Level ' + S.level + '!', S.name + ' is getting stronger and smarter!');
+    if(newStage !== oldStage){
+      queueCelebrate(breedEmoji(), S.name + ' grew up!', 'Your puppy is now a ' + newStage + '! Look how big!');
+    }
+    ACCESSORIES.forEach(function(a){
+      if(a.lvl === S.level) queueCelebrate(a.emoji, 'New accessory!', 'You unlocked the ' + a.name + '! Try it on from the home screen.');
+    });
+    need = xpNeeded(S.level);
+  }
+  save();
+}
+
+/* ---------- WEAK FACTS ---------- */
+function pushWeakFact(p){
+  for(var i = 0; i < S.weakFacts.length; i++) if(S.weakFacts[i].key === p.key) return;
+  S.weakFacts.push({ q:p.q, a:p.a, op:p.op, x:p.x, y:p.y, key:p.key });
+  if(S.weakFacts.length > 12) S.weakFacts.shift();
+}
+function nextProblem(){
+  if(S.weakFacts.length > 0 && Math.random() < 0.35){
+    return S.weakFacts.shift(); // drawn out; re-added only if missed again
+  }
+  return genProblem(S.level);
+}
+
+/* ---------- ACTIVITIES ---------- */
+function startActivity(type){
+  act = { type:type, entry:'', attempts:0, correct:0, done:0, streak:0, throws:0, timeLeft:60, locked:false };
+  $('miniDog').textContent = breedEmoji();
+  $('timerWrap').classList.toggle('hidden', type !== 'fetch');
+  $('miniScene').style.display = (type === 'fetch') ? 'block' : 'none';
+  if(type === 'feed')  $('actTitle').textContent = '🍖 Feeding ' + S.name;
+  if(type === 'fetch') $('actTitle').textContent = '🎾 Fetch with ' + S.name;
+  if(type === 'train'){
+    var nt = TRICKS[S.tricks.length];
+    $('actTitle').textContent = nt ? '⭐ Teaching: ' + nt.name + ' ' + nt.emoji : '⭐ Super Training!';
+  }
+  showScreen('activity');
+  if(type === 'fetch'){
+    $('timerWrap').textContent = '60';
+    actTimer = setInterval(function(){
+      act.timeLeft--;
+      $('timerWrap').textContent = act.timeLeft;
+      if(act.timeLeft <= 0) endFetch();
+    }, 1000);
+  }
+  newActProblem();
+  updateActProgress();
+}
+function updateActProgress(){
+  var el = $('actProgress');
+  if(act.type === 'feed'){
+    var s = '';
+    for(var i = 0; i < 5; i++) s += (i < act.done) ? '🍖' : '⚪';
+    el.textContent = s;
+  } else if(act.type === 'train'){
+    var t = '';
+    for(var j = 0; j < 8; j++) t += (j < act.streak) ? '🐾' : '·';
+    el.textContent = t;
+  } else {
+    el.textContent = act.throws + ' 🎾';
+  }
+}
+function newActProblem(){
+  act.p = nextProblem();
+  act.entry = '';
+  act.attempts = 0;
+  act.locked = false;
+  $('problemText').textContent = act.p.q + ' = ?';
+  $('answerShow').innerHTML = '&nbsp;';
+  var f = $('feedback');
+  f.textContent = '';
+  f.className = '';
+}
+function pressKey(k){
+  if(!act || act.locked) return;
+  if(k === 'del'){ act.entry = act.entry.slice(0, -1); }
+  else if(k === 'ok'){ submitAnswer(); return; }
+  else if(act.entry.length < 3){ act.entry += k; }
+  $('answerShow').textContent = act.entry || ' ';
+}
+function submitAnswer(){
+  if(!act || act.locked || act.entry === '') return;
+  var f = $('feedback');
+  var val = parseInt(act.entry, 10);
+  if(val === act.p.a){
+    act.locked = true;
+    f.textContent = ['Yes! 🎾','Woohoo! ⭐','Got it! 💜','Pawsome! 🐾','Nailed it! ✨'][rnd(5)];
+    f.className = 'good';
+    act.correct++;
+    addXp(10);
+    recordEffort(1);
+    if(act.type === 'fetch'){
+      act.throws++;
+      var ball = $('miniBall');
+      ball.classList.remove('mini-throw');
+      void ball.offsetWidth;
+      ball.classList.add('mini-throw');
+      setTimeout(function(){
+        if(act && act.type === 'fetch' && act.timeLeft > 0){ act.done++; advance(); }
+      }, 550);
+    } else if(act.type === 'train'){
+      act.streak++;
+      updateActProgress();
+      if(act.streak >= 8){ setTimeout(endTrain, 700); }
+      else setTimeout(function(){ advance(); }, 700);
+    } else { // feed
+      act.done++;
+      updateActProgress();
+      if(act.done >= 5){ setTimeout(endFeed, 700); }
+      else setTimeout(function(){ advance(); }, 700);
+    }
+  } else {
+    act.attempts++;
+    act.entry = '';
+    $('answerShow').innerHTML = '&nbsp;';
+    if(act.attempts === 1){
+      f.textContent = hintFor(act.p) + ' Try again!';
+      f.className = 'hint';
+    } else {
+      act.locked = true;
+      f.textContent = explainFor(act.p);
+      f.className = 'tell';
+      pushWeakFact(act.p);
+      recordEffort(1);
+      if(act.type === 'train' && act.streak > 0){
+        act.streak = 0;
+        updateActProgress();
+        setTimeout(function(){ speakAct('Streak restarts — ' + S.name + ' believes in you! 💜'); }, 100);
+      }
+      save();
+      setTimeout(function(){ advance(); }, 2600);
+    }
+  }
+  updateActProgress();
+}
+function speakAct(msg){
+  var f = $('feedback');
+  // brief supportive line appended below explanation
+  f.textContent = f.textContent + '  ' + msg;
+}
+function advance(){
+  if(!act) return;
+  newActProblem();
+}
+function endFeed(){
+  S.energy = clamp(S.energy + 35, 0, 100);
+  S.happiness = clamp(S.happiness + 15, 0, 100);
+  if(S.fastRefill){ S.energy = 100; S.happiness = 100; S.fastRefill = false; }
+  // care streak
+  var t = todayStr();
+  if(S.lastFed !== t){
+    if(S.lastFed && daysBetween(S.lastFed, t) === 1) S.careStreak++;
+    else S.careStreak = 1;
+    S.lastFed = t;
+  }
+  addXp(15);
+  recordEffort(2);
+  save();
+  finishActivity('anim-nom', S.name + ' gobbles it up! Nom nom nom! 🍖');
+  queueCelebrate('🍖', 'Yummy meal!', S.name + ' is full and happy. Care streak: ' + S.careStreak + ' day' + (S.careStreak === 1 ? '' : 's') + ' 💗');
+  runCelebrates();
+}
+function endFetch(){
+  if(actTimer){ clearInterval(actTimer); actTimer = null; }
+  var throws = act ? act.throws : 0;
+  S.happiness = clamp(S.happiness + 10 + throws * 2, 0, 100);
+  S.energy = clamp(S.energy - 5, 15, 100);
+  addXp(throws * 5);
+  recordEffort(3);
+  save();
+  finishActivity('anim-happy', 'That was FUN! 🎾');
+  queueCelebrate('🎾', throws + ' fetches!', S.name + ' chased the ball ' + throws + ' time' + (throws === 1 ? '' : 's') + '! +' + (throws * 5) + ' bonus XP!');
+  runCelebrates();
+}
+function endTrain(){
+  var learned = null;
+  if(S.tricks.length < TRICKS.length){
+    learned = TRICKS[S.tricks.length];
+    S.tricks.push(learned.id);
+  }
+  S.happiness = clamp(S.happiness + 20, 0, 100);
+  addXp(40);
+  recordEffort(5);
+  save();
+  if(learned){
+    finishActivity('anim-' + learned.id, learned.name + '! ' + learned.emoji);
+    queueCelebrate(learned.emoji, 'New trick: ' + learned.name + '!', S.name + ' learned it forever! Tap the trick button anytime to show it off.');
+  } else {
+    finishActivity('anim-happy', 'Super genius dog! 🧠');
+    queueCelebrate('🏆', 'Master class!', S.name + ' already knows every trick — that was for bonus XP!');
+  }
+  runCelebrates();
+}
+function finishActivity(animClass, msg){
+  if(actTimer){ clearInterval(actTimer); actTimer = null; }
+  act = null;
+  showScreen('home');
+  renderHome();
+  speak(msg);
+  var body = $('dogBody');
+  body.classList.remove('bobbing');
+  void body.offsetWidth;
+  body.classList.add(animClass);
+  setTimeout(function(){ body.classList.remove(animClass); body.classList.add('bobbing'); }, 1500);
+}
+function quitActivity(){
+  if(actTimer){ clearInterval(actTimer); actTimer = null; }
+  act = null;
+  showScreen('home');
+  renderHome();
+  speak('That\'s okay! Come back anytime 🐾');
+}
+
+/* ---------- DAILY CARE ---------- */
+function applyDaily(){
+  var t = todayStr();
+  var away = daysBetween(S.lastVisit, t);
+  if(away >= 1){
+    S.energy = clamp(S.energy - away * 15, 25, 100);
+    S.happiness = clamp(S.happiness - away * 8, 40, 100);
+    if(away >= 5){
+      S.fastRefill = true;
+      setTimeout(function(){ speak(S.name + ' missed you SO much! One meal will fill the tank right up! 💜'); }, 600);
+    } else {
+      setTimeout(function(){ speak(S.name + ' is happy to see you! Tummy is rumbling… 🍖'); }, 600);
+    }
+  } else {
+    setTimeout(function(){ speak('Hi! Ready for some math fun? 🐾'); }, 600);
+  }
+  S.lastVisit = t;
+  save();
+}
+
+/* ---------- NUMPAD ---------- */
+function buildNumpad(){
+  var pad = $('numpad');
+  pad.innerHTML = '';
+  var keys = ['1','2','3','4','5','6','7','8','9','del','0','ok'];
+  keys.forEach(function(k){
+    var b = document.createElement('button');
+    if(k === 'del'){ b.textContent = '⌫'; b.className = 'np-del'; }
+    else if(k === 'ok'){ b.textContent = '✓'; b.className = 'np-ok'; }
+    else b.textContent = k;
+    b.onclick = function(){ pressKey(k); };
+    pad.appendChild(b);
+  });
+}
+
+/* ---------- BOOT ---------- */
+function boot(){
+  buildAdopt();
+  buildNumpad();
+  $('btnFeed').onclick  = function(){ startActivity('feed');  };
+  $('btnFetch').onclick = function(){ startActivity('fetch'); };
+  $('btnTrain').onclick = function(){ startActivity('train'); };
+  $('quitAct').onclick  = quitActivity;
+  $('ovBtn').onclick    = runCelebrates;
+  $('dogWrap').onclick  = petDog;
+  document.addEventListener('keydown', function(ev){
+    if($('screen-activity').classList.contains('hidden')) return;
+    if(ev.key >= '0' && ev.key <= '9') pressKey(ev.key);
+    else if(ev.key === 'Backspace') pressKey('del');
+    else if(ev.key === 'Enter') pressKey('ok');
+  });
+  S = load();
+  if(S){
+    showScreen('home');
+    renderHome();
+    applyDaily();
+    renderHome();
+  } else {
+    showScreen('adopt');
+  }
+}
+if(typeof document !== 'undefined' && typeof window !== 'undefined'){
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+}
+</script>
+</body>
+</html>

@@ -10,7 +10,7 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f8f9fa;color:#1a1a2e;line-height:1.5;padding:24px 16px;padding-top:max(24px,env(safe-area-inset-top));-webkit-text-size-adjust:100%}
-.header{text-align:center;margin-bottom:24px}
+.header{text-align:center;margin-bottom:18px}
 .header h1{font-size:26px;font-weight:800;color:#2d6a4f}
 .header .subtitle{font-size:14px;color:#666;margin-top:4px}
 .wrap{max-width:880px;margin:0 auto}
@@ -22,10 +22,52 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .card .icon{font-size:30px;margin-bottom:8px;display:block}
 .card .title{font-size:16px;font-weight:700;margin-bottom:4px}
 .card .desc{font-size:13px;color:#555}
+.card .prog{margin-top:10px;display:none}
+.card .prog.show{display:block}
+.card .prog-label{font-size:12px;font-weight:600;color:#2d6a4f;display:flex;justify-content:space-between;gap:8px}
+.card.siena .prog-label{color:#7c3aed}
+.card .prog-label .ago{font-weight:400;color:#999;white-space:nowrap}
+.card .prog-bar{height:6px;background:#eef0f2;border-radius:3px;margin-top:5px;overflow:hidden}
+.card .prog-fill{height:100%;border-radius:3px;background:#2d6a4f;transition:width .4s}
+.card.siena .prog-fill{background:#7c3aed}
+.card.new::after{content:"NEW";font-size:9px;font-weight:800;letter-spacing:.5px;background:#f59e0b;color:#fff;padding:2px 7px;border-radius:8px;float:right;margin-top:-42px}
 .card.isaiah{border-left-color:#2d6a4f}
 .card.siena{border-left-color:#7c3aed}
+/* family panel */
+.family-panel{background:#fff;border-radius:16px;padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,.08);margin-bottom:6px}
+.fp-row{display:flex;gap:12px;flex-wrap:wrap;align-items:stretch}
+.fp-box{flex:1;min-width:150px;background:#f8f9fa;border-radius:12px;padding:12px 14px}
+.fp-box h4{font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#888;margin-bottom:6px}
+.streak-line{display:flex;justify-content:space-between;align-items:center;font-size:14px;font-weight:600;padding:3px 0}
+.streak-line .val{font-size:14px}
+.streak-line.k-isaiah{color:#2d6a4f}.streak-line.k-siena{color:#7c3aed}
+.score-line{display:flex;align-items:center;gap:8px;padding:3px 0}
+.score-line .nm{font-size:13px;font-weight:600;width:52px}
+.score-line.k-isaiah .nm{color:#2d6a4f}.score-line.k-siena .nm{color:#7c3aed}
+.score-line .bar{flex:1;height:8px;background:#eef0f2;border-radius:4px;overflow:hidden}
+.score-line .fill{height:100%;border-radius:4px}
+.score-line.k-isaiah .fill{background:#2d6a4f}.score-line.k-siena .fill{background:#7c3aed}
+.score-line .pts{font-size:12px;font-weight:700;color:#555;min-width:44px;text-align:right}
+.fp-note{font-size:10.5px;color:#aaa;margin-top:6px}
+.movie-box{background:linear-gradient(135deg,#fff7ed,#fef3c7);border:1px solid #fde68a}
+.movie-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.movie-top .mv-pts{font-size:12px;font-weight:700;color:#b45309}
+.movie-bar{height:12px;background:#fff;border-radius:6px;overflow:hidden;margin-top:6px;border:1px solid #fde68a}
+.movie-fill{height:100%;background:linear-gradient(90deg,#f59e0b,#f97316);border-radius:6px;transition:width .5s}
+.movie-msg{font-size:12px;color:#92400e;margin-top:6px;font-weight:500}
+.redeem-btn{margin-top:8px;width:100%;padding:8px;border:none;border-radius:8px;background:#f59e0b;color:#fff;font-size:13px;font-weight:700;cursor:pointer;display:none}
+.redeem-btn.show{display:block}
+.redeem-btn:active{background:#d97706}
+.spot-strip{margin-top:12px;background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:10px 14px;font-size:13px;color:#78350f}
+.spot-strip b{font-weight:700}
+.spot-strip .sp-isaiah{color:#2d6a4f;font-weight:700}
+.spot-strip .sp-siena{color:#7c3aed;font-weight:700}
+.spot-badge{display:inline-block;background:#f59e0b;color:#fff;font-size:9px;font-weight:800;letter-spacing:.5px;padding:2px 7px;border-radius:8px;margin-left:6px;vertical-align:middle}
+.today-status{font-size:11px;font-weight:600;margin-top:4px}
+.today-status.counted{color:#059669}
+.today-status.partial{color:#d97706}
 .footer{text-align:center;font-size:12px;color:#aaa;margin-top:28px}
-@media(max-width:480px){.grid{grid-template-columns:1fr}.header h1{font-size:22px}}
+@media(max-width:480px){.grid{grid-template-columns:1fr}.header h1{font-size:22px}.fp-row{flex-direction:column}}
 </style>
 </head>
 <body>
@@ -35,6 +77,30 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     <div class="subtitle">All our learning &amp; training apps in one place</div>
   </div>
 
+  <div class="family-panel">
+    <div class="fp-row">
+      <div class="fp-box">
+        <h4>🔥 Daily Streaks</h4>
+        <div class="streak-line k-isaiah"><span>Isaiah</span><span class="val" id="streak-isaiah">—</span></div>
+        <div class="streak-line k-siena"><span>Siena</span><span class="val" id="streak-siena">—</span></div>
+        <div class="fp-note">Play any app today to keep it alive!</div>
+      </div>
+      <div class="fp-box">
+        <h4>🏆 This Week</h4>
+        <div class="score-line k-isaiah"><span class="nm">Isaiah</span><div class="bar"><div class="fill" id="wk-bar-isaiah" style="width:0%"></div></div><span class="pts" id="wk-pts-isaiah">0</span></div>
+        <div class="score-line k-siena"><span class="nm">Siena</span><div class="bar"><div class="fill" id="wk-bar-siena" style="width:0%"></div></div><span class="pts" id="wk-pts-siena">0</span></div>
+        <div class="fp-note">An app counts after ~20 actions of real work. 10 pts each (best 3/day), ⭐ 2x apps worth 20, +5 for showing up. Resets Monday.</div>
+      </div>
+      <div class="fp-box movie-box">
+        <div class="movie-top"><h4>🎬 Movie Night Meter</h4><span class="mv-pts" id="mv-pts">0 / 300</span></div>
+        <div class="movie-bar"><div class="movie-fill" id="mv-fill" style="width:0%"></div></div>
+        <div class="movie-msg" id="mv-msg">Team up! Play a little every day — about 2 weeks of teamwork earns the movie.</div>
+        <button class="redeem-btn" id="mv-redeem" onclick="redeemMovie()">🎉 Movie earned — mark it claimed!</button>
+      </div>
+    </div>
+    <div class="spot-strip" id="spot-strip">⭐ Loading today's 2x apps…</div>
+  </div>
+
   <div class="section-label">Isaiah</div>
   <div class="grid">
     <a class="card isaiah" href="Summer-Training-Dashboard.html">
@@ -42,53 +108,197 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
       <div class="title">Summer Training Dashboard</div>
       <div class="desc">Soccer &amp; cross-country training — daily workouts, fitness tests, progress, and mindset.</div>
     </a>
-    <a class="card isaiah" href="code-challenge-arena.html">
+    <a class="card isaiah new" href="typing-speed-arena.html" data-app="typing-speed-arena">
+      <span class="icon">⌨️</span>
+      <div class="title">Typing Speed Arena</div>
+      <div class="desc">Race the clock — the faster you type, the bigger the multiplier. Beat your WPM record.</div>
+      <div class="prog"><div class="prog-label"><span class="pl-text"></span><span class="ago"></span></div><div class="prog-bar"><div class="prog-fill"></div></div></div>
+    </a>
+    <a class="card isaiah new" href="soccer-trivia.html" data-app="soccer-trivia">
+      <span class="icon">⚽</span>
+      <div class="title">Soccer Trivia</div>
+      <div class="desc">Rules, tactics, legends, and World Cups — daily 10 challenge and category drills.</div>
+      <div class="prog"><div class="prog-label"><span class="pl-text"></span><span class="ago"></span></div><div class="prog-bar"><div class="prog-fill"></div></div></div>
+    </a>
+    <a class="card isaiah" href="geometry-visualizer.html" data-app="geometry-visualizer">
+      <span class="icon">📐</span>
+      <div class="title">Geometry Prep</div>
+      <div class="desc">Get ready for next year — formulas, practice problems, and a 2-minute PR sprint.</div>
+      <div class="prog"><div class="prog-label"><span class="pl-text"></span><span class="ago"></span></div><div class="prog-bar"><div class="prog-fill"></div></div></div>
+    </a>
+    <a class="card isaiah" href="code-challenge-arena.html" data-app="code-challenge-arena">
       <span class="icon">⚡</span>
       <div class="title">Code Challenge Arena</div>
-      <div class="desc">Solve coding challenges, learn computer-science concepts, and level up.</div>
+      <div class="desc">Learn JavaScript from zero, then solve real coding challenges and level up.</div>
+      <div class="prog"><div class="prog-label"><span class="pl-text"></span><span class="ago"></span></div><div class="prog-bar"><div class="prog-fill"></div></div></div>
     </a>
-    <a class="card isaiah" href="article-analyst.html">
+    <a class="card isaiah" href="article-analyst.html" data-app="article-analyst">
       <span class="icon">📰</span>
       <div class="title">Article Analyst</div>
       <div class="desc">Read science &amp; tech articles, then practice writing about what you read.</div>
-    </a>
-    <a class="card isaiah" href="geometry-visualizer.html">
-      <span class="icon">📐</span>
-      <div class="title">Geometry Visualizer</div>
-      <div class="desc">Create, transform, and measure shapes — drag vertices to explore figures.</div>
+      <div class="prog"><div class="prog-label"><span class="pl-text"></span><span class="ago"></span></div><div class="prog-bar"><div class="prog-fill"></div></div></div>
     </a>
   </div>
 
   <div class="section-label">Siena</div>
   <div class="grid">
-    <a class="card siena" href="multiplication-quest.html">
+    <a class="card siena new" href="story-creator-studio.html" data-app="story-creator-studio">
+      <span class="icon">📖</span>
+      <div class="title">Story Creator Studio</div>
+      <div class="desc">Write your OWN adventures — characters, choices, endings. Your stories join the shelf!</div>
+      <div class="prog"><div class="prog-label"><span class="pl-text"></span><span class="ago"></span></div><div class="prog-bar"><div class="prog-fill"></div></div></div>
+    </a>
+    <a class="card siena new" href="math-puppy.html" data-app="math-puppy">
+      <span class="icon">🐶</span>
+      <div class="title">Math Puppy</div>
+      <div class="desc">Adopt a puppy that grows, learns tricks, and earns accessories as you practice math.</div>
+      <div class="prog"><div class="prog-label"><span class="pl-text"></span><span class="ago"></span></div><div class="prog-bar"><div class="prog-fill"></div></div></div>
+    </a>
+    <a class="card siena new" href="social-studies-explorer.html" data-app="social-studies-explorer">
+      <span class="icon">🗺️</span>
+      <div class="title">Social Studies Explorer</div>
+      <div class="desc">Stamp your passport — explore your community, the USA, the world, and long ago.</div>
+      <div class="prog"><div class="prog-label"><span class="pl-text"></span><span class="ago"></span></div><div class="prog-bar"><div class="prog-fill"></div></div></div>
+    </a>
+    <a class="card siena" href="multiplication-quest.html" data-app="multiplication-quest">
       <span class="icon">⚔️</span>
       <div class="title">Multiplication Quest</div>
       <div class="desc">Choose your hero and battle creatures with the power of multiplication.</div>
+      <div class="prog"><div class="prog-label"><span class="pl-text"></span><span class="ago"></span></div><div class="prog-bar"><div class="prog-fill"></div></div></div>
     </a>
-    <a class="card siena" href="science-lab-simulator.html">
+    <a class="card siena" href="story-adventure-creator.html" data-app="story-adventure-creator">
+      <span class="icon">✨</span>
+      <div class="title">Story Adventure</div>
+      <div class="desc">Read, choose, and learn your way through interactive tales.</div>
+      <div class="prog"><div class="prog-label"><span class="pl-text"></span><span class="ago"></span></div><div class="prog-bar"><div class="prog-fill"></div></div></div>
+    </a>
+    <a class="card siena" href="science-lab-simulator.html" data-app="science-lab-simulator">
       <span class="icon">🔬</span>
       <div class="title">Science Lab Simulator</div>
       <div class="desc">Run virtual experiments, make predictions, and discover how science works.</div>
+      <div class="prog"><div class="prog-label"><span class="pl-text"></span><span class="ago"></span></div><div class="prog-bar"><div class="prog-fill"></div></div></div>
     </a>
-    <a class="card siena" href="story-adventure-creator.html">
-      <span class="icon">✨</span>
-      <div class="title">Story Adventure Creator</div>
-      <div class="desc">Read, choose, and learn your way through interactive tales.</div>
-    </a>
-    <a class="card siena" href="coin-counting-game.html">
+    <a class="card siena" href="coin-counting-game.html" data-app="coin-counting-game">
       <span class="icon">💰</span>
       <div class="title">Coin Counting Game</div>
       <div class="desc">Count coins, make change, and compare amounts — and level up.</div>
+      <div class="prog"><div class="prog-label"><span class="pl-text"></span><span class="ago"></span></div><div class="prog-bar"><div class="prog-fill"></div></div></div>
     </a>
-    <a class="card siena" href="word-problem-game.html">
+    <a class="card siena" href="word-problem-game.html" data-app="word-problem-game">
       <span class="icon">🧮</span>
       <div class="title">Math Word Problems</div>
       <div class="desc">Read, think, and solve — addition, subtraction, and fractions.</div>
+      <div class="prog"><div class="prog-label"><span class="pl-text"></span><span class="ago"></span></div><div class="prog-bar"><div class="prog-fill"></div></div></div>
     </a>
   </div>
 
   <div class="footer">Hodge Family Hub</div>
 </div>
+<script>
+var KID_APPS={isaiah:['typing-speed-arena','soccer-trivia','geometry-visualizer','code-challenge-arena','article-analyst'],siena:['story-creator-studio','math-puppy','social-studies-explorer','multiplication-quest','story-adventure-creator','science-lab-simulator','coin-counting-game','word-problem-game']};
+var FAM_KEY='hub-family-v1',MOVIE_GOAL=1200,DAILY_APP_CAP=3,SPOT_PTS=20,BASE_PTS=10,FAM=null;
+var APP_NAMES={'typing-speed-arena':'Typing','soccer-trivia':'Trivia','geometry-visualizer':'Geometry','code-challenge-arena':'Code','article-analyst':'Film Room','story-creator-studio':'Story Studio','math-puppy':'Math Puppy','social-studies-explorer':'Passport','multiplication-quest':'Mult. Quest','story-adventure-creator':'Story Adv.','science-lab-simulator':'Science Lab','coin-counting-game':'Coins','word-problem-game':'Word Problems'};
+function dayNumOf(k){var p=k.split('-');return Math.round(new Date(+p[0],+p[1]-1,+p[2]).getTime()/864e5)}
+function spotFor(k,kid){var apps=KID_APPS[kid],L=apps.length,n=dayNumOf(k);var i1=((n%L)+L)%L,i2=(i1+Math.max(1,Math.floor(L/2)))%L;if(i2===i1)i2=(i1+1)%L;return[apps[i1],apps[i2]]}
+function readSummary(app){try{var r=localStorage.getItem('hubSummary_'+app);return r?JSON.parse(r):null}catch(e){return null}}
+
+function famLoad(){try{var r=localStorage.getItem(FAM_KEY);if(r){var f=JSON.parse(r);if(f&&f.log)return f}}catch(e){}return{log:{},redeemed:0}}
+function famSave(){try{localStorage.setItem(FAM_KEY,JSON.stringify(FAM))}catch(e){}}
+function dkey(d){var x=new Date(d);return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0')}
+function addDays(d,n){var x=new Date(d);x.setDate(x.getDate()+n);return x}
+function ago(iso){try{var d=(Date.now()-new Date(iso))/864e5;if(d<1)return'today';if(d<2)return'yesterday';return Math.floor(d)+'d ago'}catch(e){return''}}
+
+function ingest(){
+  Object.keys(KID_APPS).forEach(function(kid){
+    KID_APPS[kid].forEach(function(app){
+      var s=readSummary(app);if(!s)return;
+      var dates=Array.isArray(s.earnedDates)?s.earnedDates:[];
+      dates.forEach(function(k){
+        if(!/^\d{4}-\d{2}-\d{2}$/.test(k))return;
+        if(!FAM.log[k])FAM.log[k]={};
+        if(!FAM.log[k][kid])FAM.log[k][kid]=[];
+        if(FAM.log[k][kid].indexOf(app)<0)FAM.log[k][kid].push(app);
+      });
+    });
+  });
+  // prune to 120 days
+  var cutoff=dkey(addDays(new Date(),-120));
+  Object.keys(FAM.log).forEach(function(k){if(k<cutoff)delete FAM.log[k]});
+  famSave();
+}
+function dayPts(k,kid){
+  var d=FAM.log[k];if(!d||!d[kid]||!d[kid].length)return 0;
+  var spots=spotFor(k,kid);
+  var vals=d[kid].map(function(app){return spots.indexOf(app)>=0?SPOT_PTS:BASE_PTS}).sort(function(a,b){return b-a});
+  var total=5;for(var i=0;i<Math.min(vals.length,DAILY_APP_CAP);i++)total+=vals[i];
+  return total;
+}
+function streak(kid){
+  var n=0,d=new Date();
+  if(!dayPts(dkey(d),kid))d=addDays(d,-1); // grace: streak alive if played yesterday
+  while(dayPts(dkey(d),kid)){n++;d=addDays(d,-1)}
+  return n;
+}
+function weekPts(kid){
+  var d=new Date(),dow=(d.getDay()+6)%7,total=0; // Monday=0
+  for(var i=0;i<=dow;i++)total+=dayPts(dkey(addDays(d,-i)),kid);
+  return total;
+}
+function totalPts(){var t=0;Object.keys(FAM.log).forEach(function(k){t+=dayPts(k,'isaiah')+dayPts(k,'siena')});return t}
+function redeemMovie(){
+  if(!confirm('Mark the movie as earned? The meter starts over toward the next one.'))return;
+  FAM.redeemed+=MOVIE_GOAL;famSave();renderFamily();
+}
+function renderFamily(){
+  ['isaiah','siena'].forEach(function(kid){
+    var s=streak(kid);
+    document.getElementById('streak-'+kid).textContent=s>0?'🔥 '+s+(s===1?' day':' days'):'Start today!';
+  });
+  var wi=weekPts('isaiah'),ws=weekPts('siena'),mx=Math.max(wi,ws,50);
+  document.getElementById('wk-pts-isaiah').textContent=wi;
+  document.getElementById('wk-pts-siena').textContent=ws;
+  document.getElementById('wk-bar-isaiah').style.width=Math.round(wi/mx*100)+'%';
+  document.getElementById('wk-bar-siena').style.width=Math.round(ws/mx*100)+'%';
+  var pool=Math.max(0,totalPts()-FAM.redeemed),pct=Math.min(100,Math.round(pool/MOVIE_GOAL*100));
+  document.getElementById('mv-pts').textContent=Math.min(pool,MOVIE_GOAL)+' / '+MOVIE_GOAL;
+  document.getElementById('mv-fill').style.width=pct+'%';
+  var msg=document.getElementById('mv-msg'),btn=document.getElementById('mv-redeem');
+  if(pool>=MOVIE_GOAL){msg.textContent='🎉 You did it together — movie night is EARNED!';btn.classList.add('show')}
+  else{var left=MOVIE_GOAL-pool;msg.textContent=left===MOVIE_GOAL?'Team up! Play a little every day — about 2 weeks of teamwork earns the movie.':'Only '+left+' points to go — keep showing up!';btn.classList.remove('show')}
+  var tk=dkey(new Date());
+  var si=spotFor(tk,'isaiah').map(function(a){return APP_NAMES[a]||a}).join(' & ');
+  var ss=spotFor(tk,'siena').map(function(a){return APP_NAMES[a]||a}).join(' & ');
+  document.getElementById('spot-strip').innerHTML='⭐ <b>Today\'s 2x apps</b> — <span class="sp-isaiah">Isaiah:</span> '+si+' · <span class="sp-siena">Siena:</span> '+ss;
+}
+function renderCards(){
+  var tk=dkey(new Date());
+  var spots={isaiah:spotFor(tk,'isaiah'),siena:spotFor(tk,'siena')};
+  document.querySelectorAll('[data-app]').forEach(function(card){
+    var app=card.dataset.app;
+    var kid=card.classList.contains('siena')?'siena':'isaiah';
+    // spotlight badge on the title
+    if(spots[kid].indexOf(app)>=0){
+      var t=card.querySelector('.title');
+      if(t&&!t.querySelector('.spot-badge')){var b=document.createElement('span');b.className='spot-badge';b.textContent='⭐ 2x TODAY';t.appendChild(b)}
+    }
+    var s=readSummary(app);if(!s)return;
+    var prog=card.querySelector('.prog');if(!prog)return;
+    prog.querySelector('.pl-text').textContent=s.label||'';
+    prog.querySelector('.ago').textContent=s.lastPlayed?ago(s.lastPlayed):'';
+    prog.querySelector('.prog-fill').style.width=Math.max(0,Math.min(100,s.pct||0))+'%';
+    prog.classList.add('show');
+    // today's effort status
+    var old=prog.querySelector('.today-status');if(old)old.remove();
+    var earnedToday=Array.isArray(s.earnedDates)&&s.earnedDates.indexOf(tk)>=0;
+    var acts=(s.actionsDate===tk)?(s.actionsToday||0):0;
+    if(earnedToday||acts>0){
+      var st=document.createElement('div');st.className='today-status '+(earnedToday?'counted':'partial');
+      st.textContent=earnedToday?'✓ Counted today!':acts+'/20 today — keep going!';
+      prog.appendChild(st);
+    }
+  });
+}
+FAM=famLoad();ingest();renderCards();renderFamily();
+</script>
 </body>
 </html>

@@ -1,0 +1,1270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Story Creator Studio</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&family=Patrick+Hand&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --pink: #e91e90;
+    --purple: #7c3aed;
+    --blue: #2563eb;
+    --teal: #0d9488;
+    --gold: #f59e0b;
+    --green: #16a34a;
+    --red: #dc2626;
+    --bg: #0f0a1a;
+    --card: #1a1230;
+    --text: #f0e6ff;
+    --muted: #a89cc8;
+  }
+
+  body {
+    font-family: 'Quicksand', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Starfield background */
+  .stars {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none; z-index: 0;
+  }
+  .star {
+    position: absolute;
+    background: white;
+    border-radius: 50%;
+    animation: twinkle var(--dur) ease-in-out infinite alternate;
+  }
+  @keyframes twinkle {
+    0% { opacity: 0.2; transform: scale(0.8); }
+    100% { opacity: 1; transform: scale(1.2); }
+  }
+
+  .container {
+    position: relative; z-index: 1;
+    max-width: 800px; margin: 0 auto; padding: 16px;
+  }
+
+  .header { text-align: center; padding: 24px 0 10px; }
+  .header h1 {
+    font-size: 2.2em;
+    background: linear-gradient(135deg, var(--pink), var(--purple), var(--blue));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 6px;
+  }
+  .header p { color: var(--muted); font-size: 1.05em; }
+
+  .card {
+    background: var(--card);
+    border: 1px solid rgba(124,58,237,0.2);
+    border-radius: 20px;
+    padding: 24px;
+    margin-bottom: 20px;
+    animation: fadeUp 0.5s ease;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  h2.section-title {
+    font-size: 1.25em; margin-bottom: 14px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .hint { color: var(--muted); font-size: 0.95em; margin-bottom: 12px; line-height: 1.5; }
+
+  /* Buttons */
+  .btn {
+    background: linear-gradient(135deg, var(--purple), var(--pink));
+    border: none; border-radius: 14px;
+    padding: 13px 26px; color: white;
+    font-family: 'Quicksand', sans-serif;
+    font-size: 1.05em; font-weight: 700;
+    cursor: pointer; transition: all 0.3s;
+  }
+  .btn:hover { transform: scale(1.04); box-shadow: 0 0 20px rgba(124,58,237,0.4); }
+  .btn.blue { background: linear-gradient(135deg, var(--purple), var(--blue)); }
+  .btn.gold { background: linear-gradient(135deg, var(--gold), var(--pink)); }
+  .btn.green { background: linear-gradient(135deg, var(--green), var(--teal)); }
+  .btn.ghost {
+    background: rgba(124,58,237,0.12);
+    border: 2px solid rgba(124,58,237,0.4);
+    color: var(--text); font-weight: 600;
+  }
+  .btn.ghost:hover { border-color: var(--purple); box-shadow: 0 0 14px rgba(124,58,237,0.25); }
+  .btn.small { padding: 8px 16px; font-size: 0.95em; border-radius: 11px; }
+  .btn.tiny { padding: 5px 12px; font-size: 0.85em; border-radius: 9px; }
+  .btn.danger { background: rgba(220,38,38,0.15); border: 2px solid rgba(220,38,38,0.4); color: #f87171; }
+  .btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+
+  /* Inputs */
+  input[type=text], textarea {
+    width: 100%;
+    background: rgba(124,58,237,0.08);
+    border: 2px solid rgba(124,58,237,0.35);
+    border-radius: 14px;
+    padding: 12px 14px;
+    color: var(--text);
+    font-family: 'Quicksand', sans-serif;
+    font-size: 1.05em;
+    outline: none;
+    transition: border-color 0.3s;
+  }
+  input[type=text]:focus, textarea:focus { border-color: var(--purple); }
+  textarea {
+    font-family: 'Patrick Hand', cursive;
+    font-size: 1.4em;
+    line-height: 1.6;
+    min-height: 180px;
+    resize: vertical;
+    color: #e8dff5;
+  }
+  label.field-label {
+    display: block; font-weight: 700; margin: 16px 0 8px;
+    color: var(--text); font-size: 1.05em;
+  }
+
+  /* Shelf */
+  .shelf-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 14px; }
+  .book {
+    background: linear-gradient(135deg, rgba(124,58,237,0.15), rgba(37,99,235,0.1));
+    border: 2px solid rgba(124,58,237,0.3);
+    border-radius: 18px;
+    padding: 18px 14px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative;
+  }
+  .book:hover {
+    border-color: var(--purple);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(124,58,237,0.25);
+  }
+  .book .b-cover { font-size: 2.8em; margin-bottom: 8px; }
+  .book .b-title {
+    font-family: 'Patrick Hand', cursive;
+    font-size: 1.2em; margin-bottom: 4px;
+    word-break: break-word;
+  }
+  .book .b-meta { color: var(--muted); font-size: 0.85em; margin-bottom: 10px; }
+  .book .b-actions { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
+  .book.finished { border-color: rgba(22,163,74,0.5); background: linear-gradient(135deg, rgba(22,163,74,0.12), rgba(124,58,237,0.1)); }
+  .new-book {
+    border-style: dashed;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    min-height: 160px; color: var(--muted);
+  }
+  .new-book .b-cover { font-size: 2.4em; }
+
+  /* Picker chips */
+  .chip-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .chip {
+    background: rgba(124,58,237,0.12);
+    border: 2px solid rgba(124,58,237,0.3);
+    border-radius: 14px;
+    padding: 10px 14px;
+    cursor: pointer;
+    font-family: 'Quicksand', sans-serif;
+    font-size: 1em; color: var(--text);
+    transition: all 0.25s;
+  }
+  .chip:hover { border-color: var(--purple); }
+  .chip.selected {
+    border-color: var(--gold);
+    background: rgba(245,158,11,0.15);
+    box-shadow: 0 0 12px rgba(245,158,11,0.3);
+  }
+
+  /* Emoji grid */
+  .emoji-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(46px, 1fr));
+    gap: 6px;
+    margin-top: 10px;
+    background: rgba(124,58,237,0.07);
+    border: 1px solid rgba(124,58,237,0.25);
+    border-radius: 14px;
+    padding: 10px;
+    max-height: 240px;
+    overflow-y: auto;
+  }
+  .emoji-cell {
+    font-size: 1.6em;
+    background: none; border: 2px solid transparent; border-radius: 10px;
+    cursor: pointer; padding: 4px;
+    transition: all 0.2s;
+  }
+  .emoji-cell:hover { background: rgba(124,58,237,0.2); transform: scale(1.15); }
+  .emoji-cell.selected { border-color: var(--gold); background: rgba(245,158,11,0.15); }
+
+  /* Editor */
+  .editor-top {
+    display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+    margin-bottom: 14px;
+  }
+  .editor-top input.title-input { flex: 1; min-width: 160px; font-weight: 700; }
+  .cover-badge {
+    font-size: 1.8em;
+    background: rgba(124,58,237,0.12);
+    border: 2px solid rgba(124,58,237,0.35);
+    border-radius: 12px; padding: 4px 10px; cursor: pointer;
+  }
+  .page-crumb {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    color: var(--muted); font-size: 0.95em; margin-bottom: 12px;
+  }
+  .page-crumb .pill {
+    background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.35);
+    color: var(--gold); border-radius: 20px; padding: 4px 14px; font-weight: 700;
+  }
+  .scene-display {
+    width: 100%; height: 130px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, rgba(124,58,237,0.2), rgba(37,99,235,0.15));
+    border: 1px solid rgba(124,58,237,0.3);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 4em; cursor: pointer;
+    margin-bottom: 8px;
+    transition: all 0.3s;
+  }
+  .scene-display:hover { box-shadow: 0 0 20px rgba(124,58,237,0.3); }
+  .scene-tip { text-align: center; color: var(--muted); font-size: 0.85em; margin-bottom: 12px; }
+
+  .word-star {
+    display: flex; align-items: center; gap: 8px;
+    margin: 10px 0 4px; font-size: 0.98em; color: var(--muted);
+  }
+  .word-star .earned { color: var(--gold); font-weight: 700; animation: popStar 0.4s ease; }
+  @keyframes popStar {
+    0% { transform: scale(0.5); } 60% { transform: scale(1.3); } 100% { transform: scale(1); }
+  }
+
+  .ideas-box {
+    background: rgba(245,158,11,0.08);
+    border: 2px solid rgba(245,158,11,0.3);
+    border-radius: 16px; padding: 16px; margin-top: 12px;
+  }
+  .ideas-box h3 { color: var(--gold); font-size: 1.05em; margin-bottom: 10px; }
+  .idea-btn {
+    display: block; width: 100%; text-align: left;
+    background: rgba(245,158,11,0.1);
+    border: 2px solid rgba(245,158,11,0.2);
+    border-radius: 12px; padding: 11px 14px; margin-bottom: 8px;
+    color: var(--text); cursor: pointer;
+    font-family: 'Patrick Hand', cursive; font-size: 1.15em;
+    transition: all 0.25s;
+  }
+  .idea-btn:hover { border-color: var(--gold); background: rgba(245,158,11,0.2); }
+
+  .next-section {
+    background: rgba(37,99,235,0.08);
+    border: 2px solid rgba(37,99,235,0.25);
+    border-radius: 16px; padding: 16px; margin-top: 16px;
+  }
+  .next-section h3 { font-size: 1.05em; margin-bottom: 10px; color: #93b8f5; }
+  .branch-row {
+    display: flex; gap: 8px; align-items: center; margin-bottom: 8px; flex-wrap: wrap;
+  }
+  .branch-row input { flex: 1; min-width: 120px; }
+  .nudge {
+    background: rgba(245,158,11,0.12); border: 2px solid rgba(245,158,11,0.4);
+    border-radius: 14px; padding: 12px 16px; margin-top: 12px;
+    color: var(--gold); font-weight: 700; text-align: center;
+    animation: fadeUp 0.4s ease;
+  }
+  .autosave-note { color: var(--muted); font-size: 0.85em; text-align: center; margin-top: 10px; }
+
+  /* Read mode */
+  .story-text {
+    font-family: 'Patrick Hand', cursive;
+    font-size: 1.4em;
+    line-height: 1.7;
+    color: #e8dff5;
+    margin-bottom: 24px;
+    white-space: pre-line;
+  }
+  .scene-image {
+    width: 100%; height: 190px; border-radius: 16px; margin-bottom: 20px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 5em;
+    background: linear-gradient(135deg, rgba(124,58,237,0.25), rgba(233,30,144,0.15));
+    border: 1px solid rgba(124,58,237,0.3);
+  }
+  .choices { display: flex; flex-direction: column; gap: 12px; }
+  .choice-btn {
+    background: linear-gradient(135deg, rgba(124,58,237,0.2), rgba(37,99,235,0.2));
+    border: 2px solid rgba(124,58,237,0.4);
+    border-radius: 14px;
+    padding: 16px 20px;
+    color: var(--text);
+    font-family: 'Quicksand', sans-serif;
+    font-size: 1.1em;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-align: left;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .choice-btn:hover {
+    border-color: var(--purple);
+    background: linear-gradient(135deg, rgba(124,58,237,0.35), rgba(37,99,235,0.35));
+    transform: translateX(6px);
+    box-shadow: 0 0 20px rgba(124,58,237,0.3);
+  }
+  .read-byline {
+    font-family: 'Patrick Hand', cursive; color: var(--muted);
+    text-align: center; margin-bottom: 14px; font-size: 1.15em;
+  }
+
+  /* End screen */
+  .end-screen { text-align: center; }
+  .end-screen h2 {
+    font-size: 2em; margin-bottom: 12px;
+    background: linear-gradient(135deg, var(--gold), var(--green));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .end-stats { display: flex; gap: 16px; justify-content: center; margin: 20px 0; flex-wrap: wrap; }
+  .end-stat {
+    background: rgba(124,58,237,0.1); border: 1px solid rgba(124,58,237,0.3);
+    border-radius: 14px; padding: 16px 24px; text-align: center;
+  }
+  .end-stat .es-val { font-size: 2em; font-weight: 700; color: var(--gold); }
+  .end-stat .es-label { color: var(--muted); font-size: 0.9em; }
+
+  /* Confetti */
+  .confetti-piece {
+    position: fixed; top: -20px; z-index: 50;
+    width: 10px; height: 14px; border-radius: 3px;
+    animation: confettiFall linear forwards;
+    pointer-events: none;
+  }
+  @keyframes confettiFall {
+    to { transform: translateY(110vh) rotate(720deg); opacity: 0.6; }
+  }
+
+  @media (max-width: 600px) {
+    .card { padding: 18px; }
+    .header h1 { font-size: 1.8em; }
+    .scene-image { height: 150px; font-size: 4em; }
+  }
+</style>
+</head>
+<body>
+
+<div class="stars" id="stars"></div>
+
+<div class="container">
+  <div class="header">
+    <h1>📖 Story Creator Studio 📖</h1>
+    <p>Make up your OWN stories — write them, branch them, share them!</p>
+  </div>
+  <div id="app"></div>
+</div>
+
+<script>
+'use strict';
+
+// ─── Constants ───
+var SAVE_KEY = 'story-creator-studio-save-v1';
+var HUB_KEY = 'hubSummary_story-creator-studio';
+var MAX_PAGES = 12;
+var NUDGE_AT = 10;
+var STAR_WORDS = 20;
+
+var SCENE_EMOJIS = [
+  '😀','😄','😍','🥳','😱','😴','🤔','😎','🥰','😢',
+  '🧒','👧','🦸‍♀️','🧙‍♀️','🧜‍♀️','🧚','🧑‍🚀','🕵️‍♀️','👑','🤖',
+  '🐶','🐱','🦊','🐻','🐼','🦁','🦄','🐉','🐢','🦋',
+  '🐬','🐙','🦉','🐸','🐝','🦖','🐴','🐰','🐺','🐾',
+  '🌲','🌊','🏰','🚀','🏫','🌋','🏝️','⛺','🌈','🗻',
+  '🌙','⭐','☀️','⛈️','❄️','🔥','💫','🌸','🍄','🌻',
+  '🗝️','📜','💎','🧭','🗺️','🎁','🪄','📚','🔮','⚔️'
+];
+
+var COVER_EMOJIS = ['📖','✨','🦄','🐉','🌈','🚀','🧜‍♀️','🏰','🦊','🌊','⭐','🌸','🐶','🔮','🗺️','👑'];
+
+var CHARACTER_STARTERS = [
+  { emoji: '🧭', label: 'Girl Explorer', name: 'Maya the Explorer' },
+  { emoji: '🐶', label: 'Puppy', name: 'Biscuit the Puppy' },
+  { emoji: '🧜‍♀️', label: 'Mermaid', name: 'Coral the Mermaid' },
+  { emoji: '🧑‍🚀', label: 'Astronaut', name: 'Astronaut Zoe' },
+  { emoji: '🐉', label: 'Baby Dragon', name: 'Sparky the Dragon' },
+  { emoji: '🦄', label: 'Unicorn', name: 'Luna the Unicorn' },
+  { emoji: '🕵️‍♀️', label: 'Detective', name: 'Detective Daisy' },
+  { emoji: '🦸‍♀️', label: 'Superhero', name: 'Super Stella' }
+];
+
+var SETTING_STARTERS = [
+  { emoji: '🌲', name: 'Magical Forest' },
+  { emoji: '🌊', name: 'Deep Ocean' },
+  { emoji: '🚀', name: 'Outer Space' },
+  { emoji: '🏫', name: 'School' },
+  { emoji: '🏰', name: 'Castle' }
+];
+
+var STORY_IDEAS = [
+  'Suddenly, the lights went out...',
+  'She found a tiny door behind the bookshelf...',
+  'The letter was addressed to her — but it was 100 years old!',
+  'Something in the backpack started to wiggle...',
+  'The cat spoke, and everyone froze.',
+  '"Whatever you do," the note said, "do NOT open the blue box."',
+  'That night, the moon looked closer than ever before...',
+  'The map showed a room in the house she had never seen.',
+  'A tiny voice called out from inside the flower...',
+  'When she woke up, everything was upside down!',
+  'The new kid at school had a secret nobody would believe.',
+  'The treasure chest was empty — except for one shiny key.',
+  'Her shadow waved at her. She had NOT waved first.',
+  'The elevator had a button she had never noticed: floor 13½.',
+  'All the animals in town were whispering about something big.',
+  'The snow was purple this morning, and it smelled like cookies.',
+  'Her best friend just turned invisible — in the middle of lunch!',
+  'A dragon egg appeared on the doorstep with a name tag on it.'
+];
+
+// ─── Persistence ───
+function loadSave() {
+  try {
+    var raw = localStorage.getItem(SAVE_KEY);
+    if (raw) {
+      var s = JSON.parse(raw);
+      if (s && typeof s === 'object' && Array.isArray(s.stories)) return s;
+    }
+  } catch (e) { /* storage unavailable or corrupted — start fresh */ }
+  return { v: 1, stories: [] };
+}
+
+var SAVE = loadSave();
+var saveTimer = null;
+
+function persistNow() {
+  try {
+    recomputeEffort();
+    localStorage.setItem(SAVE_KEY, JSON.stringify(SAVE));
+    writeHubSummary();
+  } catch (e) { /* localStorage unavailable — keep writing in memory */ }
+}
+
+// ─── Daily effort tracking ───
+function todayStr() {
+  var d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+
+function ensureActivity() {
+  var t = todayStr();
+  if (!SAVE.activity || typeof SAVE.activity !== 'object') {
+    SAVE.activity = { date: t, actions: 0, earnedDates: [], baseWords: totalWordsAll(), pagesToday: 0, finishedToday: false };
+  }
+  if (!Array.isArray(SAVE.activity.earnedDates)) SAVE.activity.earnedDates = [];
+  if (SAVE.activity.date !== t) {
+    SAVE.activity.date = t;
+    SAVE.activity.actions = 0;
+    SAVE.activity.baseWords = totalWordsAll();
+    SAVE.activity.pagesToday = 0;
+    SAVE.activity.finishedToday = false;
+  }
+  if (typeof SAVE.activity.baseWords !== 'number') SAVE.activity.baseWords = totalWordsAll();
+  if (typeof SAVE.activity.pagesToday !== 'number') SAVE.activity.pagesToday = 0;
+  return SAVE.activity;
+}
+
+function notePagesCreated(n) {
+  try { ensureActivity().pagesToday += n; } catch (e) { /* ignore */ }
+}
+
+function recomputeEffort() {
+  try {
+    var a = ensureActivity();
+    var wordsToday = Math.max(0, totalWordsAll() - a.baseWords);
+    a.actions = Math.floor(wordsToday / 5) + a.pagesToday * 2 + (a.finishedToday ? 10 : 0);
+    if (a.actions >= 20 && a.earnedDates.indexOf(a.date) < 0) {
+      a.earnedDates.push(a.date);
+      if (a.earnedDates.length > 30) a.earnedDates = a.earnedDates.slice(-30);
+    }
+  } catch (e) { /* never block writing */ }
+}
+
+function scheduleSave() {
+  if (saveTimer) clearTimeout(saveTimer);
+  saveTimer = setTimeout(function () { saveTimer = null; persistNow(); }, 400);
+}
+
+function totalWordsAll() {
+  var total = 0;
+  SAVE.stories.forEach(function (st) { total += storyWords(st); });
+  return total;
+}
+
+function totalStarsAll() {
+  var total = 0;
+  SAVE.stories.forEach(function (st) {
+    Object.keys(st.pages).forEach(function (pid) {
+      if (countWords(st.pages[pid].text) >= STAR_WORDS) total++;
+    });
+  });
+  return total;
+}
+
+function writeHubSummary() {
+  try {
+    var finished = SAVE.stories.filter(function (s) { return s.finished; }).length;
+    var n = SAVE.stories.length;
+    var words = totalWordsAll();
+    var summary = {
+      app: 'story-creator-studio',
+      kid: 'siena',
+      icon: '📖',
+      label: n + (n === 1 ? ' story • ' : ' stories • ') + words + ' words written',
+      pct: Math.min(100, finished * 20),
+      streak: null,
+      stars: totalStarsAll(),
+      lastPlayed: new Date().toISOString(),
+      actionsToday: (SAVE.activity && SAVE.activity.date === todayStr()) ? (SAVE.activity.actions | 0) : 0,
+      actionsDate: todayStr(),
+      earnedDates: (SAVE.activity && Array.isArray(SAVE.activity.earnedDates)) ? SAVE.activity.earnedDates : []
+    };
+    localStorage.setItem(HUB_KEY, JSON.stringify(summary));
+  } catch (e) { /* ignore */ }
+}
+
+// ─── Story model helpers ───
+function uid() { return 's' + Date.now().toString(36) + Math.floor(Math.random() * 1e6).toString(36); }
+
+function countWords(text) {
+  if (!text) return 0;
+  return text.trim().split(/\s+/).filter(function (w) { return w.length > 0; }).length;
+}
+
+function createStory(title, cover, charName, charEmoji, settingName, settingEmoji) {
+  var story = {
+    id: uid(),
+    title: title || 'My Story',
+    cover: cover || '📖',
+    character: { name: charName || 'My Hero', emoji: charEmoji || '🧒' },
+    setting: { name: settingName || 'Somewhere Magical', emoji: settingEmoji || '✨' },
+    pages: {},
+    rootId: 'p1',
+    nextPageNum: 2,
+    finished: false,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+  story.pages.p1 = { emoji: settingEmoji || '✨', text: '', next: null, choices: null };
+  SAVE.stories.push(story);
+  notePagesCreated(1);
+  persistNow();
+  return story;
+}
+
+function getStory(id) {
+  for (var i = 0; i < SAVE.stories.length; i++) {
+    if (SAVE.stories[i].id === id) return SAVE.stories[i];
+  }
+  return null;
+}
+
+function countStoryPages(story) { return Object.keys(story.pages).length; }
+
+function storyWords(story) {
+  var total = 0;
+  Object.keys(story.pages).forEach(function (pid) { total += countWords(story.pages[pid].text); });
+  return total;
+}
+
+function storyStars(story) {
+  var total = 0;
+  Object.keys(story.pages).forEach(function (pid) {
+    if (countWords(story.pages[pid].text) >= STAR_WORDS) total++;
+  });
+  return total;
+}
+
+function newPageId(story) {
+  var id = 'p' + story.nextPageNum;
+  story.nextPageNum++;
+  return id;
+}
+
+function addNextPage(story, pageId) {
+  if (countStoryPages(story) >= MAX_PAGES) return null;
+  var page = story.pages[pageId];
+  if (!page || page.next || page.choices) return null;
+  var nid = newPageId(story);
+  story.pages[nid] = { emoji: page.emoji, text: '', next: null, choices: null };
+  page.next = nid;
+  touch(story);
+  return nid;
+}
+
+function addChoicePages(story, pageId) {
+  if (countStoryPages(story) + 2 > MAX_PAGES) return null;
+  var page = story.pages[pageId];
+  if (!page || page.next || page.choices) return null;
+  var a = newPageId(story);
+  var b = newPageId(story);
+  story.pages[a] = { emoji: page.emoji, text: '', next: null, choices: null };
+  story.pages[b] = { emoji: page.emoji, text: '', next: null, choices: null };
+  page.choices = [
+    { label: 'Choice 1', next: a },
+    { label: 'Choice 2', next: b }
+  ];
+  touch(story);
+  return [a, b];
+}
+
+function collectDescendants(story, pageId, set) {
+  set = set || {};
+  var page = story.pages[pageId];
+  if (!page || set[pageId]) return set;
+  set[pageId] = true;
+  if (page.next) collectDescendants(story, page.next, set);
+  if (page.choices) page.choices.forEach(function (c) { collectDescendants(story, c.next, set); });
+  return set;
+}
+
+function removeBranch(story, pageId) {
+  var page = story.pages[pageId];
+  if (!page) return;
+  var ids = {};
+  if (page.next) collectDescendants(story, page.next, ids);
+  if (page.choices) page.choices.forEach(function (c) { collectDescendants(story, c.next, ids); });
+  Object.keys(ids).forEach(function (id) { delete story.pages[id]; });
+  page.next = null;
+  page.choices = null;
+  touch(story);
+}
+
+function parentOf(story, pageId) {
+  var pids = Object.keys(story.pages);
+  for (var i = 0; i < pids.length; i++) {
+    var p = story.pages[pids[i]];
+    if (p.next === pageId) return pids[i];
+    if (p.choices) {
+      for (var j = 0; j < p.choices.length; j++) {
+        if (p.choices[j].next === pageId) return pids[i];
+      }
+    }
+  }
+  return null;
+}
+
+function pageDepth(story, pageId) {
+  var depth = 1, cur = pageId, guard = 0;
+  while (guard++ < 100) {
+    var par = parentOf(story, cur);
+    if (!par) break;
+    depth++; cur = par;
+  }
+  return depth;
+}
+
+function finishStory(story) {
+  story.finished = true;
+  touch(story);
+  try { ensureActivity().finishedToday = true; } catch (e) { /* ignore */ }
+  persistNow();
+}
+
+function touch(story) { story.updatedAt = new Date().toISOString(); }
+
+function deleteStory(id) {
+  SAVE.stories = SAVE.stories.filter(function (s) { return s.id !== id; });
+  persistNow();
+}
+
+// ─── HTML escaping ───
+function esc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+// ─── View state ───
+var view = { name: 'shelf', storyId: null, pageId: null, readPageId: null, showEmojiPicker: false, showIdeas: false, ideas: [] };
+
+// Setup form scratch state
+var setup = null;
+
+function el(id) { return document.getElementById(id); }
+function appEl() { return el('app'); }
+
+// ─── Starfield ───
+(function createStars() {
+  var host = el('stars');
+  if (!host) return;
+  for (var i = 0; i < 80; i++) {
+    var s = document.createElement('div');
+    s.className = 'star';
+    var size = Math.random() * 3 + 1;
+    s.style.cssText = 'width:' + size + 'px;height:' + size + 'px;left:' + (Math.random() * 100) + '%;top:' + (Math.random() * 100) + '%;--dur:' + (Math.random() * 3 + 2) + 's;animation-delay:' + (Math.random() * 3) + 's;';
+    host.appendChild(s);
+  }
+})();
+
+// ─── Confetti ───
+function throwConfetti() {
+  try {
+    var colors = ['#e91e90', '#7c3aed', '#2563eb', '#f59e0b', '#16a34a', '#0d9488'];
+    for (var i = 0; i < 70; i++) {
+      var c = document.createElement('div');
+      c.className = 'confetti-piece';
+      c.style.left = (Math.random() * 100) + 'vw';
+      c.style.background = colors[i % colors.length];
+      c.style.animationDuration = (Math.random() * 2 + 2) + 's';
+      c.style.animationDelay = (Math.random() * 0.8) + 's';
+      document.body.appendChild(c);
+      (function (piece) {
+        setTimeout(function () { if (piece.parentNode) piece.parentNode.removeChild(piece); }, 5000);
+      })(c);
+    }
+  } catch (e) { /* ignore */ }
+}
+
+// ═══════════════ SHELF ═══════════════
+function goShelf() {
+  view = { name: 'shelf', storyId: null, pageId: null, readPageId: null, showEmojiPicker: false, showIdeas: false, ideas: [] };
+  render();
+}
+
+function renderShelf() {
+  var drafts = SAVE.stories.filter(function (s) { return !s.finished; });
+  var finished = SAVE.stories.filter(function (s) { return s.finished; });
+
+  var html = '<div class="card">';
+  html += '<h2 class="section-title">✏️ My Stories</h2>';
+  html += '<p class="hint">Tap the sparkly plus to start a brand-new story!</p>';
+  html += '<div class="shelf-grid">';
+  html += '<div class="book new-book" onclick="goSetup()"><div class="b-cover">➕✨</div><div class="b-title">New Story</div></div>';
+  drafts.forEach(function (s) {
+    html += '<div class="book">' +
+      '<div class="b-cover">' + esc(s.cover) + '</div>' +
+      '<div class="b-title">' + esc(s.title) + '</div>' +
+      '<div class="b-meta">' + countStoryPages(s) + ' pages • ' + storyWords(s) + ' words' + (storyStars(s) ? ' • ' + storyStars(s) + '⭐' : '') + '</div>' +
+      '<div class="b-actions">' +
+      '<button class="btn tiny blue" onclick="goEdit(\'' + s.id + '\')">✏️ Write</button>' +
+      '<button class="btn tiny ghost" onclick="goRead(\'' + s.id + '\')">👀 Read</button>' +
+      '<button class="btn tiny danger" onclick="confirmDelete(\'' + s.id + '\')">🗑</button>' +
+      '</div></div>';
+  });
+  html += '</div></div>';
+
+  html += '<div class="card">';
+  html += '<h2 class="section-title">🏆 Finished Stories</h2>';
+  if (finished.length === 0) {
+    html += '<p class="hint">When you mark a story "Finished ✅" it lands here, ready for the whole family to read!</p>';
+  } else {
+    html += '<div class="shelf-grid">';
+    finished.forEach(function (s) {
+      html += '<div class="book finished">' +
+        '<div class="b-cover">' + esc(s.cover) + '</div>' +
+        '<div class="b-title">' + esc(s.title) + '</div>' +
+        '<div class="b-meta">' + countStoryPages(s) + ' pages • ' + storyWords(s) + ' words' + (storyStars(s) ? ' • ' + storyStars(s) + '⭐' : '') + '</div>' +
+        '<div class="b-actions">' +
+        '<button class="btn tiny green" onclick="goRead(\'' + s.id + '\')">📖 Read</button>' +
+        '<button class="btn tiny ghost" onclick="goEdit(\'' + s.id + '\')">✏️</button>' +
+        '<button class="btn tiny danger" onclick="confirmDelete(\'' + s.id + '\')">🗑</button>' +
+        '</div></div>';
+    });
+    html += '</div>';
+  }
+  html += '</div>';
+
+  var words = totalWordsAll();
+  var stars = totalStarsAll();
+  if (SAVE.stories.length > 0) {
+    html += '<div class="autosave-note">💾 Everything saves automatically • ' + words + ' words written • ' + stars + ' ⭐ earned</div>';
+  }
+  appEl().innerHTML = html;
+}
+
+function confirmDelete(id) {
+  var s = getStory(id);
+  if (!s) return;
+  if (confirm('Delete "' + s.title + '" forever? This cannot be undone!')) {
+    deleteStory(id);
+    render();
+  }
+}
+
+// ═══════════════ SETUP ═══════════════
+function goSetup() {
+  setup = {
+    title: '', cover: '📖',
+    charIdx: 0, charName: CHARACTER_STARTERS[0].name, charEmoji: CHARACTER_STARTERS[0].emoji,
+    setIdx: 0, setName: SETTING_STARTERS[0].name, setEmoji: SETTING_STARTERS[0].emoji
+  };
+  view = { name: 'setup', storyId: null, pageId: null, readPageId: null, showEmojiPicker: false, showIdeas: false, ideas: [] };
+  render();
+}
+
+function renderSetup() {
+  var html = '<div class="card">';
+  html += '<h2 class="section-title">🌟 Set Up Your Story</h2>';
+
+  html += '<label class="field-label">What is your story called?</label>';
+  html += '<input type="text" id="setupTitle" maxlength="60" placeholder="The Mystery of the Purple Snow..." value="' + esc(setup.title) + '" oninput="setup.title=this.value">';
+
+  html += '<label class="field-label">Pick a cover:</label><div class="chip-row">';
+  COVER_EMOJIS.forEach(function (e2) {
+    html += '<button class="chip' + (setup.cover === e2 ? ' selected' : '') + '" onclick="setupCover(\'' + e2 + '\')">' + e2 + '</button>';
+  });
+  html += '</div>';
+
+  html += '<label class="field-label">Who is your main character?</label><div class="chip-row">';
+  CHARACTER_STARTERS.forEach(function (c, i) {
+    html += '<button class="chip' + (setup.charIdx === i ? ' selected' : '') + '" onclick="setupChar(' + i + ')">' + c.emoji + ' ' + esc(c.label) + '</button>';
+  });
+  html += '<button class="chip' + (setup.charIdx === -1 ? ' selected' : '') + '" onclick="setupChar(-1)">✨ My own!</button>';
+  html += '</div>';
+  html += '<label class="field-label">Character\'s name:</label>';
+  html += '<input type="text" id="setupCharName" maxlength="40" value="' + esc(setup.charName) + '" oninput="setup.charName=this.value">';
+
+  html += '<label class="field-label">Where does the story happen?</label><div class="chip-row">';
+  SETTING_STARTERS.forEach(function (s, i) {
+    html += '<button class="chip' + (setup.setIdx === i ? ' selected' : '') + '" onclick="setupSetting(' + i + ')">' + s.emoji + ' ' + esc(s.name) + '</button>';
+  });
+  html += '<button class="chip' + (setup.setIdx === -1 ? ' selected' : '') + '" onclick="setupSetting(-1)">✏️ My own place!</button>';
+  html += '</div>';
+  if (setup.setIdx === -1) {
+    html += '<label class="field-label">Name your place:</label>';
+    html += '<input type="text" id="setupSetName" maxlength="40" placeholder="Grandma\'s attic, Candy Mountain..." value="' + esc(setup.setName) + '" oninput="setup.setName=this.value">';
+  }
+
+  html += '<div class="btn-row">';
+  html += '<button class="btn" onclick="startWriting()">Start writing! ✏️</button>';
+  html += '<button class="btn ghost" onclick="goShelf()">◀ Back to shelf</button>';
+  html += '</div></div>';
+  appEl().innerHTML = html;
+}
+
+function setupCover(e2) { setup.cover = e2; render(); }
+
+function setupChar(i) {
+  setup.charIdx = i;
+  if (i >= 0) {
+    setup.charName = CHARACTER_STARTERS[i].name;
+    setup.charEmoji = CHARACTER_STARTERS[i].emoji;
+  } else {
+    setup.charName = '';
+    setup.charEmoji = '🌟';
+  }
+  render();
+  try { var f = el('setupCharName'); if (f && i === -1) f.focus(); } catch (e) {}
+}
+
+function setupSetting(i) {
+  setup.setIdx = i;
+  if (i >= 0) {
+    setup.setName = SETTING_STARTERS[i].name;
+    setup.setEmoji = SETTING_STARTERS[i].emoji;
+  } else {
+    setup.setName = '';
+    setup.setEmoji = '🌟';
+  }
+  render();
+}
+
+function startWriting() {
+  var story = createStory(
+    (setup.title || '').trim() || 'My Story',
+    setup.cover,
+    (setup.charName || '').trim() || 'My Hero',
+    setup.charEmoji,
+    (setup.setName || '').trim() || 'Somewhere Magical',
+    setup.setEmoji
+  );
+  goEdit(story.id);
+}
+
+// ═══════════════ EDITOR ═══════════════
+function goEdit(storyId) {
+  var story = getStory(storyId);
+  if (!story) { goShelf(); return; }
+  view = { name: 'edit', storyId: storyId, pageId: story.rootId, readPageId: null, showEmojiPicker: false, showIdeas: false, ideas: [] };
+  render();
+}
+
+function editGoPage(pageId) {
+  view.pageId = pageId;
+  view.showEmojiPicker = false;
+  view.showIdeas = false;
+  render();
+}
+
+function renderEditor() {
+  var story = getStory(view.storyId);
+  if (!story) { goShelf(); return; }
+  var page = story.pages[view.pageId];
+  if (!page) { view.pageId = story.rootId; page = story.pages[view.pageId]; }
+
+  var totalPages = countStoryPages(story);
+  var depth = pageDepth(story, view.pageId);
+  var parent = parentOf(story, view.pageId);
+  var wc = countWords(page.text);
+
+  var html = '<div class="card">';
+
+  // Top bar
+  html += '<div class="editor-top">';
+  html += '<button class="btn small ghost" onclick="goShelf()">◀ Shelf</button>';
+  html += '<span class="cover-badge" title="Cover">' + esc(story.cover) + '</span>';
+  html += '<input type="text" class="title-input" maxlength="60" value="' + esc(story.title) + '" oninput="onTitleInput(this.value)">';
+  html += '</div>';
+  html += '<div class="page-crumb">' +
+    '<span class="pill">📄 Page ' + depth + '</span>' +
+    '<span>' + totalPages + ' of ' + MAX_PAGES + ' pages used</span>' +
+    '<span>' + esc(story.character.emoji) + ' ' + esc(story.character.name) + ' • ' + esc(story.setting.emoji) + ' ' + esc(story.setting.name) + '</span>' +
+    '</div>';
+  if (parent) {
+    html += '<button class="btn tiny ghost" onclick="editGoPage(\'' + parent + '\')">⬆️ Back to the page before</button><div style="height:10px"></div>';
+  }
+
+  // Scene emoji
+  html += '<div class="scene-display" onclick="toggleEmojiPicker()">' + esc(page.emoji || '✨') + '</div>';
+  html += '<div class="scene-tip">Tap the picture to change this page\'s scene emoji</div>';
+  if (view.showEmojiPicker) {
+    html += '<div class="emoji-grid">';
+    SCENE_EMOJIS.forEach(function (e2) {
+      html += '<button class="emoji-cell' + (page.emoji === e2 ? ' selected' : '') + '" onclick="pickEmoji(\'' + e2 + '\')">' + e2 + '</button>';
+    });
+    html += '</div><div style="height:12px"></div>';
+  }
+
+  // Text
+  html += '<textarea id="pageText" placeholder="Once upon a time..." oninput="onPageTextInput(this.value)">' + esc(page.text) + '</textarea>';
+  html += '<div class="word-star" id="wordStar">' + wordStarHtml(wc) + '</div>';
+
+  // Ideas
+  html += '<div class="btn-row"><button class="btn small gold" onclick="toggleIdeas()">Story ideas ✨</button></div>';
+  if (view.showIdeas) {
+    html += '<div class="ideas-box"><h3>💡 Need a spark? Tap one to add it to your page:</h3>';
+    view.ideas.forEach(function (idea, i) {
+      html += '<button class="idea-btn" onclick="useIdea(' + i + ')">' + esc(idea) + '</button>';
+    });
+    html += '<button class="btn tiny ghost" onclick="toggleIdeas(true)">🎲 Different ideas</button>';
+    html += '</div>';
+  }
+
+  // What happens next
+  html += '<div class="next-section"><h3>🧩 What happens next?</h3>';
+  if (page.next) {
+    html += '<div class="branch-row">' +
+      '<button class="btn small blue" onclick="editGoPage(\'' + page.next + '\')">✏️ Write the next page ➜</button>' +
+      '<button class="btn tiny danger" onclick="removeNext()" title="Remove the next page">🗑 remove</button>' +
+      '</div>';
+  } else if (page.choices) {
+    html += '<p class="hint">Your reader gets to pick! Name each choice button, then write what happens in each branch:</p>';
+    page.choices.forEach(function (c, i) {
+      html += '<div class="branch-row">' +
+        '<input type="text" maxlength="60" value="' + esc(c.label) + '" placeholder="Choice ' + (i + 1) + '..." oninput="onChoiceLabel(' + i + ', this.value)">' +
+        '<button class="btn small blue" onclick="editGoPage(\'' + c.next + '\')">✏️ Write this branch ➜</button>' +
+        '</div>';
+    });
+    html += '<button class="btn tiny danger" onclick="removeNext()">🗑 remove the choice</button>';
+  } else {
+    var isEnd = true; // page currently ends here
+    var canAddOne = totalPages + 1 <= MAX_PAGES;
+    var canAddTwo = totalPages + 2 <= MAX_PAGES;
+    html += '<p class="hint">This page ends the story right here... unless you keep going!</p>';
+    html += '<div class="btn-row">';
+    if (canAddOne) html += '<button class="btn small blue" onclick="doAddNext()">➕ Add the next page</button>';
+    if (canAddTwo) html += '<button class="btn small" onclick="doAddChoice()">🔀 Add a choice (two paths!)</button>';
+    html += '</div>';
+    if (!canAddOne) {
+      html += '<div class="nudge">🌟 Wow, ' + MAX_PAGES + ' pages! Your story is full — time to write an ending!</div>';
+    } else if (totalPages >= NUDGE_AT) {
+      html += '<div class="nudge">🌟 Your story is getting big (' + totalPages + ' pages)! Time to think about a great ending!</div>';
+    }
+  }
+  html += '</div>';
+
+  // Finish / status
+  html += '<div class="btn-row">';
+  html += '<button class="btn ghost" onclick="goRead(\'' + story.id + '\')">👀 Read my story</button>';
+  if (!story.finished) {
+    html += '<button class="btn green" onclick="markFinished()">Finished ✅</button>';
+  } else {
+    html += '<button class="btn ghost" onclick="markUnfinished()">↩️ Back to drafts</button>';
+  }
+  html += '</div>';
+  html += '<div class="autosave-note">💾 Auto-saving as you type — your words are safe!</div>';
+  html += '</div>';
+
+  appEl().innerHTML = html;
+}
+
+function wordStarHtml(wc) {
+  if (wc >= STAR_WORDS) {
+    return '<span class="earned">⭐ ' + wc + ' words — star earned!</span>';
+  }
+  return '<span>' + wc + ' word' + (wc === 1 ? '' : 's') + ' — write ' + (STAR_WORDS - wc) + ' more to earn a ⭐</span>';
+}
+
+function onTitleInput(v) {
+  var story = getStory(view.storyId);
+  if (!story) return;
+  story.title = v;
+  touch(story);
+  scheduleSave();
+}
+
+function onPageTextInput(v) {
+  var story = getStory(view.storyId);
+  if (!story) return;
+  var page = story.pages[view.pageId];
+  if (!page) return;
+  page.text = v;
+  touch(story);
+  var ws = el('wordStar');
+  if (ws) ws.innerHTML = wordStarHtml(countWords(v));
+  scheduleSave();
+}
+
+function onChoiceLabel(i, v) {
+  var story = getStory(view.storyId);
+  if (!story) return;
+  var page = story.pages[view.pageId];
+  if (!page || !page.choices || !page.choices[i]) return;
+  page.choices[i].label = v;
+  touch(story);
+  scheduleSave();
+}
+
+function toggleEmojiPicker() {
+  view.showEmojiPicker = !view.showEmojiPicker;
+  render();
+}
+
+function pickEmoji(e2) {
+  var story = getStory(view.storyId);
+  if (!story) return;
+  var page = story.pages[view.pageId];
+  if (!page) return;
+  page.emoji = e2;
+  touch(story);
+  view.showEmojiPicker = false;
+  persistNow();
+  render();
+}
+
+function toggleIdeas(reshuffle) {
+  if (reshuffle) {
+    view.ideas = pickIdeas();
+    view.showIdeas = true;
+  } else {
+    view.showIdeas = !view.showIdeas;
+    if (view.showIdeas) view.ideas = pickIdeas();
+  }
+  render();
+}
+
+function pickIdeas() {
+  var pool = STORY_IDEAS.slice();
+  var out = [];
+  for (var i = 0; i < 3 && pool.length; i++) {
+    out.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
+  }
+  return out;
+}
+
+function useIdea(i) {
+  var story = getStory(view.storyId);
+  if (!story) return;
+  var page = story.pages[view.pageId];
+  if (!page) return;
+  var idea = view.ideas[i];
+  if (!idea) return;
+  page.text = (page.text ? page.text.replace(/\s+$/, '') + '\n\n' : '') + idea + ' ';
+  touch(story);
+  view.showIdeas = false;
+  persistNow();
+  render();
+  try {
+    var ta = el('pageText');
+    if (ta && ta.focus) { ta.focus(); }
+  } catch (e) {}
+}
+
+function doAddNext() {
+  var story = getStory(view.storyId);
+  if (!story) return;
+  var nid = addNextPage(story, view.pageId);
+  if (nid) notePagesCreated(1);
+  persistNow();
+  if (nid) { editGoPage(nid); } else { render(); }
+}
+
+function doAddChoice() {
+  var story = getStory(view.storyId);
+  if (!story) return;
+  var ids = addChoicePages(story, view.pageId);
+  if (ids) notePagesCreated(2);
+  persistNow();
+  render();
+}
+
+function removeNext() {
+  var story = getStory(view.storyId);
+  if (!story) return;
+  var page = story.pages[view.pageId];
+  if (!page) return;
+  var ids = {};
+  if (page.next) collectDescendants(story, page.next, ids);
+  if (page.choices) page.choices.forEach(function (c) { collectDescendants(story, c.next, ids); });
+  var n = Object.keys(ids).length;
+  var hasWords = Object.keys(ids).some(function (id) { return countWords(story.pages[id] && story.pages[id].text) > 0; });
+  if (hasWords && !confirm('This will remove ' + n + ' page' + (n === 1 ? '' : 's') + ' of writing. Are you sure?')) return;
+  removeBranch(story, view.pageId);
+  persistNow();
+  render();
+}
+
+function markFinished() {
+  var story = getStory(view.storyId);
+  if (!story) return;
+  finishStory(story);
+  throwConfetti();
+  goShelf();
+}
+
+function markUnfinished() {
+  var story = getStory(view.storyId);
+  if (!story) return;
+  story.finished = false;
+  touch(story);
+  persistNow();
+  render();
+}
+
+// ═══════════════ READ MODE ═══════════════
+function goRead(storyId) {
+  var story = getStory(storyId);
+  if (!story) { goShelf(); return; }
+  view = { name: 'read', storyId: storyId, pageId: null, readPageId: story.rootId, showEmojiPicker: false, showIdeas: false, ideas: [], readCount: 0, readWords: 0, ended: false };
+  render();
+}
+
+function readGo(pageId) {
+  var story = getStory(view.storyId);
+  if (!story || !story.pages[pageId]) return;
+  view.readPageId = pageId;
+  render();
+  try { window.scrollTo(0, 0); } catch (e) {}
+}
+
+function renderRead() {
+  var story = getStory(view.storyId);
+  if (!story) { goShelf(); return; }
+  var page = story.pages[view.readPageId];
+  if (!page) { view.readPageId = story.rootId; page = story.pages[view.readPageId]; }
+
+  var isEnd = !page.next && !page.choices;
+
+  var html = '<div class="card">';
+  html += '<div class="editor-top">' +
+    '<button class="btn small ghost" onclick="goShelf()">◀ Shelf</button>' +
+    '<span style="flex:1"></span>' +
+    (!story.finished ? '<button class="btn small ghost" onclick="goEdit(\'' + story.id + '\')">✏️ Keep writing</button>' : '') +
+    '</div>';
+  html += '<div class="read-byline">' + esc(story.cover) + ' ' + esc(story.title) + ' — a story by Siena, starring ' + esc(story.character.emoji) + ' ' + esc(story.character.name) + '</div>';
+  html += '<div class="scene-image">' + esc(page.emoji || '✨') + '</div>';
+  html += '<div class="story-text">' + (page.text ? esc(page.text) : '<em style="color:var(--muted)">(this page is still blank... the author is hard at work!)</em>') + '</div>';
+
+  if (page.choices) {
+    html += '<div class="choices">';
+    page.choices.forEach(function (c, i) {
+      html += '<button class="choice-btn" onclick="readGo(\'' + c.next + '\')"><span>' + (i === 0 ? '🅰️' : '🅱️') + '</span> ' + esc(c.label || ('Choice ' + (i + 1))) + '</button>';
+    });
+    html += '</div>';
+  } else if (page.next) {
+    html += '<div class="choices"><button class="choice-btn" onclick="readGo(\'' + page.next + '\')"><span>📖</span> Keep reading ➜</button></div>';
+  } else {
+    html += renderTheEnd(story);
+    if (!view.ended) { view.ended = true; throwConfetti(); }
+  }
+  html += '</div>';
+  appEl().innerHTML = html;
+}
+
+function renderTheEnd(story) {
+  var html = '<div class="end-screen">';
+  html += '<h2>✨ THE END ✨</h2>';
+  html += '<p class="hint">What an amazing story! Written with imagination by Siena 💜</p>';
+  html += '<div class="end-stats">' +
+    '<div class="end-stat"><div class="es-val">' + countStoryPages(story) + '</div><div class="es-label">pages</div></div>' +
+    '<div class="end-stat"><div class="es-val">' + storyWords(story) + '</div><div class="es-label">words</div></div>' +
+    '<div class="end-stat"><div class="es-val">' + storyStars(story) + ' ⭐</div><div class="es-label">word stars</div></div>' +
+    '</div>';
+  html += '<div class="btn-row" style="justify-content:center">';
+  html += '<button class="btn" onclick="readAgain()">📖 Read again</button>';
+  html += '<button class="btn ghost" onclick="goShelf()">🏠 Back to shelf</button>';
+  html += '</div></div>';
+  return html;
+}
+
+function readAgain() {
+  var story = getStory(view.storyId);
+  if (!story) { goShelf(); return; }
+  view.readPageId = story.rootId;
+  view.ended = false;
+  render();
+}
+
+// ─── Router ───
+function render() {
+  if (view.name === 'shelf') renderShelf();
+  else if (view.name === 'setup') renderSetup();
+  else if (view.name === 'edit') renderEditor();
+  else if (view.name === 'read') renderRead();
+}
+
+// Flush pending save when leaving the page — never lose her writing
+try {
+  window.addEventListener('beforeunload', function () {
+    if (saveTimer) { clearTimeout(saveTimer); saveTimer = null; persistNow(); }
+  });
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'hidden' && saveTimer) {
+      clearTimeout(saveTimer); saveTimer = null; persistNow();
+    }
+  });
+} catch (e) { /* ignore */ }
+
+// Boot
+writeHubSummary();
+render();
+
+// Test hooks (harmless in browser; used by automated verification)
+if (typeof window !== 'undefined') {
+  window.__scsTest = {
+    createStory: createStory,
+    addNextPage: addNextPage,
+    addChoicePages: addChoicePages,
+    removeBranch: removeBranch,
+    finishStory: finishStory,
+    countWords: countWords,
+    countStoryPages: countStoryPages,
+    storyWords: storyWords,
+    storyStars: storyStars,
+    parentOf: parentOf,
+    pageDepth: pageDepth,
+    persistNow: persistNow,
+    loadSave: loadSave,
+    getSave: function () { return SAVE; },
+    keys: { SAVE_KEY: SAVE_KEY, HUB_KEY: HUB_KEY, MAX_PAGES: MAX_PAGES }
+  };
+}
+</script>
+</body>
+</html>
