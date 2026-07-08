@@ -1617,6 +1617,775 @@ Now Inky has tea parties with Coralie, races with Splash, and a best friend from
         ending: true
       }
     }
+  },
+
+  star_mapper: {
+    title: "The Star Mapper",
+    icon: "🌟",
+    desc: "Help a lost little comet find its way home through the night sky",
+    nodes: {
+      start: {
+        emoji: "🔭🌌",
+        bg: "linear-gradient(135deg, #0a0a2d, #1a0a3d)",
+        text: `Every clear night, you climb up to the rooftop with your trusty telescope and your notebook full of stars. You want to be a real astronomer someday — a scientist who studies the sky — and tonight the stars look close enough to touch.
+
+You are sketching the Big Dipper when something strange catches your eye. A tiny light is zigzagging across the sky. Stars do not zigzag. Planets do not zigzag. Even airplanes fly in straight lines!
+
+The little light wobbles, dips, and — plop! — lands right in your backyard garden, glowing like a firefly the size of a beach ball.`,
+        vocab: [
+          { word: "astronomer", definition: "A scientist who studies stars, planets, and everything in space." },
+          { word: "telescope", definition: "A tool with special lenses that makes faraway things in the sky look big and close." }
+        ],
+        quiz: {
+          question: "Why does the little light seem so strange?",
+          options: ["It is too colorful", "Stars and planets do not zigzag", "It is making music", "It is daytime"],
+          correct: 1
+        },
+        choices: [
+          { text: "Check your star charts first, like a careful scientist", icon: "🗺️", next: "chart_stars" },
+          { text: "Hurry down to the garden to investigate", icon: "🏃‍♀️", next: "comet_found" }
+        ]
+      },
+
+      chart_stars: {
+        emoji: "🗺️⭐",
+        bg: "linear-gradient(135deg, #0a1a3d, #1a0a2d)",
+        text: `You flip open your notebook to your favorite pages — your hand-drawn star maps. You know every constellation by heart. A constellation is a group of stars that makes a picture in the sky, like a lion, a hunter, or a big spoon.
+
+You check the Big Dipper. You check Orion. You check the little zigzag of Cassiopeia. The wobbling light is not on ANY of your charts. Whatever landed in your garden, it is not from any map ever drawn.
+
+"A true star mapper investigates," you whisper. You tuck your star map into your pocket and tiptoe down the stairs.`,
+        vocab: [
+          { word: "constellation", definition: "A group of stars that makes a picture in the sky, like a lion or a big spoon." }
+        ],
+        quiz: {
+          question: "What is a constellation?",
+          options: ["A kind of telescope", "A group of stars that makes a picture", "A shooting star", "A planet with rings"],
+          correct: 1
+        },
+        item: { name: "Star Map", icon: "🗺️" },
+        choices: [
+          { text: "Tiptoe down to the garden", icon: "🌙", next: "comet_found" }
+        ]
+      },
+
+      comet_found: {
+        emoji: "☄️🥺",
+        bg: "linear-gradient(135deg, #1a0a3d, #0a2a4d)",
+        text: `In the middle of the tomato plants sits the most amazing thing you have ever seen: a tiny comet! A comet is a ball of ice and space dust that flies through the sky with a long, glowing tail. This one is no bigger than a soccer ball, and its sparkly tail droops sadly on the ground.
+
+"H-hello," the little comet sniffles. "My name is Flicker. I got separated from my family — the Silverbrights. We were flying past your Moon when I stopped to look at something shiny, and now... now I am lost."
+
+Two icy tears roll down and freeze into tiny diamonds on the grass. Your heart melts. You are going to help this little comet get home — that is what star mappers do.`,
+        vocab: [
+          { word: "comet", definition: "A ball of ice and space dust that flies through space with a long, glowing tail." }
+        ],
+        quiz: {
+          question: "Who is Flicker?",
+          options: ["A lost little comet", "A talking firefly", "A baby star", "A space alien"],
+          correct: 0
+        },
+        choices: [
+          { text: "Ask Flicker exactly how she got lost", icon: "❓", next: "comet_story" },
+          { text: "Promise to help her get home right away", icon: "🤝", next: "promise_help" }
+        ]
+      },
+
+      comet_story: {
+        emoji: "☄️🛤️",
+        bg: "linear-gradient(135deg, #0a1a4d, #1a0a3d)",
+        text: `"Tell me everything," you say, sitting down in the grass. "A good scientist gathers all the facts."
+
+Flicker wipes her icy tears. "My family flies on an orbit. An orbit is the path we follow around the Sun, like a giant invisible racetrack in space. We loop past your Moon at the very same time every year."
+
+She glows pink with embarrassment. "But tonight I saw a shooting star and chased it. Just for a minute! When I turned around, I had slipped right off our racetrack, and my family was gone."
+
+You nod slowly. If her family follows the same path every year, then somewhere there must be a map of it. And you know exactly where the biggest sky maps in town live: the old observatory on Lantern Hill!`,
+        vocab: [
+          { word: "orbit", definition: "The path that something in space follows around and around, like a racetrack around the Sun." }
+        ],
+        quiz: {
+          question: "What is an orbit?",
+          options: ["A kind of star", "The path something follows around and around in space", "A comet's tail", "A space rock"],
+          correct: 1
+        },
+        choices: [
+          { text: "Take Flicker to the observatory on Lantern Hill", icon: "🏛️", next: "observatory" }
+        ]
+      },
+
+      promise_help: {
+        emoji: "🤝✨",
+        bg: "linear-gradient(135deg, #1a0a3d, #2d1a0a)",
+        text: `"Flicker," you say, looking right into her twinkly eyes, "I promise I will help you find your family. I won't stop until you're home."
+
+The little comet glows so bright and warm that the whole garden lights up like sunrise. "You mean it? Really?" she squeaks. "You are the kindest human in the whole universe!"
+
+She shakes her tail happily, and a pinch of glittering dust sprinkles into your hands. "Comet dust," she explains. "It is lucky. Keep it — helpers of the sky always carry a little stardust with them."
+
+You feel determined — when you set your mind on something important, nothing can stop you. And you know just where to start: the old observatory on Lantern Hill, where the biggest sky maps in town are kept.`,
+        vocab: [
+          { word: "determined", definition: "Having your mind made up to do something, no matter how hard it is." }
+        ],
+        quiz: {
+          question: "Why does Flicker glow bright and warm?",
+          options: ["She is angry", "Because you promised to help her", "The sun came up", "She is cold"],
+          correct: 1
+        },
+        item: { name: "Comet Dust", icon: "✨" },
+        choices: [
+          { text: "Head to the observatory on Lantern Hill", icon: "🏛️", next: "observatory" }
+        ]
+      },
+
+      observatory: {
+        emoji: "🏛️🌠",
+        bg: "linear-gradient(135deg, #0a0a2d, #0a2a4d)",
+        text: `At the top of Lantern Hill stands the observatory — a round building with a giant dome roof that slides open so the huge telescope inside can see the sky. You have always dreamed of going inside.
+
+The door creaks open, and a woman with silver-streaked hair and a coat covered in star pins smiles down at you. "Well, well. A young star mapper — and a little lost comet! I am Ms. Vega. Come in, come in!"
+
+Flicker floats shyly behind you as Ms. Vega listens to the whole story. "The Silverbright family!" she says. "They pass our Moon once a year. If we hurry, we can find their path before they disappear over the horizon — that faraway line where the sky seems to touch the ground."
+
+She points to two doors. "The great telescope is upstairs. The map room is downstairs. Where shall we start?"`,
+        vocab: [
+          { word: "observatory", definition: "A building with a giant telescope and a dome roof, where scientists study the sky." },
+          { word: "horizon", definition: "The faraway line where the sky looks like it touches the land or the sea." }
+        ],
+        quiz: {
+          question: "What is an observatory?",
+          options: ["A space rocket", "A building where scientists study the sky with a giant telescope", "A kind of comet", "A star map"],
+          correct: 1
+        },
+        choices: [
+          { text: "Climb upstairs to the great telescope", icon: "🔭", next: "great_telescope" },
+          { text: "Search the old charts in the map room", icon: "📜", next: "chart_room" }
+        ]
+      },
+
+      great_telescope: {
+        emoji: "🔭💫",
+        bg: "linear-gradient(135deg, #0a1a4d, #0a0a2d)",
+        text: `The great telescope is as long as a school bus! Ms. Vega turns a wheel, the dome roof rumbles open, and you press your eye to the eyepiece.
+
+You gasp. The Moon looks close enough to bounce a ball on. And there — just past its bright edge — you spot a ribbon of sparkles, like a glittery road in the dark.
+
+"That's them!" Flicker squeals, bouncing off the walls. "That's my family's trail!"
+
+Behind the trail, the cloudy silver stripe of our galaxy, the Milky Way, glitters like spilled sugar across the sky. A galaxy is a giant family of billions of stars — and somewhere in all that hugeness, one little comet family is missing one little comet.
+
+Ms. Vega prints a photograph of the sparkling trail. "Take this. Now we know exactly where they are headed."`,
+        vocab: [
+          { word: "galaxy", definition: "A giant family of billions of stars all swirling together. We live in the Milky Way galaxy!" }
+        ],
+        quiz: {
+          question: "What is the Milky Way?",
+          options: ["A river on the Moon", "Our galaxy — a giant family of billions of stars", "A comet's name", "A cloud"],
+          correct: 1
+        },
+        item: { name: "Comet Trail Photo", icon: "📸" },
+        choices: [
+          { text: "Plan Flicker's route home with Ms. Vega", icon: "🧮", next: "plan_route" }
+        ]
+      },
+
+      chart_room: {
+        emoji: "📜🕯️",
+        bg: "linear-gradient(135deg, #2d1a0a, #0a0a2d)",
+        text: `The map room smells like old paper and adventure. Shelves and shelves of rolled-up sky charts reach to the ceiling. Ms. Vega pulls out a chart so old its edges crackle.
+
+"Here!" she says, spreading it on the table. "The Silverbright comet family. They swing past our Moon once every year, on the first night of summer — which is TONIGHT. We have until sunrise."
+
+While she measures the path, you read the notes scribbled in the corners. One note is about a meteor — a space rock that streaks into the sky and burns up in a bright flash, which people call a shooting star.
+
+"So THAT is what I chased!" Flicker groans. "A meteor. It was very shiny and very fast, and it got me very, very lost."
+
+Ms. Vega rolls up the old chart and hands it to you. "Borrow this, star mapper. We have a comet to deliver."`,
+        vocab: [
+          { word: "meteor", definition: "A space rock that streaks into the sky and burns up in a bright flash — a shooting star!" }
+        ],
+        quiz: {
+          question: "How often does the Silverbright family pass the Moon?",
+          options: ["Every night", "Once every year, on the first night of summer", "Every hundred years", "Only in winter"],
+          correct: 1
+        },
+        item: { name: "Old Star Chart", icon: "📜" },
+        choices: [
+          { text: "Plan Flicker's route home with Ms. Vega", icon: "🧮", next: "plan_route" }
+        ]
+      },
+
+      plan_route: {
+        emoji: "🧮🌕",
+        bg: "linear-gradient(135deg, #0a2a4d, #1a0a3d)",
+        text: `Ms. Vega scribbles numbers on a chalkboard while Flicker watches nervously.
+
+"Here is the problem," Ms. Vega says. "Flicker is too little to catch up to her family in a straight line. They are just too fast. But there is a trick that real space scientists use!"
+
+She draws the Moon on the board. "Gravity is the invisible force that pulls things toward each other. It is why your pencil falls to the floor instead of floating away. The Moon's gravity can pull Flicker in, swing her around like a slingshot, and fling her out the other side with a big speed boost!"
+
+Flicker gulps. "Swing... around... the whole entire MOON?"
+
+"You can do it," you tell her. "But first, let's get you ready." The little comet is shivering with nervous sparkles.`,
+        vocab: [
+          { word: "gravity", definition: "The invisible force that pulls things toward each other. Gravity is why things fall down instead of floating away!" }
+        ],
+        quiz: {
+          question: "What will give Flicker a big speed boost?",
+          options: ["Eating space snacks", "Swinging around the Moon using its gravity", "Flapping her tail harder", "A rocket engine"],
+          correct: 1
+        },
+        choices: [
+          { text: "Calm her nerves with a quiet star song", icon: "🎵", next: "star_song" },
+          { text: "Trace the route together on the map one more time", icon: "🗺️", next: "map_route" }
+        ]
+      },
+
+      star_song: {
+        emoji: "🎵🌙",
+        bg: "linear-gradient(135deg, #1a0a3d, #0a1a2d)",
+        text: `You cup the trembling little comet in your hands and sing the lullaby your family sings when thunderstorms get too loud — soft and slow, like moonlight on water.
+
+Little by little, Flicker's shivering sparkles calm down. Her flame stops flickering and grows steady — strong and even, not wobbling at all.
+
+"How did you know that would work?" Ms. Vega whispers.
+
+"Because it works on me," you say. "When something feels too big and scary, you don't need to be fearless. You just need to be calm enough to try."
+
+Flicker floats up, glowing steady and bright as a lighthouse. "Okay," she says in her bravest little voice. "I am ready to swing around a Moon."`,
+        vocab: [
+          { word: "steady", definition: "Calm, strong, and even — not shaky or wobbly." }
+        ],
+        quiz: {
+          question: "What helped Flicker feel brave?",
+          options: ["A magic spell", "A quiet song that helped her feel calm and steady", "A pep talk from the Moon", "Space candy"],
+          correct: 1
+        },
+        choices: [
+          { text: "Count down for launch: 3... 2... 1...", icon: "🚀", next: "moon_swing" }
+        ]
+      },
+
+      map_route: {
+        emoji: "🗺️🧭",
+        bg: "linear-gradient(135deg, #0a1a4d, #0a2a2a)",
+        text: `"Scared feelings shrink when you have a plan," you tell Flicker. So together, you trace the whole route with your finger: up past the clouds, around the bright side of the Moon, then out along the sparkling trail to her family.
+
+"You are teaching her to navigate," Ms. Vega says proudly. "To navigate means to find your way from one place to another — sailors do it with stars, and comets can too!"
+
+Flicker practices the route until she can recite it with her eyes closed: "Up, around, out, and home. Up, around, out, and home!"
+
+"One more thing," Ms. Vega adds, tapping the chart. "See this bright crater on the Moon's edge? When you pass it, you are halfway home. Look for the landmark, little one."
+
+Flicker straightens her tail like an arrow. "Up, around, out, and home. I can do this!"`,
+        vocab: [
+          { word: "navigate", definition: "To find your way from one place to another, like a sailor using the stars." }
+        ],
+        quiz: {
+          question: "What does it mean to navigate?",
+          options: ["To fly very fast", "To find your way from one place to another", "To glow in the dark", "To draw a picture"],
+          correct: 1
+        },
+        choices: [
+          { text: "Count down for launch: 3... 2... 1...", icon: "🚀", next: "moon_swing" }
+        ]
+      },
+
+      moon_swing: {
+        emoji: "🌕☄️",
+        bg: "linear-gradient(135deg, #0a0a1a, #1a1a3d)",
+        text: `"3... 2... 1... FLY, Flicker, FLY!"
+
+The little comet shoots into the sky like a firework, her tail streaming silver behind her. You and Ms. Vega race to the great telescope to watch.
+
+Up she goes, higher and higher, until she reaches the Moon. She skims low over a giant crater — a big, bowl-shaped hole made long ago when a space rock crashed down. Halfway home!
+
+Then the Moon's gravity grabs her gently, just like the plan said. She swings around the bright edge — faster, faster, FASTER — and slingshots out the other side like a pebble from a slingshot!
+
+"She caught the trail!" Ms. Vega shouts. Through the telescope, you watch one tiny sparkle zoom up the glittering road — and a whole ribbon of comets loops back to meet her.`,
+        vocab: [
+          { word: "crater", definition: "A big, bowl-shaped hole in the ground, made when a space rock crashes down. The Moon is covered in craters!" }
+        ],
+        quiz: {
+          question: "What made Flicker fly faster around the Moon?",
+          options: ["She ate a snack", "The Moon's gravity slingshotted her", "A friendly rocket pushed her", "She grew bigger wings"],
+          correct: 1
+        },
+        choices: [
+          { text: "Watch the comet family reunion", icon: "💫", next: "family_reunion" }
+        ]
+      },
+
+      family_reunion: {
+        emoji: "💫👨‍👩‍👧",
+        bg: "linear-gradient(135deg, #1a0a3d, #0a2a4d)",
+        text: `What a reunion! The whole Silverbright family swirls around Flicker in loops of joy — big comets, small comets, and one mama comet who hugs her so tight their tails braid together like ribbons.
+
+Then, to your amazement, the entire family swoops down low over Lantern Hill. The sky above the observatory fills with shimmering light, like a hundred silver kites dancing.
+
+Flicker's voice sparkles down to you on the wind: "THANK YOU, STAR MAPPER! YOU FOUND MY WAY HOME!"
+
+The mama comet dips her glowing tail, which you are pretty sure is how comets say thank you. Ms. Vega wipes her eyes and pretends it is just dust.
+
+"You know," she says, "a moment like this deserves to be remembered forever. What shall we do?"`,
+        vocab: [
+          { word: "reunion", definition: "When people (or comets!) who have been apart come back together again." }
+        ],
+        quiz: {
+          question: "How does the comet family say thank you?",
+          options: ["They rain down candy", "They swoop low and the mama comet dips her glowing tail", "They write in the clouds", "They honk like geese"],
+          correct: 1
+        },
+        choices: [
+          { text: "Ask the comets to wave hello every year when their orbit passes", icon: "👋", next: "yearly_visit_ending" },
+          { text: "Draw Flicker's path on your star map so everyone can find her", icon: "🖊️", next: "star_mapper_ending" }
+        ]
+      },
+
+      yearly_visit_ending: {
+        emoji: "🎆🏡",
+        bg: "linear-gradient(135deg, #0a2a4d, #3d2a0a)",
+        text: `"Will you wave hello every year when you fly past?" you call up to the sky.
+
+"EVERY YEAR! IT'S A PROMISE!" Flicker's voice twinkles back. And comets, it turns out, always keep their promises.
+
+Now, every first night of summer, the whole town climbs onto rooftops and hilltops with blankets and popcorn. It has become a real tradition — a special thing people do together again and again, year after year.
+
+Right at midnight, the Silverbright family streaks across the sky in a river of silver light, and one small, extra-sparkly comet does three loop-the-loops right over your house. That is your secret hello.
+
+Ms. Vega says one day you will be the head astronomer of Lantern Hill. But you already have your favorite title ever: the girl who walked a comet home.
+
+✨ THE END ✨`,
+        vocab: [
+          { word: "tradition", definition: "A special thing that people do together again and again, year after year." }
+        ],
+        quiz: {
+          question: "What was the lesson of this adventure?",
+          options: [
+            "Never go outside at night",
+            "Helping someone find their way home can light up the whole sky",
+            "Comets are dangerous",
+            "Telescopes are only for grown-ups"
+          ],
+          correct: 1
+        },
+        choices: [],
+        ending: true
+      },
+
+      star_mapper_ending: {
+        emoji: "🖊️🌟",
+        bg: "linear-gradient(135deg, #1a0a3d, #0a3d3d)",
+        text: `That very night, you unroll your star map on the observatory table and carefully draw a brand-new line: the sparkling path of one small comet, looping past the Moon and home again. You label it in your neatest handwriting: "Flicker's Path."
+
+Ms. Vega mails a copy to the Grand Star Council, and weeks later a letter arrives with a golden seal. The path is official! Real astronomers all over the world will now find a little comet named Flicker on their charts.
+
+"It is a great honor," Ms. Vega says, pinning a tiny silver telescope pin onto your jacket, "and so is this. Welcome, Junior Star Mapper of Lantern Hill Observatory — the youngest one we have ever had."
+
+Every clear night, you still climb to the rooftop with your telescope. But now, when you trace the sky, one of the paths up there is yours. Well — yours and Flicker's.
+
+✨ THE END ✨`,
+        vocab: [
+          { word: "honor", definition: "Something special you receive that makes you feel proud, because you earned it." }
+        ],
+        quiz: {
+          question: "What happens to your star map at the end?",
+          options: [
+            "It gets lost in space",
+            "Flicker's Path becomes official, and you become a Junior Star Mapper",
+            "Ms. Vega keeps it locked away",
+            "It flies away with the comets"
+          ],
+          correct: 1
+        },
+        choices: [],
+        ending: true
+      }
+    }
+  },
+
+  secret_garden: {
+    title: "The Secret Garden Club",
+    icon: "🌻",
+    desc: "Grow a neighborhood garden and solve its leafy mysteries",
+    nodes: {
+      start: {
+        emoji: "🌱🏙️",
+        bg: "linear-gradient(135deg, #1a1a0a, #0a2a0a)",
+        text: `The empty lot next to the Maple Street Library has been gray and forgotten for as long as you can remember. Cracked dirt, one stubborn dandelion, and a crooked fence. Everyone walks right past it.
+
+But today, standing on your tiptoes at the fence, you see something nobody else sees: sunflowers taller than your dad. Rows of fat red tomatoes. Butterflies. A little bench for reading library books in the shade.
+
+Your neighborhood is a community — all the people who live near each other — and you are pretty sure a garden could transform this sad gray lot into the happiest corner of it.
+
+"That's it," you announce to the dandelion. "I'm starting a garden club. The SECRET Garden Club." (It won't stay secret for long. Good clubs never do.)`,
+        vocab: [
+          { word: "community", definition: "All the people who live near each other in a neighborhood and help each other out." },
+          { word: "transform", definition: "To change something completely, like a gray empty lot turning into a beautiful garden." }
+        ],
+        quiz: {
+          question: "What do you dream of turning the empty lot into?",
+          options: ["A parking lot", "A neighborhood garden", "A swimming pool", "A skate park"],
+          correct: 1
+        },
+        choices: [
+          { text: "Make colorful posters to invite the neighborhood kids", icon: "🎨", next: "posters" },
+          { text: "Ask Grandma Rosa, the retired gardener next door, for advice", icon: "👵", next: "grandma_rosa" }
+        ]
+      },
+
+      posters: {
+        emoji: "🎨👧",
+        bg: "linear-gradient(135deg, #2d1a0a, #0a2a0a)",
+        text: `You spend the whole afternoon making posters with your best markers: "GARDEN CLUB! Saturday at the empty lot. Everyone welcome. Snacks possible."
+
+Saturday morning, you hold your breath... and they come! Mateo from down the street, who knows everything about bugs. June from apartment 4B, who once kept a pet worm named Wiggles. Even little Theo, pulling a red wagon full of sand toys "for digging."
+
+"We're not just helpers," June declares. "We're volunteers — people who help because they WANT to, not because anyone pays them!"
+
+You open a brand-new notebook and write on the first page: The Secret Garden Club — Day One. Mateo draws a beetle next to it for good luck. Every great garden needs a great journal.`,
+        vocab: [
+          { word: "volunteers", definition: "People who help with something because they want to, not because they get paid." }
+        ],
+        quiz: {
+          question: "What is a volunteer?",
+          options: ["Someone who helps because they want to", "Someone who gets paid a lot", "Someone who watches", "Someone who is the boss"],
+          correct: 0
+        },
+        item: { name: "Garden Journal", icon: "📔" },
+        choices: [
+          { text: "Time to plant the very first seeds!", icon: "🌱", next: "first_planting" }
+        ]
+      },
+
+      grandma_rosa: {
+        emoji: "👵🌹",
+        bg: "linear-gradient(135deg, #0a2a0a, #2d0a1a)",
+        text: `Grandma Rosa's porch smells like mint and roses. When you tell her your plan, her eyes crinkle up like she's been waiting years for someone to ask.
+
+"A garden in that old lot! Wonderful. But listen close, mija — a garden's biggest secret is hiding under your feet. The SOIL." She scoops up a handful of her rich, dark garden dirt. "Good soil is full of nutrients — the vitamins of the plant world. Plants drink them up through their roots to grow big and strong. That gray dust in the lot? It's hungry soil. We'll have to feed it."
+
+She disappears inside and comes back with a paper packet, worn soft from years in her apron pocket.
+
+"Sunflower seeds, from my tallest ones. Plant these first. A garden should start with something that makes people look UP."`,
+        vocab: [
+          { word: "nutrients", definition: "The vitamins of the plant world — food in the soil that plants drink up through their roots to grow strong." }
+        ],
+        quiz: {
+          question: "What do plants drink up from good soil?",
+          options: ["Soda", "Nutrients", "Sunlight", "Sand"],
+          correct: 1
+        },
+        item: { name: "Sunflower Seeds", icon: "🌻" },
+        choices: [
+          { text: "Time to plant the very first seeds!", icon: "🌱", next: "first_planting" }
+        ]
+      },
+
+      first_planting: {
+        emoji: "🌱☀️",
+        bg: "linear-gradient(135deg, #0a2a0a, #1a1a0a)",
+        text: `Planting day! The club digs, rakes, and plants neat rows of seeds: sunflowers, green beans, lettuce, and six little tomato plants in the corner by the big oak tree.
+
+"Now comes the hardest part," you tell everyone. "Waiting."
+
+Each seed underground is waking up slowly. First it will germinate — crack open its shell and push out a tiny root and a tiny green shoot. Days later, each seedling — that's what you call a baby plant — will poke up and stretch toward the sun like it's yawning.
+
+One week later, it happens. "GREEN!" Theo screams from the fence. "I SEE GREEN!" The whole club comes running. Tiny green babies, everywhere. You have never been so proud of anything in your life.`,
+        vocab: [
+          { word: "germinate", definition: "When a seed wakes up, cracks open, and starts to grow its first root and shoot." },
+          { word: "seedling", definition: "A baby plant that has just sprouted from its seed." }
+        ],
+        quiz: {
+          question: "What is a seedling?",
+          options: ["A kind of bird", "A baby plant that just sprouted", "A garden tool", "A big old tree"],
+          correct: 1
+        },
+        choices: [
+          { text: "Build a compost bin to feed the hungry soil", icon: "🪱", next: "compost_bin" },
+          { text: "Set up a rain barrel and a watering plan", icon: "🌧️", next: "water_plan" }
+        ]
+      },
+
+      compost_bin: {
+        emoji: "🪱🍌",
+        bg: "linear-gradient(135deg, #2d1a0a, #0a2a0a)",
+        text: `"If the soil is hungry, let's FEED it," Mateo says. So the club builds a compost bin out of old wooden pallets.
+
+Compost is like a magic recipe: banana peels, apple cores, crunchy leaves, and grass clippings all piled together. Tiny helpers — worms, bugs, and germs too small to see — chew it all up and turn it into rich, crumbly, chocolate-colored plant food.
+
+"It's a worm restaurant!" June says happily, letting a fat pink worm wiggle across her palm. "Eat up, friends. The tomatoes are counting on you."
+
+Rule number one goes on a hand-painted sign: FRUIT AND VEGGIE SCRAPS YES. PLASTIC AND CANDY WRAPPERS NO. Soon the whole neighborhood is dropping off peels and leaves. The hungry gray soil is finally getting fed.`,
+        vocab: [
+          { word: "compost", definition: "Food scraps and leaves that worms and tiny helpers break down into rich, crumbly food for the soil." }
+        ],
+        quiz: {
+          question: "What belongs in the compost bin?",
+          options: ["Plastic bottles", "Banana peels and crunchy leaves", "Candy wrappers", "Old toys"],
+          correct: 1
+        },
+        choices: [
+          { text: "Check on the garden the next morning", icon: "🌅", next: "mystery_leaves" }
+        ]
+      },
+
+      water_plan: {
+        emoji: "🌧️🚿",
+        bg: "linear-gradient(135deg, #0a1a3d, #0a2a0a)",
+        text: `"Plants are mostly water," you tell the club, "so let's catch some!" You set an old barrel under the library's rain gutter, and after one rainy night it's brimming with free sky-water.
+
+Grandma Rosa teaches you the watering rules over the fence:
+
+"Water in the MORNING, before the sun gets hot, so it soaks down deep instead of drying up. Water the soil at the roots, not the leaves. And poke your finger in the dirt first — if you feel moisture, the little bit of water hiding in the soil, you can skip a day. Drowning a plant is just as bad as forgetting one!"
+
+Theo is put in charge of the finger-poke test, which he takes VERY seriously. You paint a name on your trusty green watering can: "Sir Sprinkles." Every knight of the garden needs a good sword.`,
+        vocab: [
+          { word: "moisture", definition: "A small amount of water hiding in something, like damp soil after the rain." }
+        ],
+        quiz: {
+          question: "When is the best time to water the garden?",
+          options: ["At lunchtime when the sun is hottest", "In the morning before it gets hot", "Never", "Only at midnight"],
+          correct: 1
+        },
+        item: { name: "Sir Sprinkles the Watering Can", icon: "🚿" },
+        choices: [
+          { text: "Check on the garden the next morning", icon: "🌅", next: "mystery_leaves" }
+        ]
+      },
+
+      mystery_leaves: {
+        emoji: "🍃🕵️‍♀️",
+        bg: "linear-gradient(135deg, #0a2a0a, #1a0a2d)",
+        text: `The next morning, June meets you at the gate with wide eyes. "Garden Club EMERGENCY."
+
+The bean leaves are full of holes! Dozens of them — little round bites, like someone snuck in overnight with a tiny hole puncher. Nobody saw anything. Nobody heard anything.
+
+"Our first garden mystery," you whisper. A good garden detective doesn't guess — she gathers evidence, the clues that help you figure out what really happened.
+
+You kneel down and study the crime scene. The holes are small and round. The nibbles are only on the softest leaves. And there's a faint, shiny trail on one stem... or is that just morning dew?
+
+"Okay, club," you say, pulling out the journal. "We have two ways to catch our mystery muncher."`,
+        vocab: [
+          { word: "evidence", definition: "Clues that help you figure out what really happened, like a detective." }
+        ],
+        quiz: {
+          question: "What is the first garden mystery?",
+          options: ["The fence fell down", "Something is eating holes in the bean leaves", "The seeds never grew", "A dog dug a hole"],
+          correct: 1
+        },
+        choices: [
+          { text: "Inspect the leaves up close, bug-detective style", icon: "🔍", next: "inspect_leaves" },
+          { text: "Stake out the garden at sunrise to catch the muncher", icon: "🌅", next: "morning_watch" }
+        ]
+      },
+
+      inspect_leaves: {
+        emoji: "🔍🐞",
+        bg: "linear-gradient(135deg, #0a2a0a, #2d1a0a)",
+        text: `Mateo brings his most prized possession: a real magnifying glass. You lean close to a bean leaf and — "AHA!"
+
+The undersides of the leaves are crowded with aphids — teeny-tiny green bugs, smaller than sprinkles, all sipping juice out of the leaves with their tiny straw-mouths. No wonder the poor beans look tired!
+
+"Should we spray them with something?" June asks.
+
+"No way," Mateo says. "Sprays can hurt the good bugs too. What we need... is LADYBUGS. One ladybug can eat fifty aphids a day. They're nature's aphid patrol!"
+
+So the club plants a little patch of flowers that ladybugs love, and within a week, the polka-dotted patrol marches in. The aphids vanish, the beans perk up, and nobody had to spray a single drop.`,
+        vocab: [
+          { word: "aphids", definition: "Teeny-tiny green bugs that sip juice from plant leaves. Ladybugs love to eat them!" }
+        ],
+        quiz: {
+          question: "Who is nature's aphid patrol?",
+          options: ["Squirrels", "Ladybugs", "Butterflies", "Ants"],
+          correct: 1
+        },
+        item: { name: "Magnifying Glass", icon: "🔍" },
+        choices: [
+          { text: "On to the next garden puzzle — the tomato corner", icon: "🍅", next: "tomato_trouble" }
+        ]
+      },
+
+      morning_watch: {
+        emoji: "🌅🐛",
+        bg: "linear-gradient(135deg, #2d1a0a, #0a2a0a)",
+        text: `The next morning, you and June creep to the garden before the sun is even all the way up, ducking behind the compost bin like proper spies.
+
+And there they are: three plump green caterpillars, munching the bean leaves like corn on the cob. Munch. Munch. Munch.
+
+"Caught you!" June whispers. "Should we... get rid of them?"
+
+"Wait," you say slowly. "Caterpillars don't stay caterpillars." You've read about this: one day, each caterpillar will wrap itself inside a chrysalis — a little hanging case, like a tiny sleeping bag — and when it comes out, it will be a BUTTERFLY.
+
+So instead, you gently move them to a leafy wild corner of the lot and plant it full of leaves they love. The club names it the Caterpillar Café. The beans are saved, and one day — you'll have butterflies.`,
+        vocab: [
+          { word: "chrysalis", definition: "The little case a caterpillar wraps itself in while it slowly changes into a butterfly." }
+        ],
+        quiz: {
+          question: "What will the caterpillars become one day?",
+          options: ["Beetles", "Butterflies", "Bees", "Bigger caterpillars"],
+          correct: 1
+        },
+        choices: [
+          { text: "On to the next garden puzzle — the tomato corner", icon: "🍅", next: "tomato_trouble" }
+        ]
+      },
+
+      tomato_trouble: {
+        emoji: "🍅😟",
+        bg: "linear-gradient(135deg, #1a1a0a, #0a1a2d)",
+        text: `Mystery number two: the tomato plants. While the sunflowers shoot up like rockets, the six tomato plants in the corner are pale, droopy, and small. Same soil. Same water. Same club singing them encouraging songs. So what's wrong?
+
+June runs to the library and comes back with a plant book and a big grin. "Listen to THIS. Plants make their own food using sunlight, air, and water. It's called photosynthesis — it happens right inside their leaves, like a tiny green kitchen powered by the sun!"
+
+You look up. And up. The big oak tree stretches over the whole tomato corner like a giant umbrella.
+
+"That's it!" you gasp. "Their kitchen has no power! The oak is blocking their sunlight — the tomatoes are HUNGRY." A plant in deep shade can't cook its sun-food, no matter how much you water it.`,
+        vocab: [
+          { word: "photosynthesis", definition: "How plants make their own food inside their leaves, using sunlight, air, and water. It's like a tiny kitchen powered by the sun!" }
+        ],
+        quiz: {
+          question: "What do plants need for photosynthesis?",
+          options: ["Sunlight, air, and water", "Moonlight and songs", "Candy and juice", "Total darkness"],
+          correct: 0
+        },
+        choices: [
+          { text: "Carefully transplant the tomatoes to the sunniest spot", icon: "☀️", next: "sunny_spot" },
+          { text: "Get clever: shade plants here, tomatoes in buckets on the sunny steps", icon: "🪣", next: "shade_garden" }
+        ]
+      },
+
+      sunny_spot: {
+        emoji: "☀️🍅",
+        bg: "linear-gradient(135deg, #3d2a0a, #0a2a0a)",
+        text: `"Moving day!" you announce. The club learns how to transplant — to dig up a plant gently, roots and all, and tuck it into a new home without hurting it.
+
+Grandma Rosa supervises from her folding chair like a coach. "Dig WIDE around the roots, mija! A plant's roots are its lifeline. Keep the dirt ball together... support the stem... now into the new hole... water it in. Perfect!"
+
+One by one, all six tomato plants move to the sunniest spot in the whole lot, right along the south fence where the light pours down all day long.
+
+For a few days the tomatoes sulk (moving is hard, even for plants). Then their little green kitchens switch on. New leaves unfurl, dark green and strong. Within two weeks, they've doubled in size — and the first yellow flowers appear!`,
+        vocab: [
+          { word: "transplant", definition: "To gently dig up a plant, roots and all, and move it to a new home." }
+        ],
+        quiz: {
+          question: "Why do you dig WIDE around a plant when moving it?",
+          options: ["To make a bigger mess", "To protect its roots, which are its lifeline", "To find buried treasure", "To scare the worms"],
+          correct: 1
+        },
+        choices: [
+          { text: "Wait for tomatoes... and discover one last mystery", icon: "🐝", next: "bee_mystery" }
+        ]
+      },
+
+      shade_garden: {
+        emoji: "🪣🥬",
+        bg: "linear-gradient(135deg, #0a2a1a, #3d2a0a)",
+        text: `"Wait," you say, tapping your chin. "What if NO spot goes to waste?"
+
+Here's your clever two-part plan: some plants, like lettuce and mint, actually LIKE cool shade — too much hot sun makes lettuce wilt and taste bitter. So the shady oak corner becomes a lettuce-and-mint patch, where they flourish — growing strong, happy, and delicious.
+
+Meanwhile, the tomatoes move into big buckets lined up on the library's sunny front steps, where they can soak up light all day long.
+
+"A garden isn't about fighting the shade," you write in the journal. "It's about giving every plant the spot it loves."
+
+The librarian is so delighted by her new tomato-bucket welcome committee that she starts watering them herself on Sundays. Two weeks later: the first yellow tomato flowers!`,
+        vocab: [
+          { word: "flourish", definition: "To grow strong, healthy, and happy in a place that is just right for you." }
+        ],
+        quiz: {
+          question: "Which plants LIKE growing in cool shade?",
+          options: ["Tomatoes and sunflowers", "Lettuce and mint", "Cactuses", "Watermelons"],
+          correct: 1
+        },
+        choices: [
+          { text: "Wait for tomatoes... and discover one last mystery", icon: "🐝", next: "bee_mystery" }
+        ]
+      },
+
+      bee_mystery: {
+        emoji: "🐝❓",
+        bg: "linear-gradient(135deg, #3d2a0a, #0a1a2d)",
+        text: `The tomato plants are tall and green now, covered in cheerful yellow flowers. The club waits. And waits. The flowers bloom... and then just drop off. No tomatoes. Not one.
+
+Final garden mystery! Back to the library book. June reads out loud: "Flowers can't make fruit alone. They need bees and butterflies to pollinate them — to carry the golden dust called pollen from flower to flower. No visits from bees means no tomatoes!"
+
+You look around the lot and realize the problem: your garden is all vegetables. There's hardly a single bright, sweet-smelling bloom to invite the bees in. Your flowers are throwing a party, but nobody sent out invitations!
+
+"Club meeting!" you call. "We need POLLINATORS. Here's my idea..."`,
+        vocab: [
+          { word: "pollinate", definition: "To carry pollen from flower to flower so plants can make fruits and seeds. Bees are pollination superheroes!" },
+          { word: "pollen", definition: "The golden powdery dust inside flowers that plants need to make seeds and fruit." }
+        ],
+        quiz: {
+          question: "Why are there no tomatoes yet?",
+          options: ["The plants are lazy", "No bees have visited to pollinate the flowers", "The tomatoes are invisible", "It's too cold"],
+          correct: 1
+        },
+        choices: [
+          { text: "Plant a wild flower strip and build a bee hotel", icon: "🏨", next: "butterfly_ending" },
+          { text: "Invite the whole neighborhood to a big flower-planting day", icon: "🎉", next: "festival_ending" }
+        ]
+      },
+
+      festival_ending: {
+        emoji: "🎉🍅",
+        bg: "linear-gradient(135deg, #3d0a2a, #0a2a0a)",
+        text: `The club makes new posters: "FLOWER PLANTING DAY — help our bees find us!" And the whole neighborhood shows up. Grandma Rosa brings marigolds. The librarian brings lavender. Somebody's uncle brings a truckload of zinnias and won't say where he got them.
+
+By sunset, the garden is ringed with a rainbow of blooms — and within a week, the bees arrive like tiny buzzing school buses. Flower to flower to flower. The tomato blossoms swell into little green marbles, then big red globes.
+
+When it's finally time to harvest — to pick all the ripe vegetables you grew — there are so many tomatoes that the club sets up a free veggie stand outside the library. Neighbors who never used to say hello now trade recipes over the fence.
+
+On the gate hangs a new sign, painted by Theo (mostly): "THE NOT-SO-SECRET GARDEN CLUB. Everyone welcome. That was the secret all along."
+
+✨ THE END ✨`,
+        vocab: [
+          { word: "harvest", definition: "To pick the fruits and vegetables you grew when they are finally ripe and ready." }
+        ],
+        quiz: {
+          question: "What was the real secret of the Secret Garden Club?",
+          options: [
+            "The tomatoes were magic",
+            "Everyone is welcome — a garden grows best when a whole community shares it",
+            "The club had a hidden treasure",
+            "Gardens grow faster at night"
+          ],
+          correct: 1
+        },
+        choices: [],
+        ending: true
+      },
+
+      butterfly_ending: {
+        emoji: "🦋🏨",
+        bg: "linear-gradient(135deg, #0a2a1a, #2d0a3d)",
+        text: `The club gets to work on your wildest idea yet. Along the sunny fence, you plant a strip of wildflowers — poppies, cosmos, and bee balm. Mateo builds a "bee hotel" from bamboo tubes and an old birdhouse, with a tiny painted sign: NO VACANCY SOON, WE HOPE.
+
+It works better than you ever dreamed. First come the honeybees, then fat fuzzy bumblebees, then hummingbirds, and then — one golden morning — BUTTERFLIES, drifting over the fence like flying flowers. The tomato plants hang heavy and red.
+
+A visitor from the city garden council stops by, amazed. She hangs an official metal sign on your gate: CERTIFIED POLLINATOR HABITAT — a true home where wild creatures can live, eat, and raise their babies.
+
+"We didn't just grow a garden," you write on the very last page of the journal. "We grew a home — for plants, for bugs, for bees, and for us."
+
+✨ THE END ✨`,
+        vocab: [
+          { word: "habitat", definition: "The natural home where a plant or animal lives, eats, and raises its babies." }
+        ],
+        quiz: {
+          question: "What did the garden become at the end?",
+          options: [
+            "A parking lot again",
+            "A certified pollinator habitat — a home for bees, butterflies, and more",
+            "A private club",
+            "A giant bee hotel only"
+          ],
+          correct: 1
+        },
+        choices: [],
+        ending: true
+      }
+    }
   }
 };
 

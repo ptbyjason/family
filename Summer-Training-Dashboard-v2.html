@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Training">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0d1117">
+<meta name="application-name" content="Summer Training">
+<link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxODAgMTgwIj48cmVjdCB3aWR0aD0iMTgwIiBoZWlnaHQ9IjE4MCIgcng9IjQwIiBmaWxsPSIjMmQ2YTRmIi8+PHRleHQgeD0iOTAiIHk9IjEyNSIgZm9udC1zaXplPSIxMTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IndoaXRlIj7wn4+LPC90ZXh0Pjwvc3ZnPg==">
+<title>Summer Training Dashboard V2</title>
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#0d1117; --bg2:#161b22; --bg3:#1c2430; --border:#2b3442;
+  --green:#2d6a4f; --green-bright:#40c057; --green-glow:#52e07c;
+  --red:#e5484d; --amber:#f5a524; --blue:#4dabf7;
+  --text:#e6edf3; --dim:#8b949e;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,'Liberation Mono',monospace;
+  --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  --cond:'Avenir Next Condensed','Arial Narrow','Helvetica Neue',var(--sans);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.5;
+  -webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent;
+  background-image:radial-gradient(ellipse 90% 40% at 50% -10%,rgba(45,106,79,.28),transparent),
+    radial-gradient(ellipse 60% 40% at 95% 110%,rgba(45,106,79,.10),transparent);
+  padding:12px 12px 92px;
+  padding-top:max(12px,env(safe-area-inset-top));
+  padding-bottom:calc(92px + env(safe-area-inset-bottom));
+  max-width:720px;margin:0 auto;
+}
+.num{font-family:var(--cond);font-weight:800;letter-spacing:.5px}
+button{font-family:inherit;color:inherit;-webkit-tap-highlight-color:transparent}
+.dim{color:var(--dim)}
+/* ===== header ===== */
+header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.logo{display:flex;align-items:center;gap:10px}
+.logo .badge{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;background:linear-gradient(135deg,var(--green),#1b4332);box-shadow:0 0 18px rgba(45,106,79,.55)}
+.logo h1{font-size:18px;letter-spacing:1px;text-transform:uppercase;font-weight:800;line-height:1.15}
+.logo h1 span{color:var(--green-bright)}
+.logo .sub{font-size:10px;color:var(--dim);letter-spacing:1.5px;text-transform:uppercase}
+.pill{font-family:var(--mono);font-size:11px;background:var(--bg2);border:1px solid var(--border);border-radius:999px;padding:5px 12px;color:var(--dim);font-weight:700}
+.pill.p1{color:var(--blue);border-color:rgba(77,171,247,.4)}
+.pill.p2{color:var(--amber);border-color:rgba(245,165,36,.4)}
+.pill.p3{color:#f783ac;border-color:rgba(247,131,172,.4)}
+/* ===== tabs ===== */
+.tab{display:none}.tab.active{display:block}
+.bottom-nav{position:fixed;left:0;right:0;bottom:0;z-index:50;display:flex;justify-content:center;gap:4px;background:rgba(13,17,23,.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--border);padding:8px 10px calc(8px + env(safe-area-inset-bottom))}
+.bottom-nav button{flex:1;max-width:150px;background:none;border:none;border-radius:10px;padding:6px 4px;cursor:pointer;color:var(--dim);font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;display:flex;flex-direction:column;align-items:center;gap:2px}
+.bottom-nav button .ic{font-size:19px;line-height:1;filter:grayscale(60%);opacity:.75}
+.bottom-nav button.active{color:var(--green-glow);background:rgba(64,192,87,.10)}
+.bottom-nav button.active .ic{filter:none;opacity:1}
+/* ===== week strip ===== */
+.strip-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.week-strip{display:flex;gap:6px;overflow-x:auto;padding:4px 2px;flex:1;scrollbar-width:none}
+.week-strip::-webkit-scrollbar{display:none}
+.wk{position:relative;flex:0 0 auto;width:46px;height:52px;background:none;border:none;cursor:pointer;display:flex;align-items:flex-start;justify-content:center}
+.wk svg{display:block}
+.wk .wk-label{position:absolute;top:14px;left:0;right:0;text-align:center;font-size:12px;color:var(--dim)}
+.wk.sel .wk-label{color:#fff}
+.wk.is-today .wk-label{color:var(--green-glow)}
+.wk.sel{background:rgba(64,192,87,.10);border-radius:10px}
+.wk .wk-test{position:absolute;bottom:2px;left:50%;transform:translateX(-50%);width:5px;height:5px;border-radius:50%;background:var(--blue)}
+.today-btn{flex:0 0 auto;font-family:var(--cond);font-weight:800;letter-spacing:1px;font-size:12px;color:#fff;background:linear-gradient(135deg,var(--green-bright),var(--green));border:none;border-radius:10px;padding:10px 14px;cursor:pointer;box-shadow:0 2px 14px rgba(64,192,87,.35)}
+.today-btn:active{transform:scale(.95)}
+/* ===== day chips ===== */
+.day-chips{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:12px}
+.dc{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:6px 0 4px;cursor:pointer;text-align:center;color:var(--dim)}
+.dc .dc-d{display:block;font-size:10px;font-weight:700;letter-spacing:1px}
+.dc .dc-n{display:block;font-size:16px;color:var(--text)}
+.dc.rest{opacity:.55}
+.dc.sel{border-color:var(--green-bright);background:rgba(64,192,87,.12);color:var(--green-glow)}
+.dc.sel .dc-n{color:var(--green-glow)}
+.dc.alldone .dc-d::after{content:' ✓';color:var(--green-bright)}
+/* ===== banners ===== */
+.banner{border-radius:12px;padding:10px 14px;font-size:13px;margin-bottom:10px;border:1px solid var(--border);background:var(--bg2)}
+.banner.test{border-color:rgba(77,171,247,.5);background:rgba(77,171,247,.08)}
+.banner.test b{color:var(--blue)}
+.banner.status{border-color:rgba(245,165,36,.5);background:rgba(245,165,36,.07)}
+.banner .jump-pr{background:none;border:1px solid var(--blue);color:var(--blue);border-radius:8px;padding:3px 10px;font-size:11px;font-weight:700;cursor:pointer;margin-left:6px}
+/* ===== travel toggle ===== */
+.travel-row{display:flex;align-items:center;justify-content:space-between;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:8px 14px;margin-bottom:12px}
+.travel-row label.txt{font-size:12px;color:var(--dim)}
+.toggle-switch{position:relative;width:44px;height:24px;flex:0 0 auto}
+.toggle-switch input{opacity:0;width:0;height:0}
+.toggle-slider{position:absolute;cursor:pointer;inset:0;background:var(--bg3);border:1px solid var(--border);border-radius:24px;transition:.3s}
+.toggle-slider:before{content:"";position:absolute;height:16px;width:16px;left:3px;top:3px;background:var(--dim);border-radius:50%;transition:.3s}
+.toggle-switch input:checked+.toggle-slider{background:rgba(245,165,36,.3);border-color:var(--amber)}
+.toggle-switch input:checked+.toggle-slider:before{transform:translateX(20px);background:var(--amber)}
+/* ===== day view ===== */
+.day-head{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin-bottom:2px}
+.day-name{font-size:34px;line-height:1;text-transform:uppercase}
+.day-sub{font-size:12px;color:var(--dim);margin-top:3px}
+.day-sub .phase-txt{font-weight:700}
+.phase-txt.p1{color:var(--blue)}.phase-txt.p2{color:var(--amber)}.phase-txt.p3{color:#f783ac}
+.day-count{font-size:26px;color:var(--green-bright);white-space:nowrap}
+.day-count small{font-size:12px;color:var(--dim);font-family:var(--sans);font-weight:600}
+.day-cue{font-size:12.5px;color:var(--dim);font-style:italic;margin:6px 0 10px}
+.day-theme{font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--green-bright);margin-bottom:10px}
+.warmup{background:rgba(45,106,79,.10);border:1px dashed rgba(64,192,87,.35);border-radius:10px;padding:9px 12px;margin-bottom:10px}
+.warmup .wu-tag{font-size:9px;font-weight:800;letter-spacing:2px;color:var(--green-bright)}
+.warmup p{font-size:12px;color:var(--dim);margin-top:2px}
+.rest-card{display:flex;gap:12px;align-items:center;background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:18px 16px;margin-bottom:10px}
+.rest-card .rc-icon{font-size:30px}
+.rest-card b{font-size:15px}
+.rest-card p{font-size:12.5px;color:var(--dim)}
+.mini-note{font-size:12px;color:var(--dim);background:var(--bg2);border-left:3px solid var(--green);border-radius:8px;padding:8px 12px;margin-bottom:10px}
+.test-banner{font-size:13px;background:rgba(77,171,247,.08);border:1px solid rgba(77,171,247,.5);border-radius:10px;padding:9px 12px;margin-bottom:10px}
+/* ===== workout blocks ===== */
+.blk{background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--cat,var(--border));border-radius:12px;margin-bottom:8px;overflow:hidden}
+.blk.done{border-color:rgba(64,192,87,.45);border-left-color:var(--green-bright);background:linear-gradient(90deg,rgba(64,192,87,.07),var(--bg2) 40%)}
+.blk-head{display:flex;align-items:center;gap:10px;padding:10px 12px}
+.chk{width:30px;height:30px;flex:0 0 auto;border-radius:50%;border:2px solid var(--border);background:var(--bg3);color:#fff;font-size:15px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.chk.on{background:linear-gradient(135deg,var(--green-bright),var(--green));border-color:var(--green-bright);box-shadow:0 0 10px rgba(64,192,87,.5)}
+.chk:active{transform:scale(.88)}
+.blk-main{flex:1;cursor:pointer;min-width:0}
+.cat-tag{display:inline-block;padding:1px 8px;border-radius:999px;font-size:9px;font-weight:800;letter-spacing:1px;text-transform:uppercase;vertical-align:middle;margin-right:6px}
+.blk-title{font-size:13.5px;font-weight:700;margin-top:2px}
+.blk.done .blk-title{color:var(--dim);text-decoration:line-through}
+.diff-ind{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:middle}
+.ind-easy{background:var(--green-bright)}.ind-right{background:var(--blue)}.ind-hard{background:var(--red)}
+.chev{color:var(--dim);font-size:12px;cursor:pointer;padding:6px;transition:transform .2s}
+.chev.open{transform:rotate(180deg)}
+.blk-body{display:none;padding:0 12px 12px;border-top:1px solid var(--border)}
+.blk-body.open{display:block}
+.ex-list{list-style:none;margin:8px 0 4px}
+.ex-list li{padding:7px 0;border-bottom:1px solid rgba(43,52,66,.6);font-size:12.5px}
+.ex-list li:last-child{border-bottom:none}
+.ex-name{font-weight:600;color:var(--text)}
+.ex-rx{color:var(--green-glow);font-family:var(--mono);font-size:11.5px;margin-left:6px}
+.ex-note{display:block;font-size:11px;color:var(--dim);font-style:italic;margin-top:1px}
+.vid-link{color:var(--dim);font-size:9px;text-decoration:none;margin-left:5px;padding:2px 5px;border:1px solid var(--border);border-radius:5px;display:inline-block;line-height:1.2;vertical-align:middle}
+.vid-link:active{color:var(--red);border-color:var(--red)}
+.diff-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:8px 0}
+.diff-lab{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--dim)}
+.diff-btn{padding:6px 12px;border-radius:999px;border:1.5px solid var(--border);font-size:11.5px;font-weight:700;cursor:pointer;background:var(--bg3);color:var(--dim);transition:all .15s}
+.diff-btn:active{transform:scale(.94)}
+.diff-btn.selected-easy{background:rgba(64,192,87,.15);border-color:var(--green-bright);color:var(--green-glow)}
+.diff-btn.selected-right{background:rgba(77,171,247,.15);border-color:var(--blue);color:var(--blue)}
+.diff-btn.selected-hard{background:rgba(229,72,77,.15);border-color:var(--red);color:var(--red)}
+.notes{width:100%;border:1px solid var(--border);background:var(--bg);color:var(--text);border-radius:8px;padding:8px 10px;font-size:14px;font-family:inherit;resize:none;-webkit-appearance:none}
+.notes:focus{outline:none;border-color:var(--green-bright)}
+/* ===== weekly focus (mindset video) ===== */
+.week-focus{background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--green-bright);border-radius:12px;padding:12px 14px;margin:14px 0}
+.week-focus .wf-head{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.week-focus .wf-label{font-size:9px;font-weight:800;letter-spacing:2px;color:var(--green-bright);text-transform:uppercase}
+.week-focus .wf-theme{font-size:9px;font-weight:800;letter-spacing:1px;background:var(--green);color:#fff;padding:2px 8px;border-radius:999px;text-transform:uppercase}
+.week-focus .wf-title{font-size:15px;font-weight:800}
+.week-focus .wf-text{font-size:12.5px;color:var(--dim);margin:2px 0 10px}
+.week-focus .wf-video{position:relative;width:100%;padding-bottom:56.25%;border-radius:10px;overflow:hidden;background:#000}
+.week-focus .wf-video iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:0}
+/* ===== PR wall ===== */
+.pr-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:14px}
+.pr-card{position:relative;background:var(--bg2);border:1px solid var(--border);border-top:3px solid var(--tc,var(--border));border-radius:14px;padding:12px;text-align:left;cursor:pointer;display:block}
+.pr-card.sel{border-color:var(--tc);box-shadow:0 0 14px color-mix(in srgb,var(--tc) 30%,transparent);background:var(--bg3)}
+.pr-name{font-size:11px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--dim);margin-bottom:4px}
+.pr-best{font-size:34px;line-height:1.05}
+.pr-best.dim{color:var(--border)}
+.pr-sub{font-size:12px;margin:4px 0 6px}
+.pr-delta.good,.pr-base.good{color:var(--green-glow);font-weight:700}
+.pr-delta.bad,.pr-base.bad{color:var(--red);font-weight:700}
+.pr-baseline{font-size:10.5px;margin-top:5px}
+.spark{width:100%;height:34px;display:block;opacity:.9}
+.section-title{font-size:12px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--dim);margin:4px 0 10px}
+/* ===== panels / progress ===== */
+.panel{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:12px}
+.panel h3{font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--dim);margin-bottom:12px}
+.stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px}
+.statBox{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:12px;text-align:center}
+.statBox .v{font-family:var(--cond);font-size:30px;font-weight:800;line-height:1.1}
+.statBox .l{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);margin-top:2px}
+.honest-note{grid-column:1/-1;font-size:11px;color:var(--dim);text-align:center;padding:2px 0 0}
+.wbars{display:flex;align-items:flex-end;gap:6px;height:130px}
+.wb{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:3px}
+.wb-v{font-size:10px;color:var(--dim)}
+.wb-bar{width:100%;max-width:34px;border-radius:5px 5px 0 0;display:flex;align-items:flex-start;justify-content:center;font-size:10px}
+.wb-bar.hi{background:linear-gradient(180deg,var(--green-glow),var(--green))}
+.wb-bar.mid{background:linear-gradient(180deg,#7dbb96,#3f6b54)}
+.wb-bar.lo{background:linear-gradient(180deg,var(--red),#8a2b2e)}
+.wb-bar.travel{background:repeating-linear-gradient(45deg,rgba(245,165,36,.25),rgba(245,165,36,.25) 4px,transparent 4px,transparent 8px);border:1px dashed rgba(245,165,36,.5);color:var(--amber)}
+.wb-l{font-size:10px;color:var(--dim);font-weight:700}
+.cat-row{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.cat-row .cl{width:74px;font-size:11px;font-weight:700;flex:0 0 auto}
+.cat-row .ctrack{flex:1;height:12px;background:var(--bg3);border-radius:999px;overflow:hidden}
+.cat-row .cfill{height:100%;border-radius:999px}
+.cat-row .cv{width:66px;text-align:right;font-family:var(--mono);font-size:10.5px;color:var(--dim);flex:0 0 auto}
+.chart{width:100%;height:auto;display:block}
+.chart .ax{fill:var(--dim);font-size:9px;font-family:var(--mono)}
+.legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.legend span{font-size:10.5px;color:var(--dim);display:flex;align-items:center;gap:4px}
+.legend i{width:10px;height:3px;border-radius:2px;display:inline-block}
+/* ===== insights (classes used by ported logic) ===== */
+.insight-card{background:var(--bg2);border:1px solid var(--border);border-left:4px solid var(--green-bright);border-radius:12px;padding:13px 14px;margin-bottom:10px}
+.insight-card.warning{border-left-color:var(--amber)}
+.insight-card.caution{border-left-color:var(--red)}
+.insight-card.strength-insight{border-left-color:var(--blue)}
+.insight-card.progress-up{border-left-color:var(--green-glow)}
+.insight-card h4{font-size:13.5px;font-weight:700;margin-bottom:3px}
+.insight-card p{font-size:12.5px;color:var(--dim)}
+.insight-card ul{margin:6px 0 0 16px;font-size:12.5px;color:var(--dim)}
+.rec-tag{display:inline-block;padding:1px 8px;border-radius:999px;font-size:9px;font-weight:800;margin-right:4px;letter-spacing:.5px}
+.rec-progress{background:rgba(64,192,87,.18);color:var(--green-glow)}
+.rec-maintain{background:rgba(77,171,247,.18);color:var(--blue)}
+.rec-deload{background:rgba(229,72,77,.18);color:var(--red)}
+.rec-adjust{background:rgba(245,165,36,.18);color:var(--amber)}
+.trend-arrow{font-size:14px;margin-right:4px}
+.trend-up{color:var(--red)}.trend-down{color:var(--green-bright)}.trend-flat{color:var(--blue)}
+/* ===== PR detail / tests ===== */
+.pr-panel{border-top:3px solid var(--tc,var(--border))}
+.pr-panel h3.tname{font-size:16px;font-weight:800;letter-spacing:0;text-transform:none;color:var(--text);margin-bottom:0}
+.pr-meta{font-size:11px;font-weight:700;color:var(--dim);margin:2px 0 12px;letter-spacing:.5px}
+.entry-row{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:12px}
+.inp-group{display:flex;flex-direction:column;gap:3px;flex:1;min-width:120px}
+.inp-group label{font-size:9px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim)}
+.inp-group select,.inp-group input{padding:10px 12px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);border-radius:9px;font-size:16px;font-family:inherit;width:100%;-webkit-appearance:none}
+.inp-group input:focus,.inp-group select:focus{outline:none;border-color:var(--green-bright)}
+.save-btn{padding:11px 20px;background:linear-gradient(135deg,var(--green-bright),var(--green));color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:800;letter-spacing:1px;cursor:pointer;box-shadow:0 2px 12px rgba(64,192,87,.35)}
+.save-btn:active{transform:scale(.96)}
+.save-msg{font-size:12px;color:var(--green-glow);font-weight:700;opacity:0;transition:opacity .3s;align-self:center}
+.save-msg.show{opacity:1}
+.results-table{width:100%;border-collapse:collapse;font-size:12.5px;margin-bottom:6px}
+.results-table th{text-align:left;padding:7px 8px;border-bottom:2px solid var(--border);font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--dim)}
+.results-table td{padding:8px;border-bottom:1px solid rgba(43,52,66,.6)}
+.pr-badge{display:inline-block;background:rgba(245,165,36,.18);color:var(--amber);font-size:9px;font-weight:800;padding:1px 6px;border-radius:999px;margin-left:4px}
+.improve-badge{font-size:11px;font-weight:700;margin-left:4px}
+.improve-up{color:var(--green-glow)}.improve-down{color:var(--red)}
+.delete-btn{background:none;border:none;color:var(--dim);cursor:pointer;font-size:15px;padding:4px 8px}
+.delete-btn:active{color:var(--red)}
+.proto{margin-top:8px}
+.proto summary{font-size:12px;font-weight:700;color:var(--dim);cursor:pointer;padding:6px 0;list-style:none}
+.proto summary::before{content:'▸ '}
+.proto[open] summary::before{content:'▾ '}
+.proto-body{font-size:12.5px;color:var(--dim);line-height:1.6;padding:8px 0 4px}
+.proto-body strong{color:var(--text)}
+.no-data-msg{text-align:center;padding:24px 16px;color:var(--dim);font-size:13px}
+/* ===== backup ===== */
+.backup{margin-top:18px;border-top:1px solid var(--border);padding-top:10px}
+.backup summary{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);font-weight:700;cursor:pointer;list-style:none;text-align:center;padding:6px}
+.backup-actions{display:flex;gap:8px;margin:10px 0;flex-wrap:wrap}
+.backup-actions button,.backup-actions label{flex:1;text-align:center;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:10px;font-size:12px;font-weight:700;cursor:pointer;color:var(--text)}
+.backup-actions input[type=file]{display:none}
+#import-text{width:100%;min-height:70px;background:var(--bg);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:var(--mono);font-size:11px;padding:10px;margin-bottom:8px}
+.backup .go-import{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:10px;font-size:12px;font-weight:700;cursor:pointer}
+#backup-msg{font-size:12px;color:var(--green-glow);text-align:center;min-height:18px;margin-top:6px}
+@media(min-width:520px){
+  .pr-grid{grid-template-columns:repeat(3,1fr)}
+  .stat-grid{grid-template-columns:repeat(4,1fr)}
+  .day-name{font-size:40px}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="badge">🏃</div>
+    <div>
+      <h1>SUMMER <span>TRAINING</span></h1>
+      <div class="sub">Isaiah • May 25 – Aug 12 • Soccer + XC</div>
+    </div>
+  </div>
+  <div id="phase-pill" class="pill"></div>
+</header>
+
+<!-- ============ TODAY / HOME ============ -->
+<section id="home-tab" class="tab active">
+  <div class="strip-row">
+    <div id="week-strip" class="week-strip"></div>
+    <button class="today-btn" onclick="goToday(true)">TODAY</button>
+  </div>
+  <div id="day-chips" class="day-chips"></div>
+  <div id="home-banners"></div>
+  <div class="travel-row">
+    <label class="txt" for="travel-toggle">Mark this week as travel / off</label>
+    <label class="toggle-switch"><input type="checkbox" id="travel-toggle" onchange="toggleTravelV2()"><span class="toggle-slider"></span></label>
+  </div>
+  <div id="day-view"></div>
+  <div id="focus-wrap"></div>
+</section>
+
+<!-- ============ PR WALL ============ -->
+<section id="pr-tab" class="tab">
+  <div class="section-title">PR Wall — Test every 2 weeks (Wks 1·3·5·7·9·11)</div>
+  <div id="pr-grid" class="pr-grid"></div>
+  <div id="pr-detail"></div>
+</section>
+
+<!-- ============ PROGRESS ============ -->
+<section id="progress-tab" class="tab">
+  <div id="stat-cards" class="stat-grid"></div>
+  <div class="panel"><h3>Weekly Completion</h3><div id="weekly-bars" class="wbars"></div></div>
+  <div class="panel"><h3>Category Breakdown</h3><div id="cat-bars"></div></div>
+  <div class="panel"><h3>Difficulty Trend</h3><div id="diff-chart"></div><div id="diff-legend" class="legend"></div></div>
+</section>
+
+<!-- ============ INSIGHTS ============ -->
+<section id="insights-tab" class="tab">
+  <div id="insights-section"></div>
+</section>
+
+<details class="backup">
+  <summary>⚙ Backup &amp; Restore</summary>
+  <div class="backup-actions">
+    <button onclick="exportData()">⬇ Export JSON backup</button>
+    <label>⬆ Import backup file<input type="file" accept=".json,application/json" onchange="importFile(this)"></label>
+  </div>
+  <textarea id="import-text" placeholder='…or paste backup JSON here'></textarea>
+  <button class="go-import" onclick="importPasted()">Import pasted JSON</button>
+  <div id="backup-msg"></div>
+</details>
+
+<nav class="bottom-nav">
+  <button id="nav-home" class="active" onclick="showTab('home')"><span class="ic">🏋️</span>Today</button>
+  <button id="nav-pr" onclick="showTab('pr')"><span class="ic">🏆</span>PR Wall</button>
+  <button id="nav-progress" onclick="showTab('progress')"><span class="ic">📊</span>Progress</button>
+  <button id="nav-insights" onclick="showTab('insights')"><span class="ic">💡</span>Insights</button>
+</nav>
+
+<script>
+/* ================================================================
+   CORE PROGRAM DATA & STATE — ported VERBATIM from the original
+   Summer-Training-Dashboard.html so localStorage ('trainingV5',
+   w{week}_{blockId}, w{week}_travel, test_{testId}) stays 100%
+   compatible in both directions.
+   ================================================================ */
+const START_DATE=new Date(2026,4,25),TOTAL_WEEKS=11;let currentWeek=0;
+const DIFF={EASY:1,RIGHT:2,HARD:3},DIFF_LABELS={1:'Too Easy',2:'Just Right',3:'Too Hard'},DIFF_CSS={1:'selected-easy',2:'selected-right',3:'selected-hard'},DIFF_IND={1:'ind-easy',2:'ind-right',3:'ind-hard'};
+function getPhase(w){return w<4?1:w<8?2:3}
+function getPhaseLabel(w){const p=getPhase(w);if(p===1)return{label:'Phase 1: Foundation (Weeks 1–4)',cls:'phase-1'};if(p===2)return{label:'Phase 2: Development (Weeks 5–8)',cls:'phase-2'};return{label:'Phase 3: Preseason (Weeks 9–11)',cls:'phase-3'}}
+const CATEGORIES={sprint:{label:'Speed',color:'#dc2626',tagClass:'tag-sprint'},cardio:{label:'Cardio',color:'#2563eb',tagClass:'tag-cardio'},soccer:{label:'Soccer',color:'#059669',tagClass:'tag-soccer'},strength:{label:'Strength',color:'#d97706',tagClass:'tag-strength'},mobility:{label:'Mobility',color:'#7c3aed',tagClass:'tag-mobility'},corrective:{label:'Corrective',color:'#be123c',tagClass:'tag-corrective'}};
+const TEST_WEEKS=[0,2,4,6,8,10];
+const TESTS=[
+{id:'sprint_30m',name:'30m Sprint',unit:'seconds',cat:'Speed',color:'#dc2626',lowerIsBetter:true,icon:'⚡',protocol:'<strong>What it measures:</strong> Acceleration and raw sprint speed.<br><br><strong>Setup:</strong> Mark 30 meters on flat ground (~33 large steps).<br><br><strong>Protocol:</strong><br>1. Full dynamic warmup (5+ min)<br>2. 2 practice runs at 80%<br>3. 3-point stance start<br>4. <strong>3 max-effort trials</strong>, 2 min rest between<br>5. Timer starts on first movement, stops at finish<br>6. <strong>Record best time</strong><br><br><strong>Tips:</strong> Drive arms hard. Stay low first 10m. Don\'t peek at the timer.'},
+{id:'broad_jump',name:'Broad Jump',unit:'inches',cat:'Power',color:'#d97706',lowerIsBetter:false,icon:'💪',protocol:'<strong>What it measures:</strong> Explosive lower-body power.<br><br><strong>Setup:</strong> Flat ground, tape start line, tape measure.<br><br><strong>Protocol:</strong><br>1. Toes behind line, feet shoulder-width<br>2. Swing arms, bend knees, explode forward<br>3. Measure from start line to back of nearest heel<br>4. <strong>3 attempts</strong>, 60s rest<br>5. <strong>Record best in inches</strong><br><br><strong>Tips:</strong> Arm swing is half the jump. Reach forward on landing. Fall backward = retake.'},
+{id:'six_min_run',name:'6-Minute Run',unit:'meters',cat:'Cardio',color:'#2563eb',lowerIsBetter:false,icon:'🏃',protocol:'<strong>What it measures:</strong> Aerobic endurance — your engine for XC and soccer.<br><br><strong>Setup:</strong> Flat route you can measure. Use GPS app or field perimeter (~350m/lap).<br><br><strong>Protocol:</strong><br>1. Light 3 min jog warmup + strides<br>2. Set <strong>6-minute countdown</strong><br>3. Run as far as you can — pacing matters<br>4. Stop and mark spot at the beep<br>5. <strong>Record total meters</strong><br><br><strong>Tips:</strong> Start at a pace you can hold all 6 min. First minute should feel easy. Last minute should hurt.'},
+{id:'juggling',name:'Juggling Record',unit:'touches',cat:'Soccer',color:'#059669',lowerIsBetter:false,icon:'⚽',protocol:'<strong>What it measures:</strong> Ball control and focus.<br><br><strong>Setup:</strong> Flat surface, inflated ball, no wind.<br><br><strong>Protocol:</strong><br>1. 2 min ball mastery warmup<br>2. <strong>5 attempts</strong> at max consecutive touches<br>3. Any surface: feet, thighs, head, chest<br>4. Ball can\'t touch ground<br>5. <strong>Record highest number</strong><br><br><strong>Tips:</strong> Keep ball below head height. Relax ankle on contact. Use thigh to reset. Count out loud.'},
+{id:'squat_hold',name:'Deep Squat Hold',unit:'seconds',cat:'Mobility',color:'#7c3aed',lowerIsBetter:false,icon:'🧘',protocol:'<strong>What it measures:</strong> Functional mobility — ankles, hips, and thoracic spine together.<br><br><strong>Setup:</strong> Flat surface. Barefoot or socks. Phone timer.<br><br><strong>Protocol:</strong><br>1. Warm up first (5 min movement, squats, leg swings)<br>2. Drop into a full deep squat with these standards:<br>&nbsp;&nbsp;• <strong>Heels flat</strong> (no lifting onto toes)<br>&nbsp;&nbsp;• <strong>Hips below knees</strong><br>&nbsp;&nbsp;• <strong>Chest up, back straight</strong> (not collapsed)<br>&nbsp;&nbsp;• <strong>Feet shoulder-width</strong>, toes out up to 30°<br>&nbsp;&nbsp;• <strong>Arms in front</strong> (not holding anything)<br>3. Start timer when in position<br>4. Stop when ANY standard breaks<br>5. <strong>3 attempts</strong>, 60s rest. <strong>Record best time.</strong><br><br><strong>Tips:</strong> Push knees out over toes. Breathe slowly. If you can\'t hold at all with heels down, that\'s your baseline — the program fixes this. Most kids start 30–60s. Elite movers hold 3+ min.'},
+{id:'shuttle_5_10_5',name:'5-10-5 Shuttle',unit:'seconds',cat:'Agility',color:'#f59e0b',lowerIsBetter:true,icon:'🔄',protocol:'<strong>What it measures:</strong> Change-of-direction speed.<br><br><strong>Setup:</strong> 3 cones in a line, 5 yards apart. Start at center.<br><br><strong>Protocol:</strong><br>1. Full warmup + 2 practice at 80%<br>2. 3-point stance at center cone<br>3. Sprint 5 yds RIGHT, touch line<br>4. Sprint 10 yds LEFT (past center to far cone), touch<br>5. Sprint 5 yds RIGHT back through center<br>6. <strong>3 attempts</strong>, 2 min rest. <strong>Record best.</strong><br><br><strong>Tips:</strong> Stay LOW through turns. Plant outside foot hard. Don\'t round the turns.'}
+];
+let activeTestId=TESTS[0].id;
+function getState(){try{return JSON.parse(localStorage.getItem('trainingV5')||'{}')}catch{return{}}}
+function saveState(s){localStorage.setItem('trainingV5',JSON.stringify(s))}
+function getWS(w,bid){return getState()[`w${w}_${bid}`]||{done:false,notes:'',diff:0}}
+function setWS(w,bid,d){const s=getState();s[`w${w}_${bid}`]=d;saveState(s)}
+function isTravel(w){return getState()[`w${w}_travel`]||false}
+function setTravelState(w,v){const s=getState();s[`w${w}_travel`]=v;saveState(s)}
+function getTestResults(tid){return getState()[`test_${tid}`]||[]}
+function saveTestResult(tid,wk,val){const s=getState(),k=`test_${tid}`;let r=s[k]||[];r=r.filter(x=>x.week!==wk);r.push({week:wk,value:parseFloat(val),date:new Date(START_DATE.getTime()+wk*7*24*60*60*1000).toISOString()});r.sort((a,b)=>a.week-b.week);s[k]=r;saveState(s)}
+function deleteTestResult(tid,wk){const s=getState(),k=`test_${tid}`;s[k]=(s[k]||[]).filter(x=>x.week!==wk);saveState(s)}
+function getWeekDates(w){const d=[];for(let i=0;i<7;i++){const dt=new Date(START_DATE);dt.setDate(dt.getDate()+w*7+i);d.push(dt)}return d}
+function fmtDate(d){return d.toLocaleDateString('en-US',{month:'short',day:'numeric'})}
+function getCurrentWeekIdx(){return Math.max(0,Math.min(Math.floor((new Date()-START_DATE)/(7*24*60*60*1000)),TOTAL_WEEKS-1))}
+const expandedBlocks={};
+const AFS_MENUS=[
+{focus:'Tempo',ex:[
+{name:'Slow-Tempo Pushups',rx:'4×8 (5s down, 1s up)',note:'Own every inch — the slower you lower, the harder it gets.'},
+{name:'Bottom-Pause Pushups',rx:'3×8 (3s pause)',note:'Pause an inch off the floor, no bounce.'},
+{name:'Eccentric Negatives',rx:'2×5 (8s lowering)',note:'8 seconds down, push back up fast. Make the lowering brutal.'},
+{name:'Challenge — Max-Rep Set',rx:'1× max clean reps',note:'As many strict pushups as you can. Log the number and beat it next time.'},
+{name:'Hollow Body Hold',rx:'3×25s',note:'Ribs down, low back pressed to the floor.'},
+{name:'Dead Bug',rx:'2×10 each side',note:'Slow; back flat, breathe out on the reach.'}
+]},
+{focus:'Hand Positions',ex:[
+{name:'Wide Pushups',rx:'3×12',note:'Hands wide — load the chest.'},
+{name:'Diamond Pushups',rx:'3×10',note:'Hands together under the chest — triceps on fire.'},
+{name:'Staggered-Hand Pushups',rx:'2×8 each lead',note:'One hand forward, one back; switch the lead each set.'},
+{name:'Archer Pushups',rx:'2×6 each side',note:'Shift over one arm, the other stays long — almost a one-arm.'},
+{name:'Challenge — Hand-Position Ladder',rx:'3 rounds: 5 wide + 5 standard + 5 diamond',note:'No rest within a round; rest 60s between rounds.'},
+{name:'Side Plank',rx:'2×30s each side',note:'Straight line, hips stacked and high.'}
+]},
+{focus:'Frontal Plane',ex:[
+{name:'Lateral "Walking" Pushups',rx:'3×6 each way',note:'Step both hands over, pushup, step back — stay low.'},
+{name:'Archer Pushups',rx:'3×6 each side',note:'Push through the bent arm, keep the straight arm long.'},
+{name:'Side-to-Side Pushups',rx:'2×8 each side',note:'Shift your weight fully over each hand as you lower.'},
+{name:'Challenge — Archer Ladder',rx:'6/5/4/3/2/1 each side',note:'Alternate sides, work down the ladder, minimal rest.'},
+{name:'Side Plank + Hip Dips',rx:'2×12 each side',note:'Lower the hip and drive it back up, controlled.'}
+]},
+{focus:'Rotation',ex:[
+{name:'T-Pushups',rx:'3×6 each side',note:'Pushup, rotate to a side plank, reach the top arm up.'},
+{name:'Spiderman Pushups',rx:'3×8 each side',note:'Knee drives to the elbow as you lower — fight the rotation.'},
+{name:'Typewriter Pushups',rx:'2×4 each side',note:'At the bottom, slide side to side before pressing up.'},
+{name:'Challenge — Spiderman Flow',rx:'2×10 continuous',note:'Nonstop alternating reps, smooth — no dumping the hips.'},
+{name:'Bicycle Crunch',rx:'2×20 total',note:'Rotate from the core, not the neck.'}
+]},
+{focus:'Power',ex:[
+{name:'Clap Pushups',rx:'4×5',note:'Explode up hard enough to clap. No clap yet? Just get both hands off the floor.'},
+{name:'Plyo Pushups',rx:'3×6',note:'Max push off the ground every rep; land soft.'},
+{name:'Tempo-Contrast Pushups',rx:'3 sets: 3 slow + 5 explosive',note:'Three grinding reps, then five fast ones.'},
+{name:'Challenge — EMOM 5 min',rx:'8 explosive pushups every minute',note:'Every minute on the minute for 5 minutes; rest the remainder of each minute.'},
+{name:'Plank Shoulder Taps',rx:'2×24 total',note:"Don't let your hips rock — anti-rotation."}
+]},
+{focus:'Volume',ex:[
+{name:'Pushup Pyramid',rx:'1-2-3-4-5-6-5-4-3-2-1',note:'Climb up then back down; short rests only as needed.'},
+{name:'Pulse Pushups',rx:'3×12 pulses',note:'Live in the bottom third — constant tension.'},
+{name:'Decline Pushups',rx:'2×10 (feet on a step/couch)',note:'Feet up shifts the load to the upper chest and shoulders.'},
+{name:'Challenge — 100 Pushups',rx:'100 total, fewest sets possible',note:'Break them however you need. Log the sets it took, then beat it.'},
+{name:'Hollow Hold',rx:'3×25s',note:'Lower back glued down.'}
+]}
+];
+function getPrograms(phase){const pc=AFS_MENUS[currentWeek%AFS_MENUS.length];return{
+monday:{warmup:'Dynamic warmup: 10 yd high knees, butt kicks, carioca, A-skips, B-skips, walking lunges w/ twist, leg swings (≈8 min)',blocks:[
+{id:'mon_corr',cat:'corrective',title:phase===1?'Correctives: Hip Activation + Ankles':phase===2?'Correctives: Hip Stability + Mobility':'Correctives: Dynamic Stability',exercises:phase===1?[{name:'Side-Lying Hip Raises',rx:'2×12 each (L first)',note:'Keep hips stacked. Lift from outer hip, not waist.'},{name:'Single-Leg Balance',rx:'3×20s each (L first)',note:'Keep hips level — don\'t let standing hip drop.'},{name:'Wall Ankle Rocks',rx:'10 each ×2',note:'Knee over pinky toe, heel stays down.'},{name:'Quadruped T-Spine Rotation',rx:'2×8 each side',note:'Hand behind head, rotate from mid-back only.'}]:phase===2?[{name:'Side Plank + Hip Raise',rx:'2×20s each (L first)',note:'Stack hips, lift top leg without rotating.'},{name:'SL RDL (Bodyweight)',rx:'2×8 each (L first)',note:'Slow 3s down, hips level, reach long.'},{name:'Pronation Lunges',rx:'2×8 each side',note:'Let back heel roll in, feel inside of ankle.'},{name:'Half-Kneel T-Spine Rotation',rx:'2×8 each side',note:'Rotate chest, keep hips facing forward.'}]:[{name:'Side Plank + Hip Raise',rx:'3×20s each (L first)',note:'Straight line head to toe, top leg lifts.'},{name:'SL Squat to Tap',rx:'2×6 each (L first)',note:'3s down, knee tracks over toes.'},{name:'Pronation Lunge + Rotate',rx:'2×8 each',note:'Lunge + rotate chest over front leg.'},{name:'Standing T-Spine Rotation',rx:'2×10 each',note:'Arms wide, rotate mid-back only.'}]},
+{id:'mon_speed',cat:'sprint',title:phase===1?'Acceleration Mechanics & Sprints':phase===2?'Acceleration — Increased Volume':'Game-Speed Acceleration',exercises:phase===1?[{name:'Wall Drive Drill',rx:'2×8 each leg',note:'Drive knee to 90°, hold 2s.'},{name:'Falling Start → 10m',rx:'4 reps, walk back',note:'Lean until you fall into sprint.'},{name:'10m Build-Ups',rx:'4 reps, 60s rest',note:'70→90%. Stay low.'},{name:'20m from 3-Point',rx:'4 reps, 90s rest',note:'Full effort.'},{name:'30m Sprint',rx:'2 reps, 2 min rest',note:'Max effort.'}]:phase===2?[{name:'Wall Drive → Sprint',rx:'3×5 each → 10m',note:''},{name:'10m Sprints',rx:'4 reps, 60s rest',note:'Time if possible.'},{name:'20m Sprints',rx:'5 reps, 90s rest',note:''},{name:'30m Sprints',rx:'3 reps, 2 min rest',note:''},{name:'40m Sprint',rx:'2 reps, 2 min rest',note:'Top-end speed.'}]:[{name:'Reaction Starts',rx:'4×10m, 60s rest',note:'React to cue.'},{name:'20m + Cut',rx:'4 reps, 90s rest',note:'15m sprint, 45° cut, 5m.'},{name:'30m Sprints',rx:'4 reps, 90s rest',note:''},{name:'40m Sprint',rx:'3 reps, 2 min rest',note:''},{name:'Flying 20m',rx:'2 reps, 2 min rest',note:'10m build → 20m max.'}]},
+{id:'mon_soccer',cat:'soccer',title:phase===1?'Close Control & Dribbling':phase===2?'Advanced Dribbling & 1v1':'Pressure Dribbling',exercises:phase===1?[{name:'Toe Taps',rx:'2×30s each foot',note:''},{name:'Inside-Outside Cones',rx:'4 trips, 8 cones',note:''},{name:'Figure-8 Dribbling',rx:'3 min',note:''},{name:'Pull-Back Turn',rx:'10 each foot',note:''},{name:'Ladder Quick Feet',rx:'4 trips',note:''}]:phase===2?[{name:'Coerver Circuit',rx:'6 min continuous',note:'30s each: toe taps, inside-inside, sole rolls, scissors.'},{name:'Slalom + Moves',rx:'4 trips, 10 cones',note:''},{name:'Matthews Cut + Accel',rx:'8 reps',note:''},{name:'Stepover → Shot',rx:'6 reps',note:''},{name:'Shuffle → Sprint',rx:'6 reps',note:''}]:[{name:'Pressure Circuit',rx:'4×45s/30s rest',note:''},{name:'1v1 Attacking',rx:'8 reps',note:''},{name:'Speed Dribble 40m',rx:'4 timed reps',note:''},{name:'Receive & Attack',rx:'8 reps',note:''},{name:'Complex Ladder',rx:'4 trips',note:''}]},
+{id:'mon_pushcore',cat:'strength',title:'Push & Core — '+pc.focus+' (AFS)',exercises:pc.ex},
+{id:'mon_mob',cat:'mobility',title:'Hip & Ankle Mobility',exercises:phase===1?[{name:'90/90 Hip Stretch',rx:'30s each ×2',note:''},{name:'Ankle Dorsiflexion',rx:'10 rocks each ×2',note:''},{name:'Leg Swings F/B',rx:'15 each',note:''},{name:'Leg Swings Lateral',rx:'15 each',note:''},{name:'Deep Squat Hold',rx:'3×20s',note:''}]:phase===2?[{name:'90/90 Switches',rx:'10 ×2',note:''},{name:'Ankle Rocks + Hold',rx:'8+15s each ×2',note:''},{name:'Adductor Rock-Back',rx:'10 each ×2',note:''},{name:'Figure-4 Standing',rx:'30s each ×2',note:''},{name:'Calf Raises off Step',rx:'15, 3s lower',note:''}]:[{name:'90/90 + Rotation',rx:'8 ×2',note:''},{name:'Banded Ankle',rx:'10 each ×2',note:''},{name:'WGS Dynamic',rx:'5 each side',note:''},{name:'Squat-to-Stand',rx:'8 reps',note:''},{name:'SL Balance Eyes Closed',rx:'3×20s each',note:''}]}]},
+tuesday:{warmup:'5 min jog + arm/hip circles, leg swings (≈7 min)',blocks:[
+{id:'tue_corr',cat:'corrective',title:phase===1?'Correctives: Core + T-Spine':phase===2?'Correctives: Core Stability':'Correctives: Integrated Core',exercises:phase===1?[{name:'Dead Bugs',rx:'2×8 each side',note:'Press lower back into floor, ribs down.'},{name:'Bird-Dog',rx:'2×8 each, 3s hold',note:'Reach long without rotating. Keep ribs down.'},{name:'Cat-Cow',rx:'10 reps slow',note:'Initiate movement from mid-back, not low back.'},{name:'Quadruped T-Spine Rotation',rx:'2×8 each',note:'Hand behind head, rotate from mid-back.'}]:phase===2?[{name:'Dead Bugs + Reach',rx:'3×8 each side',note:'Opposite arm/leg extend, back stays flat.'},{name:'Bird-Dog Anti-Rotation',rx:'3×8 each',note:'Someone could balance a cup on your back.'},{name:'Half-Kneel Rotation',rx:'2×10 each',note:'Rotate chest only, hips stay square.'},{name:'Hollow Body Hold',rx:'2×15s',note:'Ribs down, lower back flat, arms overhead.'}]:[{name:'Hollow Body Hold',rx:'3×20s',note:'Full extension, back pressed to floor.'},{name:'Bird-Dog + Knee Tap',rx:'3×8 each',note:'Extend, bring knee to elbow, extend again.'},{name:'Standing Rotation + Reach',rx:'2×10 each',note:'Feet planted, rotate and reach mid-height.'},{name:'Dead Bug + Opposite Reach',rx:'3×8 each',note:'Slow, controlled, breathe out on extension.'}]},
+{id:'tue_str',cat:'strength',title:'Strength Training (Your Program)',exercises:[{name:'Follow your program',rx:'Full session',note:'Glute-focused — keep emphasizing it, it\'s carrying over well.'}]},
+{id:'tue_mob',cat:'mobility',title:'Recovery Stretch',exercises:phase===1?[{name:'Quad Stretch',rx:'30s each',note:''},{name:'Hamstring Stretch',rx:'30s each',note:''},{name:'Calf Stretch',rx:'30s each',note:''},{name:'Shoulder Stretch',rx:'20s each',note:''},{name:'Child\'s Pose',rx:'45s',note:''}]:[{name:'FR Quads',rx:'60s each',note:''},{name:'FR Calves',rx:'60s each',note:''},{name:'Pigeon',rx:'45s each',note:''},{name:'Seated Hamstring',rx:'30s each',note:''},{name:'Spinal Twist',rx:'30s each',note:''}]}]},
+wednesday:{warmup:'Ball mastery: juggling 2 min, toe taps 1 min, sole rolls 1 min, inside-inside 1 min (≈5 min)',blocks:[
+{id:'wed_corr',cat:'corrective',title:phase===1?'Correctives: Hip Rotation':phase===2?'Correctives: Rotation + Dissociation':'Correctives: Rotational Power',exercises:phase===1?[{name:'90/90 Hip Stretch',rx:'30s each side ×2',note:'Sit tall, feel front hip and back hip.'},{name:'Hip Flexor Stretch (Kneel)',rx:'30s each ×2',note:'Tuck tailbone, squeeze back glute.'},{name:'Half-Kneel Rotation',rx:'2×8 each (extra left)',note:'Rotate chest left for extra reps.'},{name:'Deep Squat Hold',rx:'2×15s',note:'Heels down, chest up, push knees out.'}]:phase===2?[{name:'90/90 Switches',rx:'2×10',note:'Smooth transitions, sit tall throughout.'},{name:'Pigeon + Reach',rx:'30s each side',note:'Square hips, reach forward, breathe.'},{name:'Standing Rotation + Step',rx:'2×10 each (extra left)',note:'Step and rotate, hips follow chest.'},{name:'Deep Squat + Shift',rx:'2×20s',note:'Shift weight side to side in squat.'}]:[{name:'90/90 Flow',rx:'3×8',note:'Switch + lean + rotate — continuous.'},{name:'Pelvis-Thorax Rotation',rx:'2×10 each',note:'Keep hips forward, rotate chest only.'},{name:'Deep Squat Rotations',rx:'2×8',note:'In squat, reach one arm up and rotate.'},{name:'Tall Kneel Hip Circles',rx:'2×8 each direction',note:'Big circles from the hips, core tight.'}]},
+{id:'wed_soccer1',cat:'soccer',title:phase===1?'First Touch & Passing':phase===2?'First Touch Under Pressure':'Technical Sharpening',exercises:phase===1?[{name:'Wall Pass — Inside',rx:'50 each foot',note:''},{name:'Wall Pass — Outside',rx:'20 each',note:''},{name:'Receive-Turn-Pass',rx:'3 min',note:''},{name:'Throw-Trap-Volley',rx:'10 each foot',note:''},{name:'Driven Pass Target',rx:'15 each foot',note:''}]:phase===2?[{name:'One-Touch Wall',rx:'2×1 min each',note:''},{name:'Receive-and-Go',rx:'15 each dir',note:''},{name:'Chipped Pass',rx:'15 each foot',note:''},{name:'Back-to-Wall Turn',rx:'10 each side',note:''},{name:'Weak-Foot Focus',rx:'30 reps',note:''}]:[{name:'Rapid-Fire Wall',rx:'3×45s/15s rest',note:''},{name:'Long Ball Target',rx:'10 each, 20-25 yds',note:''},{name:'Receive from Air',rx:'15 reps',note:''},{name:'Give-and-Go',rx:'10 each side',note:''},{name:'Weak-Foot Shooting',rx:'10 strikes',note:''}]},
+{id:'wed_soccer2',cat:'soccer',title:phase===1?'Juggling & Mastery':phase===2?'Small-Sided & Juggling':'Game Sim & Finishing',exercises:phase===1?[{name:'Juggling Challenge',rx:'10 min — beat record',note:''},{name:'Around the World',rx:'5 each direction',note:''},{name:'Sole Roll Drag-Back',rx:'3 min',note:''}]:phase===2?[{name:'Juggling + Head',rx:'5 min',note:''},{name:'Finishing Circuit',rx:'10 shots, 5 spots',note:''},{name:'2v1 Scenarios',rx:'10 min',note:''}]:[{name:'Timed Juggling',rx:'3×2 min count',note:''},{name:'Shoot Under Fatigue',rx:'5× sprint→shoot',note:''},{name:'Full Scenario',rx:'8 reps',note:''}]},
+{id:'wed_pushcore',cat:'strength',title:'Push & Core — '+pc.focus+' (AFS)',exercises:pc.ex},
+{id:'wed_mob',cat:'mobility',title:phase===1?'Yoga Flow':'Yoga + Thoracic',exercises:phase===1?[{name:'Cat-Cow',rx:'10 reps',note:''},{name:'Down Dog → Cobra',rx:'8 reps',note:''},{name:'Low Lunge + Reach',rx:'30s each ×2',note:''},{name:'Seated Twist',rx:'30s each',note:''},{name:'Pigeon',rx:'45s each',note:''},{name:'Figure-4 Supine',rx:'30s each',note:''}]:[{name:'Cat-Cow → Thread Needle',rx:'8 alternating',note:''},{name:'DD→Lunge→Twist',rx:'5 each side',note:''},{name:'Prone Scorpion',rx:'8 each',note:''},{name:'Straddle + Rotation',rx:'30s each ×2',note:''},{name:'Pigeon',rx:'60s each',note:''},{name:'Windshield Wipers',rx:'10 each',note:''}]}]},
+thursday:{warmup:'5 min jog + high knees, butt kicks, A-skips, shuffles (≈8 min)',blocks:[
+{id:'thu_corr',cat:'corrective',title:phase===1?'Correctives: Left Leg + Hip Flexors':phase===2?'Correctives: SL Strength + Hips':'Correctives: Left Leg Power',exercises:phase===1?[{name:'Side-Lying Hip Raises',rx:'2×12 each (L first)',note:'Slow, feel the outer hip burn.'},{name:'SL Glute Bridge',rx:'2×10 each (L first)',note:'Drive through heel, squeeze glute at top.'},{name:'Kneeling Hip Flexor Stretch',rx:'30s each ×2',note:'Tuck tailbone, lean forward slightly.'},{name:'Supine Hamstring Stretch',rx:'30s each ×2',note:'Keep low back flat on floor.'}]:phase===2?[{name:'Side Plank + Hip Raise',rx:'2×20s each (L first)',note:'Stack hips, control the lift.'},{name:'SL Glute Bridge March',rx:'2×8 each (L first)',note:'Hold bridge, alternate lifting feet.'},{name:'Hip Flexor + Overhead Reach',rx:'30s each ×2',note:'Reach up in lunge, feel stretch deepen.'},{name:'90/90 Hip IR Focus',rx:'2×10 each (R emphasis)',note:'Sit tall, rotate knee inward. Extra on right.'}]:[{name:'SL Glute Bridge + Reach',rx:'3×8 each (L first)',note:'Bridge up, reach opposite arm overhead.'},{name:'Side Plank + Hip Raise',rx:'3×20s each (L first)',note:'Straight line, top leg lift, no wobble.'},{name:'Tall Kneel Hip Flexor + Rotate',rx:'30s each ×2',note:'Lunge stretch + rotate toward front leg.'},{name:'90/90 + Lean',rx:'2×10 each',note:'Switch + lean into front hip each time.'}]},
+{id:'thu_str',cat:'strength',title:'Strength Training (Your Program)',exercises:[{name:'Follow your program',rx:'Full session',note:'Opposite of Tuesday if splitting. Keep the glute emphasis.'}]},
+{id:'thu_mob',cat:'mobility',title:'Hip Flexor & Hamstring',exercises:phase===1?[{name:'HK Hip Flexor',rx:'30s each ×2',note:''},{name:'Hamstring Scoop',rx:'10 each',note:''},{name:'Supine Hamstring',rx:'30s each ×2',note:''},{name:'Band Pull-Aparts',rx:'2×15',note:''}]:[{name:'HK Hip Flexor + Lean',rx:'30s each ×2',note:''},{name:'SL RDL Stretch',rx:'8 each, 3s hold',note:''},{name:'Banded Hamstring PNF',rx:'30s each ×2',note:''},{name:'Banded Hip IR',rx:'10 each',note:''},{name:'T-Spine Roller',rx:'10 ext + 30s hold',note:''}]}]},
+friday:{warmup:'Jog 200m + dynamic drills + 5 tuck jumps, 5 squat jumps (≈10 min)',blocks:[
+{id:'fri_corr',cat:'corrective',title:phase===1?'Correctives: Quick Activation':phase===2?'Correctives: Pre-Plyo Activation':'Correctives: Speed Prep',exercises:phase===1?[{name:'Single-Leg Balance',rx:'2×15s each (L first)',note:'Hips level, eyes forward.'},{name:'Bird-Dog',rx:'2×6 each',note:'Quick but controlled. No rotation.'},{name:'Side-Lying Hip Raises',rx:'2×8 each (L first)',note:'Wake up the outer hips before plyos.'},{name:'Wall Ankle Rocks',rx:'8 each',note:'Quick ankle prep for jumping.'}]:phase===2?[{name:'SL Balance Eyes Closed',rx:'2×15s each (L first)',note:'Feel the ground, stay tall.'},{name:'Dead Bugs (Quick)',rx:'2×6 each',note:'Fast but controlled. Core on.'},{name:'Side Plank Hold',rx:'2×15s each',note:'Quick activation, straight body.'},{name:'Pronation Lunges',rx:'2×6 each',note:'Ankle warm-up for plyos.'}]:[{name:'SL Hop + Stick',rx:'3×4 each (L first)',note:'Hop forward, land and freeze 2s.'},{name:'Bird-Dog + Tap',rx:'2×6 each',note:'Fast: extend, elbow-to-knee, extend.'},{name:'Side Plank + Hip Raise',rx:'2×15s each',note:'Quick activation, lift top leg.'},{name:'Deep Squat Hold',rx:'20s',note:'Full depth, heels down, chest up.'}]},
+{id:'fri_speed',cat:'sprint',title:phase===1?'Hill Sprints & Intro Plyos':phase===2?'Hill Sprints & Plyo Dev':'Advanced Plyos',exercises:phase===1?[{name:'Hill Sprints ~30m',rx:'6 reps, walk down',note:''},{name:'Pogo Hops',rx:'3×10',note:''},{name:'Broad Jumps',rx:'3×4',note:''},{name:'Lateral Hops',rx:'3×8 each',note:''}]:phase===2?[{name:'Hill Sprints',rx:'8 reps, walk down',note:''},{name:'SL Pogo Hops',rx:'2×8 each',note:''},{name:'Broad Jump→Sprint',rx:'4 reps',note:''},{name:'SL Bounding',rx:'3×6 each',note:''},{name:'Depth Drop to Stick',rx:'3×4',note:''}]:[{name:'Hill Sprints',rx:'6 reps, jog down',note:''},{name:'Depth Jump→Broad',rx:'3×3',note:''},{name:'SL Bounding',rx:'3×8 each',note:''},{name:'Lateral Bound→Sprint',rx:'4 each way',note:''},{name:'10-5 Repeated Hops',rx:'3×6',note:''}]},
+{id:'fri_soccer',cat:'soccer',title:phase===1?'Shooting Fundamentals':phase===2?'Shooting Variety':'Finishing Under Pressure',exercises:phase===1?[{name:'Laces Strikes',rx:'10 each foot',note:''},{name:'Inside Placement',rx:'10 each foot',note:''},{name:'One-Touch Finish',rx:'10 reps',note:''}]:phase===2?[{name:'Dribble → Shoot',rx:'8 reps',note:''},{name:'Volley Finishing',rx:'8 reps',note:''},{name:'Chip Shots',rx:'6 reps',note:''},{name:'Angle Shooting',rx:'5 each side',note:''}]:[{name:'Sprint→Receive→Shoot',rx:'6 reps',note:''},{name:'1v1 to Finish',rx:'6 reps',note:''},{name:'Weak-Foot Circuit',rx:'8 reps',note:''},{name:'Penalty Kicks',rx:'5 reps',note:''}]},
+{id:'fri_cardio',cat:'cardio',title:'Cooldown Jog',exercises:[{name:'Easy Cooldown',rx:'8–10 min very easy',note:''}]},
+{id:'fri_mob',cat:'mobility',title:'Full-Body Mobility',exercises:phase===1?[{name:'FR Quads',rx:'60s each',note:''},{name:'FR IT Band',rx:'45s each',note:''},{name:'FR Calves',rx:'45s each',note:''},{name:'WGS',rx:'5 each side',note:''},{name:'Quad/HF Stretch',rx:'30s each',note:''},{name:'Child\'s Pose→Cobra',rx:'8 reps',note:''}]:[{name:'FR Full Lower',rx:'5 min',note:''},{name:'Lacrosse Ball Glutes',rx:'60s each',note:''},{name:'WGS',rx:'5 each, 5s holds',note:''},{name:'Straddle Fold',rx:'45s',note:''},{name:'Spinal Twist',rx:'30s each',note:''},{name:'Legs Up Wall',rx:'2 min',note:''}]}]},
+saturday:{rest:true},sunday:{rest:true}}}
+function getAllBlocks(phase){const p=getPrograms(phase),b=[];['monday','tuesday','wednesday','thursday','friday'].forEach(d=>{if(p[d].blocks)p[d].blocks.forEach(bl=>b.push({...bl}))});return b}
+function getCatDiffHistory(cat){const h=[];for(let w=0;w<TOTAL_WEEKS;w++){if(isTravel(w)){h.push(null);continue}const bl=getAllBlocks(getPhase(w)).filter(b=>b.cat===cat);let s=0,c=0;bl.forEach(b=>{const ws=getWS(w,b.id);if(ws.diff>0){s+=ws.diff;c++}});h.push(c>0?s/c:null)}return h}
+function getRecentTrend(cat){const h=getCatDiffHistory(cat).filter(v=>v!==null);if(h.length<2)return{trend:'unknown',avg:h.length?h[h.length-1]:0};const r=h.slice(-3),f=r[0],l=r[r.length-1],a=r.reduce((s,v)=>s+v,0)/r.length;return{trend:l-f>=.4?'getting_harder':f-l>=.4?'getting_easier':'flat',avg:a}}
+function renderInsights(){const c=document.getElementById('insights-section');const cs={};Object.keys(CATEGORIES).forEach(k=>{cs[k]={total:0,done:0,notes:[],diffs:[]}});const wc=Math.min(getCurrentWeekIdx()+1,TOTAL_WEEKS);for(let w=0;w<wc;w++){if(isTravel(w))continue;getAllBlocks(getPhase(w)).forEach(b=>{cs[b.cat].total++;const ws=getWS(w,b.id);if(ws.done)cs[b.cat].done++;if(ws.notes)cs[b.cat].notes.push(ws.notes);if(ws.diff>0)cs[b.cat].diffs.push(ws.diff)})}
+let html='<h3 style="font-size:16px;font-weight:600;margin-bottom:12px">Training Insights</h3>';const cr=Object.keys(CATEGORIES).map(k=>({key:k,label:CATEGORIES[k].label,rate:cs[k].total>0?cs[k].done/cs[k].total:0,total:cs[k].total,done:cs[k].done,diffs:cs[k].diffs})).filter(x=>x.total>0).sort((a,b)=>b.rate-a.rate);const td=cr.reduce((s,x)=>s+x.diffs.length,0);const ti=getTestInsights();if(ti)html+=ti;
+if(cr.length===0){html+=`<div class="insight-card"><h4>No data yet</h4><p>Start checking off workouts.</p></div>`;c.innerHTML=html;return}
+if(td>=2){html+='<h3 style="font-size:15px;font-weight:600;margin:16px 0 10px">Adaptive Recommendations</h3>';Object.keys(CATEGORIES).forEach(cat=>{const t=getRecentTrend(cat),st=cs[cat];if(st.diffs.length<2)return;const rd=st.diffs.slice(-4),ra=rd.reduce((s,v)=>s+v,0)/rd.length,ec=rd.filter(d=>d===1).length,rc=rd.filter(d=>d===2).length,hc=rd.filter(d=>d===3).length;let rt='',rT='',rB='',tI='',tc='';if(ra<=1.4||(ec>=3&&hc===0)){rt='progress-up';tI='↑';tc='trend-down';rT=`${CATEGORIES[cat].label}: Ready to Progress`;rB=getProgRec(cat)}else if(ra>=2.7||(hc>=3&&ec===0)){rt='caution';tI='↓';tc='trend-up';rT=`${CATEGORIES[cat].label}: Scale Back`;rB=getDeloadRec(cat)}else if(t.trend==='getting_harder'&&ra>=2.3){rt='warning';tI='⚠';tc='trend-up';rT=`${CATEGORIES[cat].label}: Getting Harder`;rB=`<span class="rec-tag rec-adjust">WATCH</span> Monitor one more week.`}else if(t.trend==='getting_easier'){rt='progress-up';tI='✓';tc='trend-down';rT=`${CATEGORIES[cat].label}: Adapting`;rB=`<span class="rec-tag rec-maintain">ADAPTING</span> Stay the course until consistently "Too Easy."`}else if(rc>=2){rt='';tI='→';tc='trend-flat';rT=`${CATEGORIES[cat].label}: On Track`;rB='Difficulty feels right.'}else if(ec>=1&&hc>=1){rt='warning';tI='~';tc='trend-flat';rT=`${CATEGORIES[cat].label}: Mixed`;rB=`<span class="rec-tag rec-adjust">MIXED</span> Check sleep, prior day, time of day.`}if(rT)html+=`<div class="insight-card ${rt}"><h4><span class="trend-arrow ${tc}">${tI}</span> ${rT}</h4><p>${rB}</p></div>`})}else if(td>0)html+=`<div class="insight-card"><h4>Keep Rating!</h4><p>Need more data for adaptive recs.</p></div>`;else html+=`<div class="insight-card warning"><h4>Rate Your Workouts</h4><p>Use the difficulty buttons!</p></div>`;
+html+='<h3 style="font-size:15px;font-weight:600;margin:20px 0 10px">Completion</h3>';const best=cr[0],worst=cr[cr.length-1];if(best.rate>0)html+=`<div class="insight-card strength-insight"><h4>Strongest: ${best.label}</h4><p>${Math.round(best.rate*100)}%</p></div>`;if(worst.rate<best.rate){const adv={sprint:'Earlier in day or pair with soccer.',cardio:'Even 15 min counts.',soccer:'10 min wall passes adds up.',strength:'Just show up.',mobility:'Tack 5 min onto other sessions.',corrective:'5 min a day makes a big difference.'};html+=`<div class="insight-card warning"><h4>Needs Work: ${worst.label}</h4><p>${Math.round(worst.rate*100)}%. ${adv[worst.key]||''}</p></div>`}
+const ov=cr.reduce((s,x)=>s+x.done,0)/Math.max(cr.reduce((s,x)=>s+x.total,0),1);if(ov>=.8)html+=`<div class="insight-card"><h4>Excellent!</h4><p>Over 80%. Check adaptive recs to level up.</p></div>`;else if(ov>=.5)html+=`<div class="insight-card"><h4>Solid</h4><p>${Math.round(ov*100)}%. Make easy sessions non-negotiable.</p></div>`;else if(ov>0)html+=`<div class="insight-card warning"><h4>Building</h4><p>Under 50%. Focus on 3 blocks/day.</p></div>`;
+const wn=getCurrentWeekIdx()+1;if(wn>=4&&wn<8)html+=`<div class="insight-card strength-insight"><h4>Phase 2</h4><p>Should feel harder — by design.</p></div>`;if(wn>=8)html+=`<div class="insight-card strength-insight"><h4>Preseason</h4><p>${TOTAL_WEEKS-wn+1} weeks left. Sharpen, don't add.</p></div>`;c.innerHTML=html}
+function getTestInsights(){let html='',any=false;TESTS.forEach(t=>{const r=getTestResults(t.id);if(r.length<2)return;any=true;const f=r[0].value,l=r[r.length-1].value,p=((l-f)/f*100).toFixed(1),imp=t.lowerIsBetter?(l<f):(l>f),stag=Math.abs(p)<1;if(imp&&Math.abs(p)>=5)html+=`<div class="insight-card progress-up"><h4>${t.icon} ${t.name}: ${Math.abs(p)}% Better!</h4><p>${getTPT(t.id)}</p></div>`;else if(!imp&&Math.abs(p)>=3)html+=`<div class="insight-card caution"><h4>${t.icon} ${t.name}: Wrong Direction</h4><p>${getTRT(t.id)}</p></div>`;else if(stag&&r.length>=3)html+=`<div class="insight-card warning"><h4>${t.icon} ${t.name}: Plateau</h4><p>${getTPP(t.id)}</p></div>`});return any?'<h3 style="font-size:15px;font-weight:600;margin:0 0 10px">Test Insights</h3>'+html:''}
+function getTPT(id){return{sprint_30m:'Acceleration improving. Keep building mechanics.',broad_jump:'Explosive power developing from plyos.',six_min_run:'Aerobic base growing. Big for XC season.',juggling:'Ball control improving. Try weak-foot-only sessions.',squat_hold:'Ankle, hip, and thoracic mobility all improving. Fewer injuries ahead.',shuttle_5_10_5:'Direction changes getting faster. Great for soccer.'}[id]||''}
+function getTRT(id){return{sprint_30m:'Possible fatigue. Ensure speed days follow rest. Consider lighter week.',broad_jump:'Leg power dipping. Check recovery — maybe too much running + lifting.',six_min_run:'Aerobic capacity down. Skipping easy runs? Check sleep/hydration.',juggling:'Technical work on fresh legs only.',squat_hold:'Losing squat depth = tightening up. Are you skipping mobility? Early warning for injury.',shuttle_5_10_5:'Agility dropping. Check mobility and recovery.'}[id]||''}
+function getTPP(id){return{sprint_30m:'Try contrast training or focus on arm mechanics.',broad_jump:'Add reactive plyos (depth jumps, bounds).',six_min_run:'Add a 20 min tempo run once per week.',juggling:'Add constraints: weak foot, thigh-foot alternating, headers.',squat_hold:'Try holding a light weight as counterbalance. Shift side to side in the squat. Add banded ankle work — ankles are usually the limiter.',shuttle_5_10_5:'Work deceleration: full speed to 2-step stop at a cone.'}[id]||''}
+function getProgRec(cat){return{sprint:'<span class="rec-tag rec-progress">PROGRESS</span> Add 1–2 reps, longer distance, or 15s less rest.',cardio:'<span class="rec-tag rec-progress">PROGRESS</span> +5 min runs, +1 interval rep, or -15s rest.',soccer:'<span class="rec-tag rec-progress">PROGRESS</span> Speed up drills, add defender, 50% weak foot.',strength:'<span class="rec-tag rec-progress">PROGRESS</span> Add weight, reps, or a set.',mobility:'<span class="rec-tag rec-progress">PROGRESS</span> +15s holds, deeper variations, add bands.',corrective:'<span class="rec-tag rec-progress">PROGRESS</span> Harder variations — eyes closed, longer holds, single-leg.'}[cat]||''}
+function getDeloadRec(cat){return{sprint:'<span class="rec-tag rec-deload">SCALE BACK</span> -2 reps, +30s rest, 85% effort.',cardio:'<span class="rec-tag rec-deload">SCALE BACK</span> -5 min runs, -1-2 reps, +30s rest.',soccer:'<span class="rec-tag rec-deload">SCALE BACK</span> -30% drills, 2-3 per session, more fun stuff.',strength:'<span class="rec-tag rec-deload">SCALE BACK</span> -20% weight or drop a set.',mobility:'<span class="rec-tag rec-deload">SCALE BACK</span> Shorter holds, 6/10 intensity.',corrective:'<span class="rec-tag rec-deload">SCALE BACK</span> Basic versions, fewer reps, shorter holds.'}[cat]||''}
+const DAILY_CUES=["Talk to yourself like you'd talk to a teammate.","Mistakes are reps — that's how you get better.","Judge today by your effort, not the outcome.","Progress, not perfection.","You're better than you think, and the work is showing it.","The best players have short memories for mistakes.","Compare yourself to May-you, not to anyone else.","Effort and attitude are 100% yours to control.","You don't have to be perfect to be good — you already are good.","Frustration means you care. Use it, don't drown in it.","Be your own coach, not your own critic.","Confidence comes from evidence — keep stacking it.","One good rep at a time.","Trust your training. You've earned it.","A frustrating week often comes right before a jump.","Scan before you receive — know your next move early.","Head up between touches.","First touch out of your feet, into space.","Off the ball, make space — then attack it.","Pick a pro in your position and steal one thing they do.","Make the decision a half-second sooner today.","Communicate — one word to a teammate counts.","Breathe out slow — longer than the breath in — then next play.","Feel the frustration for a second, then let it go. Next play."];
+const VIDEOS=[
+{id:'b_Gebed7DPE',theme:'Soccer IQ',title:'Scan like a pro',blurb:"How and when to check your shoulders so you always know where space and pressure are."},
+{id:'jSxnP-s4VDM',theme:'Emotional IQ',title:'How to handle a mistake',blurb:"Great players aren't mistake-free — they reset fast and get on with the next play."},
+{id:'ORpOUmGEOY8',theme:'Encouragement',title:'Who you are off the field',blurb:"Your worth isn't your stat line. Play with freedom, not fear."},
+{id:'4nFN9L7yUk8',theme:'Soccer IQ',title:'Off-the-ball movement: 7 rules',blurb:"Most of the game happens without the ball. Learn the runs that create space and chances."},
+{id:'dzd84dEmJVQ',theme:'Emotional IQ',title:'Staying calm under pressure',blurb:"Simple ways to control your emotions and keep a clear head when the game heats up."},
+{id:'K8S0CK4ysRo',theme:'Encouragement',title:'How to be confident',blurb:"Confidence is a daily habit — how to build belief in yourself on and off the field."},
+{id:'A7YR73ALZ1s',theme:'Soccer IQ',title:'Check your shoulder',blurb:"The simple scanning habit that separates good players from great ones."}
+];
+function daysSince(date){return Math.max(0,Math.round((date-START_DATE)/864e5))}
+function dayCue(date){return DAILY_CUES[daysSince(date)%DAILY_CUES.length]}
+function weekFocusHTML(wk){const v=VIDEOS[Math.max(0,Math.min(wk-4,VIDEOS.length-1))];return '<div class="week-focus"><div class="wf-head"><span class="wf-label">This week</span><span class="wf-theme">'+v.theme+'</span></div><div class="wf-title">'+v.title+'</div><div class="wf-text">'+v.blurb+'</div><div class="wf-video"><iframe src="https://www.youtube.com/embed/'+v.id+'" title="'+v.title+'" frameborder="0" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen loading="lazy"></iframe></div></div>';}
+
+/* ================================================================
+   V2 SHELL — new dark UI on top of the identical data layer
+   ================================================================ */
+const CAT_UI={sprint:'#f87171',cardio:'#60a5fa',soccer:'#34d399',strength:'#fbbf24',mobility:'#a78bfa',corrective:'#fb7185'};
+const DAY_KEYS=['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
+const DAY_LABELS=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+const DAY_SHORT=['M','T','W','T','F','S','S'];
+const DAY_THEMES=['Speed + Soccer + Push/Core • +XC team run','Strength + Mobility + Stretch • +XC team run','Soccer Technical + Push/Core + Yoga • +XC team run','Strength + Mobility • +XC team run','Plyos + Shooting + Easy Jog + Mobility','Rest & Recovery','Rest & Recovery'];
+let currentDay=0,programStatus='live',activeTab='home',lastFocusWeek=-1;
+
+function todayOffset(){return Math.floor((new Date()-START_DATE)/864e5)}
+function goToday(rerender){const d=todayOffset();
+  if(d<0){programStatus='pre';currentWeek=0;currentDay=0}
+  else if(d>TOTAL_WEEKS*7-1){programStatus='post';currentWeek=TOTAL_WEEKS-1;currentDay=6}
+  else{programStatus='live';currentWeek=Math.floor(d/7);currentDay=d%7}
+  if(rerender!==false)renderHome()}
+function weekCompletion(w){const bl=getAllBlocks(getPhase(w));let d=0;bl.forEach(b=>{if(getWS(w,b.id).done)d++});return{done:d,total:bl.length}}
+function ringSVG(pct,size,stroke,color){const r=(size-stroke)/2,c=2*Math.PI*r,off=c*(1-Math.max(0,Math.min(1,pct)));
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"><circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="var(--bg3)" stroke-width="${stroke}"/><circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${color}" stroke-width="${stroke}" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${off}" transform="rotate(-90 ${size/2} ${size/2})"/></svg>`}
+
+/* ---------- HOME ---------- */
+function renderHome(){
+  const pi=getPhaseLabel(currentWeek),pp=document.getElementById('phase-pill');
+  pp.textContent=pi.label;pp.className='pill p'+getPhase(currentWeek);
+  const tOff=todayOffset(),todayW=(tOff>=0&&tOff<=TOTAL_WEEKS*7-1)?Math.floor(tOff/7):-1,todayD=todayW>=0?tOff%7:-1;
+  /* week strip */
+  let sh='';
+  for(let w=0;w<TOTAL_WEEKS;w++){
+    const wc=weekCompletion(w),pct=wc.total?wc.done/wc.total:0,tv=isTravel(w);
+    sh+=`<button class="wk${w===currentWeek?' sel':''}${w===todayW?' is-today':''}" onclick="jumpWeek(${w})">${ringSVG(tv?0:pct,44,4,tv?'var(--amber)':pct>=1?'var(--green-glow)':'var(--green-bright)')}<span class="wk-label num">${tv?'✈':'W'+(w+1)}</span>${TEST_WEEKS.includes(w)?'<span class="wk-test"></span>':''}</button>`}
+  document.getElementById('week-strip').innerHTML=sh;
+  const selEl=document.querySelector('.wk.sel');
+  if(selEl&&selEl.scrollIntoView){try{selEl.scrollIntoView({block:'nearest',inline:'center'})}catch(e){}}
+  /* day chips */
+  const dates=getWeekDates(currentWeek),prg=getPrograms(getPhase(currentWeek));
+  let dh='';
+  for(let i=0;i<7;i++){
+    const rest=i>4;let allDone=false;
+    if(!rest){const bl=prg[DAY_KEYS[i]].blocks;allDone=bl.length>0&&bl.every(b=>getWS(currentWeek,b.id).done)}
+    dh+=`<button class="dc${i===currentDay?' sel':''}${rest?' rest':''}${allDone?' alldone':''}" onclick="jumpDay(${i})"><span class="dc-d">${DAY_SHORT[i]}</span><span class="dc-n num">${dates[i].getDate()}</span></button>`}
+  document.getElementById('day-chips').innerHTML=dh;
+  /* banners */
+  const isTW=TEST_WEEKS.includes(currentWeek);let bh='';
+  if(programStatus==='pre')bh+=`<div class="banner status">⏳ Program starts <b>May 25</b>. Showing Week 1.</div>`;
+  if(programStatus==='post')bh+=`<div class="banner status">🎉 <b>Program complete!</b> All 11 weeks are in the books — check the PR Wall.</div>`;
+  if(isTW)bh+=`<div class="banner test">📋 <b>Test Week ${TEST_WEEKS.indexOf(currentWeek)+1}/6</b> — time to set some PRs. <button class="jump-pr" onclick="showTab('pr')">PR Wall →</button></div>`;
+  document.getElementById('home-banners').innerHTML=bh;
+  /* travel toggle */
+  document.getElementById('travel-toggle').checked=isTravel(currentWeek);
+  /* day view */
+  const tv=isTravel(currentWeek),phase=getPhase(currentWeek),day=prg[DAY_KEYS[currentDay]];
+  const isToday=(currentWeek===todayW&&currentDay===todayD);
+  let dn=0,tot=0;
+  if(!day.rest&&!tv){day.blocks.forEach(b=>{tot++;if(getWS(currentWeek,b.id).done)dn++})}
+  let h=`<div class="day-head"><div><div class="day-name num">${isToday?'TODAY · ':''}${DAY_LABELS[currentDay].toUpperCase()}</div><div class="day-sub">${fmtDate(dates[currentDay])} • Week ${currentWeek+1} • <span class="phase-txt p${phase}">Phase ${phase}</span></div></div>${tot?`<div class="day-count num">${dn}<small>/${tot} done</small></div>`:''}</div>`;
+  h+=`<div class="day-cue">“${dayCue(dates[currentDay])}”</div>`;
+  if(tv){
+    h+=`<div class="rest-card"><div class="rc-icon">✈️</div><div><b>Travel week</b><p>Rest or do what you can!</p></div></div>`;
+  }else if(day.rest){
+    h+=`<div class="rest-card"><div class="rc-icon">😴</div><div><b>Rest &amp; recovery</b><p>Recovery is where the gains get locked in.</p></div></div>`;
+    if(currentDay===5)h+=`<div class="mini-note">Optional easy distance run if he wants it — his call. XC already covers the weekly mileage.</div>`;
+    if(currentDay===5&&isTW)h+=`<div class="test-banner">📋 <b>Test Week!</b> Run fitness tests this week.</div>`;
+  }else{
+    h+=`<div class="day-theme">${DAY_THEMES[currentDay]}</div>`;
+    h+=`<div class="warmup"><span class="wu-tag">WARMUP</span><p>${day.warmup}</p></div>`;
+    day.blocks.forEach(bl=>{
+      const ws=getWS(currentWeek,bl.id),cat=CATEGORIES[bl.cat],ui=CAT_UI[bl.cat],io=expandedBlocks[`${currentWeek}_${bl.id}`],dv=ws.diff||0;
+      h+=`<div class="blk${ws.done?' done':''}" style="--cat:${ui}"><div class="blk-head">`;
+      h+=`<button class="chk${ws.done?' on':''}" aria-label="mark done" onclick="toggleDoneV2(${currentWeek},'${bl.id}')">${ws.done?'✓':''}</button>`;
+      h+=`<div class="blk-main" onclick="toggleExpandV2(${currentWeek},'${bl.id}')"><span class="cat-tag" style="color:${ui};background:${ui}1f;border:1px solid ${ui}44">${cat.label}</span>${dv?`<span class="diff-ind ${DIFF_IND[dv]}"></span>`:''}<div class="blk-title">${bl.title}</div></div>`;
+      h+=`<span class="chev${io?' open':''}" onclick="toggleExpandV2(${currentWeek},'${bl.id}')">▾</span></div>`;
+      h+=`<div class="blk-body${io?' open':''}"><ul class="ex-list">`;
+      bl.exercises.forEach(ex=>{
+        const yt='https://www.youtube.com/results?search_query='+encodeURIComponent(ex.name+' exercise form');
+        const vl=ex.name!=='Follow your program'?` <a href="${yt}" target="_blank" rel="noopener" class="vid-link" title="Watch how on YouTube">▶</a>`:'';
+        h+=`<li><span class="ex-name">${ex.name}</span>${vl}<span class="ex-rx">${ex.rx}</span>${ex.note?`<span class="ex-note">${ex.note}</span>`:''}</li>`});
+      h+=`</ul><div class="diff-row"><span class="diff-lab">How was it?</span>`;
+      [1,2,3].forEach(d=>{h+=`<button class="diff-btn ${dv===d?DIFF_CSS[d]:''}" onclick="setDiffV2(${currentWeek},'${bl.id}',${d})">${DIFF_LABELS[d]}</button>`});
+      h+=`</div><textarea class="notes" rows="1" placeholder="Notes…" onchange="saveNotesV2(${currentWeek},'${bl.id}',this.value)" onfocus="this.rows=2" onblur="if(!this.value)this.rows=1">${ws.notes||''}</textarea></div></div>`});
+  }
+  document.getElementById('day-view').innerHTML=h;
+  /* weekly mindset video — only rebuild when the week changes (avoid iframe reloads) */
+  if(lastFocusWeek!==currentWeek){document.getElementById('focus-wrap').innerHTML=weekFocusHTML(currentWeek);lastFocusWeek=currentWeek}
+}
+function jumpWeek(w){currentWeek=w;renderHome()}
+function jumpDay(d){currentDay=d;renderHome()}
+function toggleDoneV2(w,bid){const ws=getWS(w,bid);ws.done=!ws.done;setWS(w,bid,ws);renderHome()}
+function toggleExpandV2(w,bid){const k=`${w}_${bid}`;expandedBlocks[k]=!expandedBlocks[k];renderHome()}
+function saveNotesV2(w,bid,n){const ws=getWS(w,bid);ws.notes=n;setWS(w,bid,ws)}
+function setDiffV2(w,bid,d){const ws=getWS(w,bid);ws.diff=ws.diff===d?0:d;setWS(w,bid,ws);renderHome()}
+function toggleTravelV2(){setTravelState(currentWeek,document.getElementById('travel-toggle').checked);renderHome()}
+
+/* ---------- PR WALL ---------- */
+function fmtVal(v,unit){const u=unit==='seconds'?'s':unit==='inches'?'"':unit==='meters'?'m':'';return v+u}
+function sparkSVG(vals,color){
+  if(vals.length<2)return'';
+  const w=120,h=34,pad=5,mn=Math.min(...vals),mx=Math.max(...vals),rg=(mx-mn)||1;
+  const pts=vals.map((v,i)=>[pad+i*(w-2*pad)/(vals.length-1),h-pad-(v-mn)/rg*(h-2*pad)]);
+  const d=pts.map(p=>(Math.round(p[0]*10)/10)+','+(Math.round(p[1]*10)/10)).join(' ');
+  const lp=pts[pts.length-1];
+  return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><polyline points="${d}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" opacity=".85"/><circle cx="${lp[0]}" cy="${lp[1]}" r="3" fill="${color}"/></svg>`}
+function renderPR(){
+  let gh='';
+  TESTS.forEach(t=>{
+    const r=getTestResults(t.id);let inner='';
+    if(!r.length){inner=`<div class="pr-best num dim">—</div><div class="pr-sub"><span class="dim">No data yet</span></div>`}
+    else{
+      const best=t.lowerIsBetter?Math.min(...r.map(x=>x.value)):Math.max(...r.map(x=>x.value));
+      let delta='<span class="dim">Baseline set</span>',base='';
+      if(r.length>=2){
+        const prev=r[r.length-2].value,l=r[r.length-1].value,dp=(l-prev)/prev*100,imp=t.lowerIsBetter?l<prev:l>prev;
+        delta=`<span class="pr-delta ${imp?'good':'bad'}">${imp?'▲':'▼'} ${Math.abs(dp).toFixed(1)}% last test</span>`;
+        const f=r[0].value,bp=(r[r.length-1].value-f)/f*100,bimp=t.lowerIsBetter?r[r.length-1].value<f:r[r.length-1].value>f;
+        base=`<div class="pr-baseline"><span class="pr-base ${bimp?'good':'bad'}">${bimp?'▲':'▼'} ${Math.abs(bp).toFixed(1)}% since baseline</span></div>`}
+      inner=`<div class="pr-best num" style="color:${t.color}">${fmtVal(best,t.unit)}</div><div class="pr-sub">${delta}</div>${sparkSVG(r.map(x=>x.value),t.color)}${base}`}
+    gh+=`<button class="pr-card${t.id===activeTestId?' sel':''}" style="--tc:${t.color}" onclick="selectTestV2('${t.id}')"><div class="pr-name">${t.icon} ${t.name}</div>${inner}</button>`});
+  document.getElementById('pr-grid').innerHTML=gh;
+  renderPRDetail()}
+function renderPRDetail(){
+  const test=TESTS.find(t=>t.id===activeTestId),results=getTestResults(test.id);
+  let html=`<div class="panel pr-panel" style="--tc:${test.color}"><h3 class="tname">${test.icon} ${test.name}</h3><div class="pr-meta" style="color:${test.color}">${test.cat} • ${test.lowerIsBetter?'Lower':'Higher'} is better • ${test.unit}</div>`;
+  html+=`<div class="entry-row"><div class="inp-group"><label>Test Week</label><select id="test-week-select">`;
+  TEST_WEEKS.forEach(w=>{const d=getWeekDates(w),has=results.some(r=>r.week===w);html+=`<option value="${w}">Wk ${w+1} (${fmtDate(d[0])})${has?' ✓':''}</option>`});
+  html+=`</select></div><div class="inp-group"><label>Result (${test.unit})</label><input type="number" step="any" id="test-value-input" placeholder="Enter result" inputmode="decimal"></div><button class="save-btn" onclick="saveTestV2()">SAVE</button><span class="save-msg" id="save-msg">Saved!</span></div>`;
+  if(results.length>0){
+    const pv=test.lowerIsBetter?Math.min(...results.map(r=>r.value)):Math.max(...results.map(r=>r.value));
+    html+=`<table class="results-table"><thead><tr><th>Week</th><th>Date</th><th>Result</th><th>Δ</th><th></th></tr></thead><tbody>`;
+    results.forEach((r,i)=>{
+      const d=getWeekDates(r.week),isPR=r.value===pv;let ch='';
+      if(i>0){const prev=results[i-1].value,diff=r.value-prev,pct=((diff/prev)*100).toFixed(1),imp=test.lowerIsBetter?(diff<0):(diff>0);
+        ch=`<span class="improve-badge ${imp?'improve-up':'improve-down'}">${imp?'▲':'▼'} ${Math.abs(pct)}%</span>`}
+      else ch='<span class="dim" style="font-size:11px">Base</span>';
+      html+=`<tr><td>Wk ${r.week+1}</td><td>${fmtDate(d[0])}</td><td><strong class="num" style="font-size:15px">${r.value}</strong> <span class="dim" style="font-size:11px">${test.unit}</span>${isPR?' <span class="pr-badge">PR!</span>':''}</td><td>${ch}</td><td><button class="delete-btn" onclick="deleteTestV2(${r.week})">✕</button></td></tr>`});
+    html+=`</tbody></table>`;
+  }else html+=`<div class="no-data-msg">No results yet. Run your first test and put a number on the board!</div>`;
+  html+=`<details class="proto"><summary>Test protocol &amp; tips</summary><div class="proto-body">${test.protocol}</div></details></div>`;
+  document.getElementById('pr-detail').innerHTML=html}
+function selectTestV2(id){activeTestId=id;renderPR()}
+function saveTestV2(){
+  const wk=parseInt(document.getElementById('test-week-select').value),val=document.getElementById('test-value-input').value;
+  if(!val||isNaN(parseFloat(val)))return;
+  saveTestResult(activeTestId,wk,val);
+  document.getElementById('test-value-input').value='';
+  const m=document.getElementById('save-msg');m.classList.add('show');setTimeout(()=>m.classList.remove('show'),2000);
+  renderPR()}
+function deleteTestV2(wk){if(confirm('Delete this test result?')){deleteTestResult(activeTestId,wk);renderPR()}}
+
+/* ---------- PROGRESS (honest stats: only weeks that have happened) ---------- */
+function computeHonestStats(){
+  const cap=Math.min(getCurrentWeekIdx(),TOTAL_WEEKS-1);
+  let tB=0,cB=0;const cs={};Object.keys(CATEGORIES).forEach(c=>{cs[c]={total:0,done:0}});const wr=[];
+  for(let w=0;w<=cap;w++){
+    if(isTravel(w)){wr.push(null);continue}
+    const bl=getAllBlocks(getPhase(w));let wT=0,wD=0;
+    bl.forEach(b=>{tB++;wT++;cs[b.cat].total++;if(getWS(w,b.id).done){cB++;wD++;cs[b.cat].done++}});
+    wr.push(wT>0?Math.round(wD/wT*100):0)}
+  let streak=0;
+  for(let w=getCurrentWeekIdx();w>=0;w--){
+    if(isTravel(w))continue;
+    const bl=getAllBlocks(getPhase(w));
+    if(bl.every(b=>getWS(w,b.id).done)&&bl.length>0)streak++;else if(w<getCurrentWeekIdx())break}
+  let tR=0;
+  for(let w=0;w<=cap;w++){if(isTravel(w))continue;getAllBlocks(getPhase(w)).forEach(b=>{if(getWS(w,b.id).diff>0)tR++})}
+  return{cap,totalBlocks:tB,doneBlocks:cB,pct:tB>0?Math.round(cB/tB*100):0,weekRates:wr,catStats:cs,streak,ratings:tR}}
+function diffChartSVG(cap){
+  const W=340,H=150,padL=44,padR=10,padT=10,padB=22,n=cap+1;
+  const x=i=>padL+(n===1?(W-padL-padR)/2:i*(W-padL-padR)/(n-1));
+  const y=v=>padT+(3-v)*(H-padT-padB)/2;
+  let s=`<svg viewBox="0 0 ${W} ${H}" class="chart">`;
+  [[3,'HARD'],[2,'RIGHT'],[1,'EASY']].forEach(g=>{s+=`<line x1="${padL}" y1="${y(g[0])}" x2="${W-padR}" y2="${y(g[0])}" stroke="var(--border)" stroke-dasharray="3 4"/><text x="${padL-6}" y="${y(g[0])+3}" text-anchor="end" class="ax">${g[1]}</text>`});
+  for(let i=0;i<n;i++)if(n<=7||i%2===0)s+=`<text x="${x(i)}" y="${H-6}" text-anchor="middle" class="ax">W${i+1}</text>`;
+  let anyLine=false;
+  Object.keys(CATEGORIES).forEach(k=>{
+    const hist=getCatDiffHistory(k).slice(0,n);let d='',started=false;
+    hist.forEach((v,i)=>{if(v===null)return;d+=(started?' L ':'M ')+x(i)+' '+y(v);started=true});
+    if(!d)return;anyLine=true;
+    s+=`<path d="${d}" fill="none" stroke="${CAT_UI[k]}" stroke-width="2" stroke-linejoin="round"/>`;
+    hist.forEach((v,i)=>{if(v!==null)s+=`<circle cx="${x(i)}" cy="${y(v)}" r="3" fill="${CAT_UI[k]}"/>`})});
+  s+='</svg>';
+  return anyLine?s:'<div class="no-data-msg">Rate workouts (Too Easy / Just Right / Too Hard) to see the trend.</div>'}
+function renderProgressV2(){
+  const st=computeHonestStats();
+  document.getElementById('stat-cards').innerHTML=
+    `<div class="statBox"><div class="v" style="color:var(--green-glow)">${st.pct}%</div><div class="l">Completion</div></div>`+
+    `<div class="statBox"><div class="v" style="color:var(--blue)">${st.doneBlocks}</div><div class="l">Blocks Done</div></div>`+
+    `<div class="statBox"><div class="v" style="color:var(--amber)">${st.ratings}</div><div class="l">Ratings</div></div>`+
+    `<div class="statBox"><div class="v" style="color:#a78bfa">${st.streak}</div><div class="l">Week Streak</div></div>`+
+    `<div class="honest-note">Honest stats — counted through Week ${st.cap+1} only. The future doesn't count yet.</div>`;
+  let bh='';
+  st.weekRates.forEach((v,i)=>{
+    const tvw=v===null,cls=tvw?'travel':v>=80?'hi':v>=50?'mid':'lo';
+    bh+=`<div class="wb"><span class="wb-v num">${tvw?'✈':v+'%'}</span><div class="wb-bar ${cls}" style="height:${tvw?60:Math.max(v,3)}%"></div><span class="wb-l">W${i+1}</span></div>`});
+  document.getElementById('weekly-bars').innerHTML=bh;
+  let ch='';
+  Object.keys(CATEGORIES).forEach(k=>{
+    const c=st.catStats[k];if(!c.total)return;
+    const p=Math.round(c.done/c.total*100);
+    ch+=`<div class="cat-row"><span class="cl" style="color:${CAT_UI[k]}">${CATEGORIES[k].label}</span><div class="ctrack"><div class="cfill" style="width:${p}%;background:${CAT_UI[k]}"></div></div><span class="cv">${c.done}/${c.total} · ${p}%</span></div>`});
+  document.getElementById('cat-bars').innerHTML=ch||'<div class="no-data-msg">No training weeks yet.</div>';
+  document.getElementById('diff-chart').innerHTML=diffChartSVG(st.cap);
+  document.getElementById('diff-legend').innerHTML=Object.keys(CATEGORIES).map(k=>`<span><i style="background:${CAT_UI[k]}"></i>${CATEGORIES[k].label}</span>`).join('')}
+
+/* ---------- TABS ---------- */
+function showTab(t){
+  activeTab=t;
+  document.querySelectorAll('.tab').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.bottom-nav button').forEach(b=>b.classList.remove('active'));
+  document.getElementById(t+'-tab').classList.add('active');
+  document.getElementById('nav-'+t).classList.add('active');
+  if(t==='home')renderHome();
+  if(t==='pr')renderPR();
+  if(t==='progress')renderProgressV2();
+  if(t==='insights')renderInsights();
+  if(typeof window!=='undefined'&&window.scrollTo)window.scrollTo(0,0)}
+
+/* ---------- BACKUP / RESTORE ---------- */
+function buildExportJSON(){return JSON.stringify({app:'Summer Training Dashboard',key:'trainingV5',exportedAt:new Date().toISOString(),data:getState()},null,2)}
+function applyImport(text){
+  let p;try{p=JSON.parse(text)}catch(e){return{ok:false,msg:'That is not valid JSON.'}}
+  let data=null;
+  if(p&&typeof p==='object'&&!Array.isArray(p)){
+    if(p.key==='trainingV5'&&p.data&&typeof p.data==='object'&&!Array.isArray(p.data))data=p.data;
+    else if(!p.key&&!p.data)data=p}
+  if(!data)return{ok:false,msg:'Not a valid training backup.'};
+  const n=Object.keys(data).length;
+  if(typeof confirm==='function'&&!confirm(`Import backup with ${n} entries? This REPLACES all current data on this device.`))return{ok:false,msg:'Import cancelled.'};
+  saveState(data);
+  return{ok:true,msg:`Imported ${n} entries ✓`}}
+function exportData(){
+  const json=buildExportJSON(),blob=new Blob([json],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='training-backup-'+new Date().toISOString().slice(0,10)+'.json';
+  document.body.appendChild(a);a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500);
+  setBackupMsg('Backup downloaded ✓')}
+function importFile(inp){
+  const f=inp.files&&inp.files[0];if(!f)return;
+  const rd=new FileReader();
+  rd.onload=()=>{const r=applyImport(rd.result);setBackupMsg(r.msg);if(r.ok)refreshAll()};
+  rd.readAsText(f);inp.value=''}
+function importPasted(){
+  const t=document.getElementById('import-text').value.trim();
+  if(!t){setBackupMsg('Paste backup JSON first.');return}
+  const r=applyImport(t);setBackupMsg(r.msg);
+  if(r.ok){document.getElementById('import-text').value='';refreshAll()}}
+function refreshAll(){lastFocusWeek=-1;renderHome();if(activeTab==='pr')renderPR();if(activeTab==='progress')renderProgressV2();if(activeTab==='insights')renderInsights()}
+function setBackupMsg(m){const el=document.getElementById('backup-msg');el.textContent=m;setTimeout(()=>{if(el.textContent===m)el.textContent=''},5000)}
+
+/* ---------- INIT ---------- */
+function initV2(){goToday(false);showTab('home')}
+if(typeof document!=='undefined'&&document.getElementById&&document.getElementById('home-tab')){initV2()}
+</script>
+</body>
+</html>

@@ -619,6 +619,202 @@ const EXPERIMENTS = [
         realWorld:'This is exactly why giant steel ships float! Steel is denser than water, but a ship\'s hull is shaped to hold LOTS of air, making its overall density less than water.</p><p>Life jackets work the same way — they\'re filled with light, air-trapping foam that lowers your overall density so you float.</p><p>And ducks? Their feathers trap air, turning them into fluffy little boats!'
       }
     ]
+  },
+  {
+    id:'invisibleink', icon:'🕵️', title:'Invisible Ink Secret Messages',
+    topic:'Chemistry — Acids & Oxidation', desc:'Write a hidden message and make it appear like magic!',
+    steps:[
+      {
+        type:'intro',
+        label:'🕵️ Setup',
+        text:'<p>We have <strong>lemon juice</strong> in a little bowl, a <strong>cotton swab</strong> for writing, a piece of <strong>white paper</strong>, and a <strong>lamp</strong> that gets nice and warm (a grown-up helps with anything hot!).</p><p>We\'ll dip the swab in lemon juice, write a secret message on the paper, and let it dry completely. The message disappears... but is it really gone?</p>',
+        bench:{emoji:'🍋🖌️📄',label:'Lemon juice, cotton swab, and paper — spy kit ready!'}
+      },
+      {
+        type:'predict',
+        label:'🤔 Make a Prediction',
+        question:'The dried lemon juice message is totally invisible. What will happen when we gently warm the paper near the lamp?',
+        options:[
+          {text:'The message will appear in brown letters',icon:'📜',correct:true},
+          {text:'Nothing — the message is gone forever',icon:'😐',correct:false},
+          {text:'The paper will turn bright green',icon:'🟢',correct:false},
+          {text:'The message will glow in the dark',icon:'🌟',correct:false}
+        ],
+        explanation:'The message appears in brown! Lemon juice is a mild <strong>acid</strong> that soaks into the paper and weakens those exact spots. When the paper warms up, the juice-soaked spots <strong>oxidize</strong> — react with oxygen in the air — and turn brown before the rest of the paper does!'
+      },
+      {
+        type:'action',
+        label:'🔥 Reveal the Message!',
+        text:'<p>Holding the paper near the warm lamp... watching very closely...</p>',
+        bench:{emoji:'📜✨🕵️',label:'Brown letters are appearing on the blank paper!',animation:'reacting'},
+        result:'<p>Amazing! Golden-brown letters are <strong>slowly appearing</strong> on the blank paper — the secret message is revealed! 🕵️</p><p>Here\'s the science: lemon juice is a weak <strong>acid</strong>. It soaks in and slightly breaks down the paper wherever you wrote. When heat is added, those spots react with oxygen — a reaction called <strong>oxidation</strong> — and turn brown much faster than the clean paper around them. Your writing shows up like toast browning in exactly the shape of your letters!</p>'
+      },
+      {
+        type:'quiz',
+        label:'📝 Check Understanding',
+        question:'Why do the lemon juice letters turn brown before the rest of the paper?',
+        options:[
+          {text:'The acid-soaked spots oxidize (react with oxygen) faster when heated',icon:'🍋',correct:true},
+          {text:'The lamp shoots brown light at the letters',icon:'🔦',correct:false},
+          {text:'Lemon juice is secretly brown paint',icon:'🎨',correct:false},
+          {text:'The paper is blushing with embarrassment',icon:'😳',correct:false}
+        ],
+        explanation:'The lemon juice weakened those spots, so heat makes them react with oxygen and brown much faster than plain paper. It\'s the same kind of reaction that turns toast brown — just aimed exactly where you wrote!'
+      },
+      {
+        type:'conclusion',
+        label:'📓 Lab Notebook',
+        science:'Lemon juice is a mild <strong>acid</strong> that soaks into paper and weakens the spots where you write.</p><p>Heat speeds up <strong>oxidation</strong> — a chemical reaction between a substance and oxygen in the air.</p><p>The weakened, juice-soaked spots oxidize and turn brown before the rest of the paper, revealing the hidden message.',
+        realWorld:'Real spies used invisible ink to pass secret messages during the American Revolution — George Washington\'s spy ring did exactly this!</p><p>Oxidation is all around you: it\'s why a sliced apple turns brown on the counter and why toast browns in the toaster.</p><p>Rust on a bike is oxidation too — iron reacting with oxygen, just much more slowly!'
+      }
+    ]
+  },
+  {
+    id:'walkingwater', icon:'🌊', title:'Walking Water Rainbow',
+    topic:'Physics — Capillary Action', desc:'Watch water climb uphill and mix a brand-new color!',
+    steps:[
+      {
+        type:'intro',
+        label:'🌊 Setup',
+        text:'<p>We have three cups in a row: one with <strong>red water</strong>, one <strong>empty</strong> in the middle, and one with <strong>yellow water</strong>. Then we fold two <strong>paper towel strips</strong> into bridges — one from the red cup to the empty cup, and one from the yellow cup to the empty cup.</p><p>Water can\'t jump... and it definitely can\'t climb. Or can it?</p>',
+        bench:{emoji:'🔴🥛💛',label:'Red water, empty cup, yellow water — bridges in place!'}
+      },
+      {
+        type:'predict',
+        label:'🤔 Make a Prediction',
+        question:'We leave the cups alone overnight. What do you think we\'ll find in the empty middle cup in the morning?',
+        options:[
+          {text:'Still empty — water can\'t climb up a paper towel',icon:'😐',correct:false},
+          {text:'Orange water — the red and yellow walked over and mixed!',icon:'🧡',correct:true},
+          {text:'The paper towels will dissolve into mush',icon:'🫠',correct:false},
+          {text:'The water will freeze solid',icon:'🧊',correct:false}
+        ],
+        explanation:'Orange water! The red and yellow water each climb UP their paper towel bridge, travel across, and drip down into the middle cup. Red + yellow = orange! Water climbs through tiny gaps in the towel using something called <strong>capillary action</strong>.'
+      },
+      {
+        type:'action',
+        label:'⏩ Fast Forward to Morning!',
+        text:'<p>The cups sat quietly all night. Let\'s peek at the middle cup...</p>',
+        bench:{emoji:'🔴🧡💛',label:'The middle cup is filling with ORANGE water!',animation:'growing'},
+        result:'<p>WOW! The middle cup has <strong>orange water</strong> in it — and the paper towels are soaked in color from end to end! 🧡</p><p>Here\'s what happened: paper towels are made of plant fibers with <strong>tiny tube-like gaps</strong> between them. Water molecules love to stick to those fibers (that\'s called <strong>adhesion</strong>) and they love to stick to each other (that\'s called <strong>cohesion</strong>). So the water pulls itself up through the tiny gaps, hand over hand like a rope climber — right over the edge of the cup!</p>'
+      },
+      {
+        type:'quiz',
+        label:'📝 Check Understanding',
+        question:'How did the water climb UP the paper towel against gravity?',
+        options:[
+          {text:'Capillary action — water pulls itself up through the tiny gaps in the fibers',icon:'🧗',correct:true},
+          {text:'A tiny pump hidden inside the towel',icon:'⚙️',correct:false},
+          {text:'The wind blew it up there',icon:'💨',correct:false},
+          {text:'Gravity was turned off overnight',icon:'🌌',correct:false}
+        ],
+        explanation:'Capillary action! Water sticks to the towel fibers and to itself, so it creeps up through the tiny spaces — strong enough to beat gravity in small tubes. The smaller the gaps, the higher water can climb!'
+      },
+      {
+        type:'conclusion',
+        label:'📓 Lab Notebook',
+        science:'<strong>Capillary action</strong> is water climbing through tiny tubes or gaps, even against gravity.</p><p>It works because of two forces: <strong>adhesion</strong> (water sticking to other materials, like towel fibers) and <strong>cohesion</strong> (water molecules sticking to each other).</p><p>Together they let water pull itself upward through the tiny spaces, like climbers on a rope.',
+        realWorld:'This is exactly how trees drink! Water travels from the roots up to the very top leaves through tiny tubes in the trunk — capillary action helps it climb, even in trees taller than a house.</p><p>Candle wicks pull melted wax up to the flame the same way.</p><p>And every time a paper towel soaks up a spill, you\'re watching capillary action in action!'
+      }
+    ]
+  },
+  {
+    id:'balloonrocket', icon:'🚀', title:'Balloon Rocket Race',
+    topic:'Physics — Action & Reaction', desc:'Launch a balloon rocket across the room on a string!',
+    steps:[
+      {
+        type:'intro',
+        label:'🚀 Setup',
+        text:'<p>We thread a long <strong>string</strong> through a <strong>drinking straw</strong> and stretch the string tight across the room, tied to two chairs. Then we blow up a <strong>balloon</strong>, pinch it closed (no tying!), and <strong>tape it to the straw</strong>.</p><p>Our balloon rocket is on the launch pad, full of squished-up air, pointing down the string. All we have to do is... let go!</p>',
+        bench:{emoji:'🎈🥤🪢',label:'Balloon taped to the straw, string stretched tight — ready for launch!'}
+      },
+      {
+        type:'predict',
+        label:'🤔 Make a Prediction',
+        question:'What will happen the moment we let go of the pinched balloon?',
+        options:[
+          {text:'It will zoom along the string to the other side of the room',icon:'🚀',correct:true},
+          {text:'It will just deflate sadly and hang there',icon:'😞',correct:false},
+          {text:'It will pop with a big BANG',icon:'💥',correct:false},
+          {text:'It will float up to the ceiling like a party balloon',icon:'🎈',correct:false}
+        ],
+        explanation:'It zooms! The squished air inside rushes out of the opening at the back, and that pushes the balloon forward along the string — just like a real rocket. Air shoots one way, balloon flies the other way!'
+      },
+      {
+        type:'action',
+        label:'🚀 3... 2... 1... Launch!',
+        text:'<p>Letting go of the balloon in 3... 2... 1...</p>',
+        bench:{emoji:'🎈💨🚀',label:'WHOOSH! The balloon rockets down the string!',animation:'reacting'},
+        result:'<p><strong>WHOOSH!</strong> The balloon <strong>rockets across the room</strong> along the string in about one second flat! 🚀</p><p>Here\'s the secret: the air inside the balloon was squeezed tight. When you let go, the balloon pushes the air <strong>out the back</strong> — and at the exact same time, the escaping air pushes the balloon <strong>forward</strong>. That push-back is called a <strong>reaction</strong>.</p><p>Try it again with a half-full balloon — less air means a shorter flight!</p>'
+      },
+      {
+        type:'quiz',
+        label:'📝 Check Understanding',
+        question:'What actually pushes the balloon rocket forward?',
+        options:[
+          {text:'The string pulls it along like a zip line motor',icon:'🪢',correct:false},
+          {text:'Air rushing out the back pushes the balloon forward',icon:'💨',correct:true},
+          {text:'The tape flaps like tiny wings',icon:'🦋',correct:false},
+          {text:'Gravity pushes it sideways',icon:'⬇️',correct:false}
+        ],
+        explanation:'The balloon pushes air out backward, and the air pushes the balloon forward with an equal push. Scientists call this <strong>action and reaction</strong>: for every action, there is an equal and opposite reaction. It\'s one of Newton\'s famous laws of motion!'
+      },
+      {
+        type:'conclusion',
+        label:'📓 Lab Notebook',
+        science:'This experiment shows <strong>Newton\'s Third Law of Motion</strong>: for every action, there is an equal and opposite reaction.</p><p>Action: the balloon pushes air out the back. Reaction: the air pushes the balloon forward.</p><p>The straw and string just keep the rocket flying straight — the escaping air does ALL the pushing.',
+        realWorld:'Real rockets work exactly the same way! They blast hot gas out of their engines, and the gas pushes the rocket up — even in space, where there\'s no air to push against.</p><p>Squids and octopuses are living balloon rockets: they squirt water backward to jet forward through the ocean!</p><p>Even walking uses this law — your foot pushes back on the ground, and the ground pushes you forward.'
+      }
+    ]
+  },
+  {
+    id:'shadows', icon:'🌗', title:'Shadow Science',
+    topic:'Physics — Light & Opacity', desc:'Discover how shadows form, stretch, and grow!',
+    steps:[
+      {
+        type:'intro',
+        label:'🔦 Setup',
+        text:'<p>In a dark room we have a <strong>flashlight</strong>, a <strong>toy dinosaur</strong>, and three test materials: a piece of <strong>cardboard</strong>, some <strong>wax paper</strong>, and clear <strong>plastic wrap</strong>.</p><p>Light travels in straight lines. When something gets in its way, the light can\'t bend around it — and that makes a <strong>shadow</strong>. But do all materials block light the same way? Let\'s find out!</p>',
+        bench:{emoji:'🔦🦖',label:'Flashlight on, dinosaur standing by, room nice and dark'}
+      },
+      {
+        type:'predict',
+        label:'🤔 Make a Prediction',
+        question:'We shine the flashlight at the cardboard, the wax paper, and the plastic wrap. Which one will make the DARKEST shadow?',
+        options:[
+          {text:'The cardboard — it blocks all the light',icon:'📦',correct:true},
+          {text:'The plastic wrap — it\'s the shiniest',icon:'✨',correct:false},
+          {text:'The wax paper — it\'s the most mysterious',icon:'📄',correct:false},
+          {text:'They\'ll all make exactly the same shadow',icon:'🟰',correct:false}
+        ],
+        explanation:'The cardboard wins! Cardboard is <strong>opaque</strong> — no light gets through, so it makes a dark, sharp shadow. Wax paper is <strong>translucent</strong> — some light sneaks through, making a soft, fuzzy gray shadow. Plastic wrap is <strong>transparent</strong> — almost all the light passes through, so it barely makes a shadow at all!'
+      },
+      {
+        type:'action',
+        label:'🔦 Test and Play!',
+        text:'<p>Testing each material... then putting the dinosaur in the beam and slowly moving the flashlight closer...</p>',
+        bench:{emoji:'🦖🌑',label:'The dino\'s shadow is growing into a GIANT monster shadow!',animation:'growing'},
+        result:'<p>Results:</p><p>📦 <strong>Cardboard: dark, sharp shadow.</strong> Opaque — blocks ALL the light.<br>📄 <strong>Wax paper: soft gray shadow.</strong> Translucent — some light sneaks through.<br>🪟 <strong>Plastic wrap: almost no shadow.</strong> Transparent — light passes right through!</p><p>Now the fun part: with the flashlight far away, the toy dinosaur makes a small shadow. But as we move the light <strong>closer</strong>, the shadow <strong>GROWS</strong> until a tiny toy casts a giant dino-monster shadow on the wall! 🦖</p>'
+      },
+      {
+        type:'quiz',
+        label:'📝 Check Understanding',
+        question:'Why does the dinosaur\'s shadow get BIGGER when the flashlight moves closer?',
+        options:[
+          {text:'Up close, the toy blocks a bigger part of the spreading beam of light',icon:'🔦',correct:true},
+          {text:'The dinosaur toy actually grows in the light',icon:'🦖',correct:false},
+          {text:'Shadows always grow at night no matter what',icon:'🌙',correct:false},
+          {text:'The wall moves farther away',icon:'🧱',correct:false}
+        ],
+        explanation:'Light spreads out from the flashlight like a cone. When the toy is close to the light, it blocks a big slice of that cone, so the missing light — the shadow — is huge on the wall. Move the light farther away and the toy blocks a smaller slice, so the shadow shrinks!'
+      },
+      {
+        type:'conclusion',
+        label:'📓 Lab Notebook',
+        science:'Light travels in <strong>straight lines</strong>. A shadow is the dark spot where an object blocks the light.</p><p>Materials come in three types: <strong>opaque</strong> (blocks all light, like cardboard), <strong>translucent</strong> (lets some light through, like wax paper), and <strong>transparent</strong> (lets almost all light through, like plastic wrap).</p><p>Moving an object closer to the light makes its shadow bigger, because it blocks more of the spreading beam.',
+        realWorld:'Your own shadow does this every day! At noon the sun is high overhead and your shadow is short — in the evening the sun is low and your shadow stretches out long and skinny.</p><p>Long ago, people told time with <strong>sundials</strong> — clocks that use a shadow as the pointer.</p><p>And a solar eclipse is the biggest shadow show of all: the Moon blocks the Sun and casts its shadow right onto Earth!'
+      }
+    ]
   }
 ];
 

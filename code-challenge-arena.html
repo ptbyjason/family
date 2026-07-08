@@ -310,6 +310,34 @@ const CHALLENGES = [
     xp: 10
   },
   {
+    id:'count_vowels', cat:'Logic', title:'Vowel Counter', difficulty:'easy',
+    concept:'Loops & Character Checks',
+    desc:`<p>Write a function that counts the <strong>vowels</strong> (a, e, i, o, u) in a string. Count uppercase and lowercase vowels — <code>"A"</code> counts just like <code>"a"</code>.</p>
+    <p><strong>CS Concept:</strong> Checking characters one at a time is the foundation of text processing. Spell checkers, search bars, and word counters all loop through strings exactly like this.</p>`,
+    example:`countVowels("hello")  → 2\ncountVowels("rhythm") → 0\ncountVowels("AEIOU")  → 5`,
+    hint:'Lowercase the string first with .toLowerCase(). Then loop through each character and check whether "aeiou" contains it — "aeiou".includes(ch) gives you true or false.',
+    starter:`function countVowels(str) {\n  // Your code here\n  \n}`,
+    tests:[
+      {input:['hello'],expected:2},{input:['rhythm'],expected:0},{input:['AEIOU'],expected:5},
+      {input:['Isaiah'],expected:4},{input:['cross country'],expected:3}
+    ],
+    xp: 10
+  },
+  {
+    id:'sum_digits', cat:'Logic', title:'Sum of Digits', difficulty:'easy',
+    concept:'Numbers & Digits',
+    desc:`<p>Write a function that adds up all the <strong>digits</strong> of a number. For example, 123 becomes 1 + 2 + 3 = 6.</p>
+    <p><strong>CS Concept:</strong> Breaking a number into its digits is a classic move. Checksum algorithms — the math that catches typos in credit card numbers and barcodes — are built on digit sums!</p>`,
+    example:`sumDigits(123) → 6\nsumDigits(999) → 27\nsumDigits(5)   → 5`,
+    hint:'Easiest way: turn the number into a string with String(n), loop through each character, and add Number(ch) to a total. Math way: n % 10 gives the last digit, and Math.floor(n / 10) chops it off.',
+    starter:`function sumDigits(n) {\n  // Your code here\n  \n}`,
+    tests:[
+      {input:[123],expected:6},{input:[999],expected:27},{input:[5],expected:5},
+      {input:[1010],expected:2},{input:[2468],expected:20}
+    ],
+    xp: 10
+  },
+  {
     id:'fibonacci', cat:'Logic', title:'Fibonacci Sequence', difficulty:'medium',
     concept:'Recursion & Sequences',
     desc:`<p>The <strong>Fibonacci sequence</strong> is one of the most famous patterns in math and computer science. Each number is the sum of the two before it:</p>
@@ -359,6 +387,22 @@ const CHALLENGES = [
     ],
     xp: 20
   },
+  {
+    id:'atbash', cat:'Logic', title:'The Mirror Cipher', difficulty:'medium',
+    concept:'Ciphers & Symmetry',
+    desc:`<p>The <strong>Atbash cipher</strong> is even older than Caesar's — it appears in ancient Hebrew texts! Instead of shifting the alphabet, it <strong>mirrors</strong> it: 'a' swaps with 'z', 'b' with 'y', 'c' with 'x', and so on.</p>
+    <p>Write a function that applies the mirror to a string. Keep uppercase letters uppercase, and leave spaces, numbers, and punctuation unchanged. Like ROT13, running it twice gives back the original!</p>
+    <p><strong>CS Concept:</strong> Atbash is a <strong>substitution cipher</strong> built on symmetry instead of shifting — a totally different mapping from Caesar, but the same core idea: every letter has exactly one secret partner.</p>`,
+    example:`atbash("abc")    → "zyx"\natbash("Hello!") → "Svool!"\natbash("zyx")    → "abc"`,
+    hint:'For a lowercase letter, its code c is between 97 and 122. The mirrored letter is String.fromCharCode(97 + 122 - c). For uppercase (65–90), use String.fromCharCode(65 + 90 - c).',
+    starter:`function atbash(text) {\n  // Your code here\n  \n}`,
+    tests:[
+      {input:['abc'],expected:'zyx'},{input:['Hello!'],expected:'Svool!'},
+      {input:['zyx'],expected:'abc'},{input:['Atbash'],expected:'Zgyzhs'},
+      {input:['x y z'],expected:'c b a'}
+    ],
+    xp: 20
+  },
 
   // ─── ALGORITHMS ───
   {
@@ -372,6 +416,23 @@ const CHALLENGES = [
     tests:[
       {input:[[3,7,2,9,1]],expected:9},{input:[[-5,-1,-8]],expected:-1},
       {input:[[42]],expected:42},{input:[[1,2,3,4,5]],expected:5},{input:[[100,99,98]],expected:100}
+    ],
+    xp: 10
+  },
+  {
+    id:'longest_word', cat:'Algorithms', title:'Longest Word Finder', difficulty:'easy',
+    concept:'Linear Scan & Tracking the Best',
+    desc:`<p>Write a function that returns the <strong>longest word</strong> in a sentence. If two words tie, return the one that appears <strong>first</strong>.</p>
+    <p><strong>CS Concept:</strong> This is the same "scan and track the best so far" pattern as Find the Maximum — just on words instead of numbers. Recognizing that two problems are secretly the same problem is a superpower in algorithm design.</p>`,
+    example:`longestWord("the quick brown fox") → "quick"\nlongestWord("run fast")            → "fast"\nlongestWord("a bb ccc")            → "ccc"`,
+    hint:'Split the sentence with .split(" "), start with the first word as your "best", and loop through the rest. Only replace the best when a word is strictly LONGER (use > not >=) — that way ties keep the first word.',
+    starter:`function longestWord(sentence) {\n  // Your code here\n  \n}`,
+    tests:[
+      {input:['the quick brown fox'],expected:'quick'},
+      {input:['run fast'],expected:'fast'},
+      {input:['a bb ccc'],expected:'ccc'},
+      {input:['cat dog'],expected:'cat'},
+      {input:['cross country runners fly'],expected:'country'}
     ],
     xp: 10
   },
@@ -430,6 +491,23 @@ const CHALLENGES = [
     ],
     xp: 20
   },
+  {
+    id:'most_frequent', cat:'Algorithms', title:'Most Frequent Word', difficulty:'hard',
+    concept:'Hash Maps (Counting with Objects)',
+    desc:`<p>Write a function that finds the <strong>most frequent word</strong> in a lowercase sentence. If two words tie, return the one that appears first in the sentence.</p>
+    <p><strong>CS Concept:</strong> The trick is a <strong>hash map</strong> — in JavaScript, a plain object used as a counter. Counting things in one pass is one of the most-used patterns in real code: trending topics, spam filters, and search engines all count word frequencies exactly like this.</p>`,
+    example:`mostFrequent("the ball hit the post the ball") → "the"\nmostFrequent("run run fast")                   → "run"\nmostFrequent("goal")                           → "goal"`,
+    hint:'First pass: build counts with an object — counts[word] = (counts[word] || 0) + 1. Second pass: loop through the words IN ORDER and keep the word whose count is strictly higher than your best so far.',
+    starter:`function mostFrequent(sentence) {\n  // Your code here\n  \n}`,
+    tests:[
+      {input:['the ball hit the post the ball'],expected:'the'},
+      {input:['run run fast'],expected:'run'},
+      {input:['a b a b'],expected:'a'},
+      {input:['goal'],expected:'goal'},
+      {input:['go go go rockets go'],expected:'go'}
+    ],
+    xp: 35
+  },
 
   // ─── ENGINEERING ───
   {
@@ -447,6 +525,44 @@ const CHALLENGES = [
       {input:[0,'C'],expected:{C:0.0,F:32.0,K:273.1}}
     ],
     xp: 10
+  },
+  {
+    id:'pace_calc', cat:'Engineering', title:'Race Pace Calculator', difficulty:'medium',
+    concept:'Math, Rounding & Formatting',
+    desc:`<p>Every cross country runner knows their pace — the minutes per mile they can hold. Build the calculator! Given a distance in <strong>miles</strong> and a total time in <strong>minutes</strong>, return the pace per mile as a string like <code>"7:30"</code>.</p>
+    <p>Seconds must always show two digits: eight minutes flat is <code>"8:00"</code>, not <code>"8:0"</code>.</p>
+    <p><strong>Engineering Concept:</strong> Turning raw numbers into human-friendly formats is everywhere in real software — GPS watches, scoreboards, and race timers all do exactly this math.</p>`,
+    example:`pace(2, 16)      → "8:00"   (16 min for 2 miles)\npace(3.1, 23.25) → "7:30"   (a 5K!)\npace(1, 5.5)     → "5:30"`,
+    hint:'Work in seconds: secPerMile = Math.round(minutes * 60 / miles). Then Math.floor(secPerMile / 60) gives the minutes part and secPerMile % 60 the seconds. Pad the seconds with String(s).padStart(2, "0").',
+    starter:`function pace(miles, minutes) {\n  // Return a string like "7:30"\n  \n}`,
+    tests:[
+      {input:[2,16],expected:'8:00'},
+      {input:[3.1,23.25],expected:'7:30'},
+      {input:[1,5.5],expected:'5:30'},
+      {input:[5,40],expected:'8:00'},
+      {input:[3,19.5],expected:'6:30'}
+    ],
+    xp: 20
+  },
+  {
+    id:'password_check', cat:'Engineering', title:'Password Strength Checker', difficulty:'medium',
+    concept:'Validation & Security Rules',
+    desc:`<p>Websites rate your password while you type — build that! Check three rules:</p>
+    <p>• At least 8 characters long<br>• Contains at least one number<br>• Contains at least one uppercase letter</p>
+    <p>Return <code>"strong"</code> if all 3 rules pass, <code>"medium"</code> if exactly 2 pass, and <code>"weak"</code> otherwise.</p>
+    <p><strong>Engineering Concept:</strong> This is <strong>input validation</strong> — checking data against rules before trusting it. It's one of the most common jobs in real-world code, from sign-up forms to bank software.</p>`,
+    example:`checkPassword("Password1") → "strong"\ncheckPassword("password1") → "medium"\ncheckPassword("hello")     → "weak"`,
+    hint:'Count how many rules pass. Length: pw.length >= 8. Has a number: /[0-9]/.test(pw). Has an uppercase: /[A-Z]/.test(pw). Each .test() gives true or false — then use if/else on the count.',
+    starter:`function checkPassword(pw) {\n  // Return "strong", "medium", or "weak"\n  \n}`,
+    tests:[
+      {input:['Password1'],expected:'strong'},
+      {input:['password1'],expected:'medium'},
+      {input:['hello'],expected:'weak'},
+      {input:['abcdefgh'],expected:'weak'},
+      {input:['Abc1'],expected:'medium'},
+      {input:['Goals2026rock'],expected:'strong'}
+    ],
+    xp: 20
   },
   {
     id:'pixel_art', cat:'Engineering', title:'Pixel Art Encoder', difficulty:'medium',
@@ -480,7 +596,7 @@ const CHALLENGES = [
       {input:['FFRF'],expected:[1,2]},
       {input:['FFLFF'],expected:[-2,2]},
       {input:['FRFRFRFR'],expected:[0,0]},
-      {input:['FFRFFLFF'],expected:[0,4]}
+      {input:['FFRFFLFF'],expected:[2,4]}
     ],
     xp: 25
   },
@@ -502,6 +618,25 @@ const CHALLENGES = [
       {input:['3 4 + 2 * 1 +'],expected:15}
     ],
     xp: 35
+  },
+  {
+    id:'ttt_winner', cat:'Engineering', title:'Tic-Tac-Toe Referee', difficulty:'hard',
+    concept:'Game State & Win Conditions',
+    desc:`<p>Write the referee for tic-tac-toe! The board is an array of 9 strings — <code>"X"</code>, <code>"O"</code>, or <code>""</code> (empty) — numbered left to right, top to bottom:</p>
+    <p><code>0 | 1 | 2</code><br><code>3 | 4 | 5</code><br><code>6 | 7 | 8</code></p>
+    <p>Return <code>"X"</code> or <code>"O"</code> if that player has three in a row (any row, column, or diagonal). Otherwise return <code>"none"</code>.</p>
+    <p><strong>Engineering Concept:</strong> This is <strong>game state checking</strong> — exactly how real game engines detect wins. The pro move: instead of writing 8 separate if-statements, store the winning lines as DATA and loop over them.</p>`,
+    example:`tttWinner(["X","X","X","O","O","","","",""]) → "X"\ntttWinner(["X","O","X","X","O","O","O","X","X"]) → "none"`,
+    hint:'List all 8 winning lines as index triples: [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]]. Loop through them — if board[a] is not "" and board[a] === board[b] and board[b] === board[c], that player wins.',
+    starter:`function tttWinner(board) {\n  // Return "X", "O", or "none"\n  \n}`,
+    tests:[
+      {input:[['X','X','X','O','O','','','','']],expected:'X'},
+      {input:[['O','X','X','O','X','','O','','']],expected:'O'},
+      {input:[['X','O','','O','X','','','','X']],expected:'X'},
+      {input:[['X','X','O','','O','','O','','']],expected:'O'},
+      {input:[['X','O','X','X','O','O','O','X','X']],expected:'none'}
+    ],
+    xp: 30
   }
 ];
 

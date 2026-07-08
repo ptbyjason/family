@@ -287,6 +287,21 @@ var SENTENCES = [
   {t:1, s:'sharks never stop swimming'},
   {t:1, s:'the crowd roars for the derby'},
   {t:1, s:'trap the ball then look up'},
+  {t:1, s:'call for the ball early'},
+  {t:1, s:'plant your foot and swing'},
+  {t:1, s:'short passes beat long hopes'},
+  {t:1, s:'check behind you before you turn'},
+  {t:1, s:'a rested body plays faster'},
+  {t:1, s:'the winger cuts inside to shoot'},
+  {t:1, s:'small touches keep the ball close'},
+  {t:1, s:'bees dance to share directions'},
+  {t:1, s:'the bench erupts at the whistle'},
+  {t:1, s:'point your toes down to volley'},
+  {t:1, s:'strong legs start with squats'},
+  {t:1, s:'the ref points to the spot'},
+  {t:1, s:'a calm keeper settles the team'},
+  {t:1, s:'run at the defender with pace'},
+  {t:1, s:'owls can spin their heads far'},
   /* tier 2 */
   {t:2, s:'A winger hugs the touchline to stretch the defense wide open.'},
   {t:2, s:'The midfielder scans the field twice before the ball arrives.'},
@@ -303,6 +318,21 @@ var SENTENCES = [
   {t:2, s:'Press high as a team or drop back and defend as a block.'},
   {t:2, s:'The playmaker splits two defenders with a perfect through ball.'},
   {t:2, s:'Bananas are berries, but strawberries are not berries at all.'},
+  {t:2, s:'The center back steps up and wins the header with total ease.'},
+  {t:2, s:'Good sleep is the most underrated training tool in all of sports.'},
+  {t:2, s:'A dolphin sleeps with one half of its brain still wide awake.'},
+  {t:2, s:'The captain rallies the whole squad after the late equalizer.'},
+  {t:2, s:'Balanced meals fuel long practices and speed up recovery.'},
+  {t:2, s:'The referee waves play on and the counter is suddenly live.'},
+  {t:2, s:'Cheetahs accelerate faster than most sports cars ever could.'},
+  {t:2, s:'Jog to the line, touch the cone, and sprint back to the start.'},
+  {t:2, s:'A quick throw-in catches the whole defense napping badly.'},
+  {t:2, s:'Stretch after training while your muscles are still warm.'},
+  {t:2, s:'Thunder is just air expanding fast around a lightning bolt.'},
+  {t:2, s:'Practice penalties while tired to copy real match pressure.'},
+  {t:2, s:'The keeper claims the cross and rolls out a counterattack.'},
+  {t:2, s:'Wombats are the only animals that make cube-shaped droppings.'},
+  {t:2, s:'A feint with the eyes can move a defender before the ball does.'},
   /* tier 3 */
   {t:3, s:'In the 89th minute, down 2-1, the home side won a corner and sent the keeper forward.'},
   {t:3, s:'A regulation match runs 90 minutes: two halves of 45, plus whatever stoppage time the referee adds.'},
@@ -319,7 +349,22 @@ var SENTENCES = [
   {t:3, s:'The underdogs parked the bus for 85 minutes, then broke away twice and stunned the champions 2-0.'},
   {t:3, s:'Your heart beats about 100,000 times a day; hard interval training teaches it to recover faster.'},
   {t:3, s:'The scout wrote: "Great engine, two-footed, brave in the air — track his left-side deliveries."'},
-  {t:3, s:'By age 13, consistent touches matter more than raw speed; 1,000 quality touches a day adds up fast.'}
+  {t:3, s:'By age 13, consistent touches matter more than raw speed; 1,000 quality touches a day adds up fast.'},
+  {t:3, s:'The transfer fee hit 40 million, yet the striker repaid it with 25 goals in his very first season.'},
+  {t:3, s:'Keep the ratio in mind: for every 1 hard sprint, take 2 to 3 easy minutes to recover fully.'},
+  {t:3, s:'An adult body holds about 5 liters of blood; the heart pushes all of it around in roughly 1 minute.'},
+  {t:3, s:'The academy schedule reads: 45 minutes of technique, 30 of tactics, and 15 of pure finishing.'},
+  {t:3, s:'The assistant referee stays level with the last defender, sprinting sideways for the full 90 minutes.'},
+  {t:3, s:'Coach posted the stats: 87% pass accuracy, 14 shots, 6 on target, and 1 unforgettable winner.'},
+  {t:3, s:'"Play the way you face," she said, "and switch the field when their left back pushes too high."'},
+  {t:3, s:'A sneeze can leave your mouth at over 100 miles per hour; a struck penalty flies at about 70.'},
+  {t:3, s:'The under-13 squad trains Tuesdays and Thursdays at 5:30, with matches every Saturday at 9:00.'},
+  {t:3, s:'Astronauts grow about 2 inches taller in space, then shrink back within months of landing on Earth.'},
+  {t:3, s:'It took 26 passes, 14 seconds, and 1 clever dummy to carve open the best defense in the league.'},
+  {t:3, s:'Iceland, population under 400,000, reached the quarterfinals of Euro 2016 and shocked England.'},
+  {t:3, s:'Your bones are about 5 times stronger than steel of the same weight, yet they repair themselves.'},
+  {t:3, s:'Down to 10 men after the 55th minute, the visitors defended 3 corners and stole a 1-0 win.'},
+  {t:3, s:'The fans sang for 94 minutes straight; when the winner arrived, the noise hit 120 decibels.'}
 ];
 
 /* ================= persistence ================= */
@@ -621,7 +666,10 @@ function endGame(forfeit){
   save.testsCompleted++;
   save.results.push({d:todayStr(), wpm:wpm, acc:acc, score:finalScore, mode:G.duration, daily:G.daily});
   if(save.results.length > 20) save.results = save.results.slice(-20);
-  recordActivity(10); /* completed test = 10 actions; saves + updates hub */
+  /* effort credit requires real typing: ~50 correct chars = 10 actions; a token effort earns 3; idle tests earn 0 */
+  if(G.correct >= 50) recordActivity(10);
+  else if(G.correct >= 10) recordActivity(3);
+  else persist(); /* still persist the test result, just no effort credit */
 
   /* fill end screen */
   $('finalScore').textContent = finalScore.toLocaleString('en-US');
