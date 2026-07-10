@@ -96,6 +96,31 @@
   .ex-prompt{background:rgba(139,92,246,0.08);border:1px solid rgba(139,92,246,0.3);border-radius:10px;padding:14px;margin:10px 0;font-size:0.95em;line-height:1.6;}
   .ex-prompt code{color:var(--purple);}
 
+  /* Training Ground */
+  .ci-diff.guided{color:var(--cyan);}
+  .goal-box{background:rgba(6,182,212,0.07);border:1px solid rgba(6,182,212,0.3);border-radius:10px;padding:12px 14px;margin:10px 0;font-size:0.93em;line-height:1.55;}
+  .goal-box b{color:var(--cyan);}
+  .plan-box{background:rgba(139,92,246,0.07);border:1px solid rgba(139,92,246,0.3);border-radius:10px;padding:12px 14px;margin:10px 0;font-size:0.9em;}
+  .plan-box .plan-title{color:var(--purple);font-weight:600;font-size:0.85em;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;}
+  .plan-box ol{margin:0 0 0 20px;color:var(--muted);line-height:1.7;}
+
+  /* Hint ladder */
+  .help-panel{background:rgba(245,158,11,0.05);border:1px solid rgba(245,158,11,0.25);border-radius:12px;padding:12px 14px;margin:12px 0;}
+  .help-panel .hp-head{font-weight:600;color:var(--yellow);font-size:0.92em;margin-bottom:2px;}
+  .help-panel .hp-sub{color:var(--muted);font-size:0.78em;margin-bottom:8px;}
+  .help-tier{border-top:1px dashed var(--border);padding:8px 0 6px;}
+  .help-tier .ht-btn{background:none;border:1px solid var(--border);color:var(--muted);padding:5px 12px;border-radius:8px;font-family:'Inter',sans-serif;font-size:0.8em;cursor:pointer;transition:all 0.2s;}
+  .help-tier .ht-btn:hover{border-color:var(--yellow);color:var(--yellow);}
+  .help-tier .ht-label{font-size:0.85em;font-weight:600;margin-bottom:4px;color:var(--text);}
+  .help-tier .ht-body{color:var(--muted);font-size:0.88em;line-height:1.6;}
+  .help-tier .ht-body ol{margin:4px 0 4px 20px;}
+  .help-tier pre{background:#0d1117;border:1px solid var(--border);border-radius:8px;padding:10px;font-family:'JetBrains Mono',monospace;font-size:0.82em;line-height:1.55;overflow-x:auto;margin:6px 0;color:#c9d1d9;white-space:pre;}
+  .helped-mark{font-size:0.8em;margin-left:4px;}
+
+  /* Next-step banner + friendly errors */
+  .next-step-banner{max-width:700px;margin:0 auto 20px;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.3);border-radius:12px;padding:12px 16px;font-size:0.95em;display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;}
+  .friendly-error{color:var(--yellow);}
+
   /* Mobile: stack sidebar above editor */
   @media (max-width: 900px) {
     .topbar{flex-wrap:wrap;gap:8px;padding:10px 14px;}
@@ -128,6 +153,7 @@
     <div class="welcome" id="welcome">
       <h2>Welcome, Coder!</h2>
       <p>Solve coding challenges, learn computer science concepts, and level up your skills. <strong>New to coding?</strong> Start with 🎓 Lesson 1 in the sidebar — no experience needed. Already know the basics? Pick a challenge!</p>
+      <div class="next-step-banner" id="nextStepBanner" style="display:none;"></div>
       <div class="welcome-cards">
         <div class="wc"><div class="wc-icon">🧩</div><div class="wc-title">Logic</div><div class="wc-desc">Patterns, sequences, and problem-solving</div></div>
         <div class="wc"><div class="wc-icon">⚙️</div><div class="wc-title">Algorithms</div><div class="wc-desc">Sorting, searching, and efficiency</div></div>
@@ -153,6 +179,10 @@ let lessonsDone = new Set();  // completed lesson ids
 let currentLesson = null;
 let lessonExIndex = 0;
 let activity = { date:'', actions:0, earnedDates:[], runs:0 };  // daily effort tracking
+let guidedDone = new Set();   // completed Training Ground problem ids
+let currentGuided = null;
+let hintTiers = {};           // per-challenge: highest help tier opened before solving (1-3)
+let legacyUnlock = false;     // saves from before the guided path keep everything unlocked
 
 // ─── Daily effort tracking ───
 function localToday() {
@@ -207,6 +237,13 @@ function loadState() {
     failCounts = (s.failCounts && typeof s.failCounts === 'object') ? s.failCounts : {};
     lessonsDone = new Set(Array.isArray(s.lessons) ? s.lessons : []); // older saves have no lessons field
     activity = normActivity(s.activity); // older saves have no activity field
+    guidedDone = new Set(Array.isArray(s.guided) ? s.guided : []);    // older saves have no guided field
+    hintTiers = (s.hintTiers && typeof s.hintTiers === 'object') ? s.hintTiers : {};
+    legacyUnlock = s.legacyUnlock === true;
+    // Generous to existing progress: any pre-guided save with lessons or solves stays fully unlocked.
+    if (!legacyUnlock && s.guided === undefined && (solved.size > 0 || lessonsDone.size > 0)) {
+      legacyUnlock = true;
+    }
 
   } catch (e) { /* corrupted or unavailable storage — start fresh */ }
 }
@@ -221,7 +258,10 @@ function saveState() {
       drafts: drafts,
       failCounts: failCounts,
       lessons: [...lessonsDone],
-      activity: activity
+      activity: activity,
+      guided: [...guidedDone],
+      hintTiers: hintTiers,
+      legacyUnlock: legacyUnlock
     }));
   } catch (e) { /* storage unavailable */ }
   try {
@@ -232,10 +272,10 @@ function saveState() {
       kid: 'isaiah',
       icon: '⚡',
       label: learnMode
-        ? 'Learn ' + lessonsDone.size + '/' + LESSONS.length + ' • ' + xpTotal + ' XP'
+        ? 'Learn ' + lessonsDone.size + '/' + LESSONS.length + ' • Training ' + guidedDone.size + '/' + GUIDED.length + ' • ' + xpTotal + ' XP'
         : solved.size + '/' + total + ' challenges • ' + xpTotal + ' XP',
       pct: learnMode
-        ? (LESSONS.length ? Math.round((lessonsDone.size / LESSONS.length) * 100) : 0)
+        ? ((LESSONS.length + GUIDED.length) ? Math.round(((lessonsDone.size + guidedDone.size) / (LESSONS.length + GUIDED.length)) * 100) : 0)
         : (total ? Math.round((solved.size / total) * 100) : 0),
       streak: streakCount,
       stars: null,
@@ -660,7 +700,11 @@ console.log(42);           // shows: 42`,
       { prompt:'Print some text! Replace the blank so it shows <code>Goal!</code> — keep the quotes, quotes mean "this is text".',
         starter:'// Text (a "string") always goes inside quotes\nconsole.log("__");',
         kind:'log', expectLog:'Goal!',
-        why:'Type Goal! between the quotes — the quotes tell the computer it is text to show, not a command to run.' }
+        why:'Type Goal! between the quotes — the quotes tell the computer it is text to show, not a command to run.' },
+      { prompt:'The computer does math before showing the answer. Replace the blank so <code>2 + __</code> prints <code>5</code>.',
+        starter:'// The computer works out the math FIRST, then shows the answer\nconsole.log(2 + __);',
+        kind:'log', expectLog:5,
+        why:'The computer calculates 2 + 3 first, then console.log shows the result: 5.' }
     ]
   },
   {
@@ -679,7 +723,12 @@ console.log(team);      // Rockets`,
       { prompt:'Fill in the blank so <code>playerName</code> holds the text <code>"Isaiah"</code>. Remember: text needs quotes!',
         starter:'// Make playerName hold the text Isaiah (in quotes!)\nlet playerName = __;',
         kind:'value', varName:'playerName', expected:'Isaiah',
-        why:'Text needs quotes: "Isaiah" — without quotes the computer thinks Isaiah is a command and gets confused.' }
+        why:'Text needs quotes: "Isaiah" — without quotes the computer thinks Isaiah is a command and gets confused.' },
+      { prompt:'Variables can <strong>update themselves</strong>! Level up: make <code>level</code> equal <code>level + 1</code> (use the variable, not the number 2).',
+        starter:'let level = 1;\n// Level up! Make level equal one more than it was\nlevel = __;',
+        kind:'value', varName:'level', expected:2,
+        mustMatch:/level\s*\+\s*1/, matchMsg:'Write level + 1 — "whatever level is now, plus one". This move powers scoreboards everywhere!',
+        why:'level = level + 1 means: look in the box, add 1, put the result back in the same box.' }
     ]
   },
   {
@@ -701,7 +750,43 @@ let accuracy = scored / shots; // 0.4`,
         starter:'let goals = 10;\nlet games = 2;\n// Average = goals divided by games\nlet average = __;',
         kind:'value', varName:'average', expected:5,
         mustMatch:/goals\s*\/\s*games/, matchMsg:'Use the variables with the divide symbol: goals / games.',
-        why:'The / symbol divides: goals / games is 10 divided by 2, which is 5.' }
+        why:'The / symbol divides: goals / games is 10 divided by 2, which is 5.' },
+      { prompt:'Season projection! Make <code>season</code> equal <code>points</code> times <code>games</code> — the <code>*</code> symbol multiplies.',
+        starter:'let points = 3;\nlet games = 4;\n// Total for the season: points times games\nlet season = __;',
+        kind:'value', varName:'season', expected:12,
+        mustMatch:/points\s*\*\s*games/, matchMsg:'Use the variables with the times symbol: points * games.',
+        why:'In code the times sign is * (an x would look like a variable name) — points * games is 3 × 4 = 12.' }
+    ]
+  },
+  {
+    id:'l9', title:'String Superpowers',
+    intro:`<p>Strings (text) come with built-in moves, like a player with skills. <code>.length</code> counts the characters, <code>.toUpperCase()</code> makes it SHOUT, and <code>.indexOf("x")</code> finds <em>where</em> something is.</p>
+    <p>Big rule: positions start at <strong>0</strong>, not 1. And <code>.indexOf</code> answering <code>-1</code> is code for "not found".</p>`,
+    example:`let name = "Isaiah";
+name.length          // 6   (six characters)
+name.toUpperCase()   // "ISAIAH"
+name.indexOf("a")    // 2   (positions start at 0!)
+name.indexOf("z")    // -1  (means "not found")`,
+    exercises:[
+      { prompt:'How many letters are in the team name? Use <code>.length</code> (no parentheses for this one).',
+        starter:'let team = "Rockets";\n// Count the characters with .length\nlet letters = __;',
+        kind:'value', varName:'letters', expected:7,
+        mustMatch:/team\s*\.\s*length/, matchMsg:'Use team.length — let the string count itself instead of counting by hand.',
+        why:'team.length asks the string "how many characters are you?" — Rockets has 7.' },
+      { prompt:'Make the cheer LOUD! Use <code>.toUpperCase()</code> — this one needs the parentheses <code>()</code>.',
+        starter:'let cheer = "goal";\n// Make it all capitals\nlet loud = __;',
+        kind:'value', varName:'loud', expected:'GOAL',
+        mustMatch:/cheer\s*\.\s*toUpperCase\s*\(\s*\)/, matchMsg:'Use cheer.toUpperCase() — the () means "do the action now".',
+        why:'.toUpperCase() is an action, so it needs () to run — it hands back a new all-caps copy.' },
+      { prompt:'Where is the first <code>"c"</code> in <code>"soccer"</code>? Use <code>.indexOf</code> — and remember counting starts at 0!',
+        starter:'let word = "soccer";\n// Find the position of the first "c"\nlet spot = __;',
+        kind:'value', varName:'spot', expected:2,
+        mustMatch:/word\s*\.\s*indexOf/, matchMsg:'Use word.indexOf("c") — it hunts through the string for you.',
+        why:'Counting from 0: s is 0, o is 1, c is 2 — indexOf reports the first match it finds.' },
+      { prompt:'Combine your skills! Fill the blank (inside the quotes) so <code>shout</code> becomes <code>"ISAIAH ROCKS"</code>.',
+        starter:'let first = "Isaiah";\n// Glue the loud name to one more word\nlet shout = first.toUpperCase() + " __";',
+        kind:'value', varName:'shout', expected:'ISAIAH ROCKS',
+        why:'first.toUpperCase() gives "ISAIAH", and + glues " ROCKS" onto the end.' }
     ]
   },
   {
@@ -726,7 +811,44 @@ double(20)  // -> 40  (same drill, different ball)`,
       { prompt:'Strings work too! Make <code>greet</code> return <code>"Hi "</code> glued to the name with <code>+</code>.',
         starter:'function greet(name) {\n  // Glue "Hi " and the name together with +\n  return "Hi " + __;\n}',
         kind:'fn', fnName:'greet', tests:[{input:['Sam'],expected:'Hi Sam'},{input:['Ava'],expected:'Hi Ava'}],
-        why:'With text, + glues pieces together: "Hi " + name becomes "Hi Sam" when name is "Sam".' }
+        why:'With text, + glues pieces together: "Hi " + name becomes "Hi Sam" when name is "Sam".' },
+      { prompt:'Use a string superpower inside a function: fill the blank with the method that makes text ALL CAPS.',
+        starter:'function shout(word) {\n  // Make the word all capitals, then add "!"\n  return word.__() + "!";\n}',
+        kind:'fn', fnName:'shout', tests:[{input:['go'],expected:'GO!'},{input:['defense'],expected:'DEFENSE!'}],
+        mustMatch:/toUpperCase/, matchMsg:'The all-caps method is toUpperCase — watch the capital U and C!',
+        why:'Functions and string methods stack: word.toUpperCase() transforms the input, + "!" finishes the cheer.' }
+    ]
+  },
+  {
+    id:'l10', title:'Comparisons (true / false)',
+    intro:`<p>A <strong>comparison</strong> is a yes/no question, like the ref asking "did the whole ball cross the line?" The answer is a special value: <code>true</code> or <code>false</code> (no quotes — it's not text!).</p>
+    <p>The three big ones: <code>&gt;</code> greater than, <code>&lt;</code> less than, <code>===</code> exactly equal. Careful: one <code>=</code> <em>puts</em> a value in a box; three <code>===</code> <em>asks</em> if two things match.</p>`,
+    example:`5 > 3               // true
+2 === 2             // true
+7 < 4               // false
+let tied = (3 === 3);  // stores true in a variable
+// = puts in the box, === asks a question!`,
+    exercises:[
+      { prompt:'Is the team winning? Put the <strong>greater than</strong> symbol in the blank so <code>winning</code> ends up <code>true</code>.',
+        starter:'let goals = 4;\n// Is goals greater than 2? Fill in the symbol\nlet winning = goals __ 2;',
+        kind:'value', varName:'winning', expected:true,
+        mustMatch:/goals\s*>\s*2/, matchMsg:'Use the > symbol: goals > 2 asks "is goals bigger than 2?"',
+        why:'goals > 2 is a question — since 4 is bigger than 2, the computer answers true.' },
+      { prompt:'Is the score tied? Use <code>===</code> (all three!) to ask if <code>a</code> and <code>b</code> are exactly equal.',
+        starter:'let a = 7;\nlet b = 7;\n// Are they exactly equal?\nlet tied = a __ b;',
+        kind:'value', varName:'tied', expected:true,
+        mustMatch:/a\s*===\s*b/, matchMsg:'Use three equals signs: a === b. One = would try to change a instead of asking!',
+        why:'=== compares without changing anything — 7 matches 7, so the answer is true.' },
+      { prompt:'Write the whole question yourself: make <code>firstHalf</code> true when <code>minute</code> is <strong>less than</strong> 45.',
+        starter:'let minute = 30;\n// Is it still the first half? (minute less than 45)\nlet firstHalf = __;',
+        kind:'value', varName:'firstHalf', expected:true,
+        mustMatch:/minute\s*<\s*45/, matchMsg:'Write minute < 45 — the < symbol means "less than".',
+        why:'minute < 45 asks "is minute smaller than 45?" — 30 is, so firstHalf is true.' },
+      { prompt:'<code>false</code> is a real answer too! Ask if <code>score</code> is greater than 3 — the honest answer here is <code>false</code>.',
+        starter:'let score = 1;\n// Ask: is score greater than 3? (the answer will be false - that is OK!)\nlet blowout = __;',
+        kind:'value', varName:'blowout', expected:false,
+        mustMatch:/score\s*>\s*3/, matchMsg:'Write the comparison score > 3 — don\'t type the word false, let the computer answer.',
+        why:'You write the QUESTION, the computer supplies the answer — 1 is not bigger than 3, so it answers false.' }
     ]
   },
   {
@@ -748,7 +870,42 @@ double(20)  // -> 40  (same drill, different ball)`,
       { prompt:'A soccer match is 90 minutes. Put the right comparison symbol in the blank so minutes below 45 count as the first half. (Hint: <code>&lt;</code> means less than.)',
         starter:'function whichHalf(minute) {\n  if (minute __ 45) {\n    return "first half";\n  } else {\n    return "second half";\n  }\n}',
         kind:'fn', fnName:'whichHalf', tests:[{input:[10],expected:'first half'},{input:[80],expected:'second half'},{input:[30],expected:'first half'},{input:[90],expected:'second half'}],
-        why:'The < symbol means "less than" — minute < 45 is true for minutes in the first half.' }
+        why:'The < symbol means "less than" — minute < 45 is true for minutes in the first half.' },
+      { prompt:'The <code>else</code> branch is the backup plan. Fill in what everyone who is not in 1st place hears: <code>"keep training"</code> (with quotes).',
+        starter:'function medal(place) {\n  if (place === 1) {\n    return "gold";\n  } else {\n    // Everyone else gets this message\n    return __;\n  }\n}',
+        kind:'fn', fnName:'medal', tests:[{input:[1],expected:'gold'},{input:[2],expected:'keep training'},{input:[10],expected:'keep training'}],
+        why:'The else branch runs whenever the if question is false — every place except 1 lands there.' }
+    ]
+  },
+  {
+    id:'l11', title:'Combining Questions (&& and ||)',
+    intro:`<p>Sometimes one question isn't enough. <code>&amp;&amp;</code> means <strong>AND</strong> — both sides must be true (you need cleats AND shin guards to play). <code>||</code> means <strong>OR</strong> — at least one side must be true (water OR a sports drink, either works).</p>
+    <p>These glue comparisons together into bigger questions — and they slot right into <code>if</code> statements.</p>`,
+    example:`let fast = true;
+let rested = false;
+fast && rested    // false (AND needs BOTH)
+fast || rested    // true  (OR needs just one)
+5 > 3 && 10 > 2   // true  (both questions are true)`,
+    exercises:[
+      { prompt:'You need <strong>both</strong> to play. Put <code>&amp;&amp;</code> in the blank.',
+        starter:'function canPlay(hasCleats, hasGuards) {\n  // Need BOTH to be true\n  return hasCleats __ hasGuards;\n}',
+        kind:'fn', fnName:'canPlay', tests:[{input:[true,true],expected:true},{input:[true,false],expected:false},{input:[false,true],expected:false}],
+        mustMatch:/hasCleats\s*&&\s*hasGuards/, matchMsg:'Use && (two ampersands) — AND means both sides must be true.',
+        why:'&& only answers true when BOTH sides are true — missing either one means you sit out.' },
+      { prompt:'<strong>Either</strong> drink keeps you hydrated. Put <code>||</code> in the blank.',
+        starter:'function hasDrink(water, sportsDrink) {\n  // Either one is fine\n  return water __ sportsDrink;\n}',
+        kind:'fn', fnName:'hasDrink', tests:[{input:[true,false],expected:true},{input:[false,true],expected:true},{input:[false,false],expected:false}],
+        mustMatch:/water\s*\|\|\s*sportsDrink/, matchMsg:'Use || (two vertical bars) — OR is happy with just one true.',
+        why:'|| answers true if AT LEAST one side is true — only false + false lets it down.' },
+      { prompt:'Combine full comparisons: a perfect game needs goals over 2 <strong>AND</strong> saves over 5.',
+        starter:'function perfectGame(goals, saves) {\n  // Both comparisons must pass\n  return goals > 2 __ saves > 5;\n}',
+        kind:'fn', fnName:'perfectGame', tests:[{input:[3,6],expected:true},{input:[3,2],expected:false},{input:[1,9],expected:false}],
+        mustMatch:/&&/, matchMsg:'Glue the two comparisons with && — both must be true for a perfect game.',
+        why:'Each side (goals > 2, saves > 5) answers true/false on its own; && demands a yes from both.' },
+      { prompt:'Inside an <code>if</code>: it\'s only a penalty when there was a foul AND it was in the box. Fill the blank with the second variable.',
+        starter:'function refCall(foul, inBox) {\n  if (foul && __) {\n    return "penalty!";\n  } else {\n    return "free kick";\n  }\n}',
+        kind:'fn', fnName:'refCall', tests:[{input:[true,true],expected:'penalty!'},{input:[true,false],expected:'free kick'},{input:[false,true],expected:'free kick'}],
+        why:'foul && inBox makes the if run only when both are true — anything else drops to the else.' }
     ]
   },
   {
@@ -769,7 +926,42 @@ double(20)  // -> 40  (same drill, different ball)`,
       { prompt:'Add the text <code>"Go!"</code> (with quotes) each time through, so <code>cheer</code> becomes <code>"Go!Go!Go!"</code>.',
         starter:'let cheer = "";\n// Add "Go!" to cheer each time through the loop\nfor (let i = 0; i < 3; i++) {\n  cheer = cheer + __;\n}',
         kind:'value', varName:'cheer', expected:'Go!Go!Go!',
-        why:'cheer = cheer + "Go!"; glues one more "Go!" on every lap — three laps, three cheers.' }
+        why:'cheer = cheer + "Go!"; glues one more "Go!" on every lap — three laps, three cheers.' },
+      { prompt:'Loops can count DOWN too — <code>i--</code> subtracts 1. Fill in the comparison so this counts 3, 2, 1 and makes <code>launch</code> equal <code>"321"</code>.',
+        starter:'let launch = "";\n// Count DOWN: keep looping while i is greater than 0\nfor (let i = 3; i __ 0; i--) {\n  launch = launch + i;\n}',
+        kind:'value', varName:'launch', expected:'321',
+        mustMatch:/i\s*>\s*0/, matchMsg:'Use i > 0 — the loop keeps running while i is still above zero.',
+        why:'i starts at 3 and drops by 1 each lap (i--) — the loop runs while i > 0, so it visits 3, 2, 1 and stops.' }
+    ]
+  },
+  {
+    id:'l12', title:'The Accumulator Pattern',
+    intro:`<p>This is <strong>the most useful pattern in this whole app</strong> — almost every challenge uses it. To add things up (or build text piece by piece), keep a <strong>running total</strong>, like a season goal tally:</p>
+    <p>1) Start an "accumulator" variable <em>before</em> the loop — <code>0</code> for totals, <code>""</code> for text. 2) Update it <em>every lap</em>. 3) After the loop, it holds the final answer.</p>`,
+    example:`let total = 0;              // 1) start empty, BEFORE the loop
+for (let i = 1; i <= 4; i++) {
+  total = total + i;        // 2) add a bit each lap
+}
+// 3) total is now 1+2+3+4 = 10`,
+    exercises:[
+      { prompt:'Step 1 matters! Fill in the <strong>starting value</strong> so the tally works (what does a scoreboard show before kickoff?).',
+        starter:'// Start the tally empty\nlet total = __;\nfor (let i = 1; i <= 3; i++) {\n  total = total + i;\n}',
+        kind:'value', varName:'total', expected:6,
+        why:'The accumulator must start at 0 — with no starting value, there is nothing to add the first lap onto.' },
+      { prompt:'Step 2: write the update. Make <code>total</code> equal <strong>itself plus i</strong> each lap.',
+        starter:'let total = 0;\nfor (let i = 1; i <= 5; i++) {\n  // Add i to the running total\n  total = __;\n}',
+        kind:'value', varName:'total', expected:15,
+        mustMatch:/total\s*\+\s*i/, matchMsg:'Write total + i — "everything so far, plus this lap\'s number".',
+        why:'total = total + i takes the running total, adds this lap\'s i, and stores it back — 1+2+3+4+5 = 15.' },
+      { prompt:'Accumulators build <strong>text</strong> too! Fill the blank so each lap glues one more <code>"run "</code> onto everything built so far.',
+        starter:'let line = "";\nfor (let i = 1; i <= 3; i++) {\n  // Glue one more "run " onto what we have so far\n  line = __ + "run ";\n}',
+        kind:'value', varName:'line', expected:'run run run ',
+        mustMatch:/line\s*\+/, matchMsg:'The blank is line itself — line = line + "run " means "what I had, plus one more".',
+        why:'Starting from "" and gluing "run " on each lap builds the string up piece by piece — same pattern, just text.' },
+      { prompt:'Now write the <strong>whole accumulator line yourself</strong>: inside the loop, add <code>i</code> to <code>total</code>.',
+        starter:'function sumTo(n) {\n  let total = 0;\n  for (let i = 1; i <= n; i++) {\n    // YOUR LINE: add i to total\n    __\n  }\n  return total;\n}',
+        kind:'fn', fnName:'sumTo', tests:[{input:[3],expected:6},{input:[5],expected:15},{input:[1],expected:1}],
+        why:'total = total + i; is the whole move — start empty, add each lap, return the pile at the end.' }
     ]
   },
   {
@@ -790,7 +982,43 @@ team.length   // 3`,
         starter:'let scores = [3, 1, 4];\n// How many items? Use .length\nlet howMany = __;',
         kind:'value', varName:'howMany', expected:3,
         mustMatch:/scores\s*\.\s*length/, matchMsg:'Use scores.length — it counts the items for you.',
-        why:'scores.length asks the list "how many items do you have?" — here, 3.' }
+        why:'scores.length asks the list "how many items do you have?" — here, 3.' },
+      { prompt:'Grab the <strong>last</strong> player. The last position is always <code>length</code> minus 1 — fill in the minus sign.',
+        starter:'let squad = ["Ava", "Ben", "Cruz", "Dee"];\n// The last spot is length minus 1 (because counting starts at 0!)\nlet last = squad[squad.length __ 1];',
+        kind:'value', varName:'last', expected:'Dee',
+        mustMatch:/squad\s*\.\s*length\s*-\s*1/, matchMsg:'Use squad.length - 1 — with 4 players, the last one sits in spot 3.',
+        why:'Counting starts at 0, so 4 players fill spots 0–3 — the last spot is always length - 1.' }
+    ]
+  },
+  {
+    id:'l13', title:'Arrays in Action',
+    intro:`<p>Three moves make arrays truly useful. <code>.push(x)</code> adds an item to the <strong>end</strong> — like a sub joining the roster. Inside a loop, <code>arr[i]</code> visits <strong>each item in turn</strong>. And <code>arr.length</code> tells the loop when to stop.</p>
+    <p>Put them together and you can walk any list: <code>for (let i = 0; i &lt; arr.length; i++)</code> then use <code>arr[i]</code> inside.</p>`,
+    example:`let squad = ["Ava", "Ben"];
+squad.push("Cruz");          // squad is now ["Ava","Ben","Cruz"]
+
+for (let i = 0; i < squad.length; i++) {
+  console.log(squad[i]);     // visits every player, one by one
+}`,
+    exercises:[
+      { prompt:'A sub is coming on! Use <code>.push</code> to add <code>"Cruz"</code> (with quotes) to the end of the roster.',
+        starter:'let roster = ["Ava", "Ben"];\n// Add Cruz to the end\nroster.push(__);',
+        kind:'value', varName:'roster', expected:['Ava','Ben','Cruz'],
+        why:'.push("Cruz") tacks a new item onto the end of the list — the roster grows to 3.' },
+      { prompt:'Make the loop stop at the right time: it should run once per item. Fill in the blank after <code>nums.</code>',
+        starter:'let nums = [10, 20, 30];\nlet total = 0;\nfor (let i = 0; i < nums.__; i++) {\n  total = total + nums[i];\n}',
+        kind:'value', varName:'total', expected:60,
+        mustMatch:/nums\s*\.\s*length/, matchMsg:'Use nums.length — then the loop automatically fits any size of list.',
+        why:'i < nums.length keeps looping exactly once per item — 3 items, 3 laps, no matter how long the list gets.' },
+      { prompt:'Accumulator meets array! Add <strong>the item at position i</strong> to the total each lap.',
+        starter:'let goals = [2, 0, 3];\nlet total = 0;\nfor (let i = 0; i < goals.length; i++) {\n  // Add this game\'s goals to the total\n  total = total + __;\n}',
+        kind:'value', varName:'total', expected:5,
+        mustMatch:/goals\s*\[\s*i\s*\]/, matchMsg:'Use goals[i] — i changes each lap, so goals[i] is a different game each time.',
+        why:'goals[i] means "the number in spot i" — as i counts 0, 1, 2 the loop visits every game.' },
+      { prompt:'Build a NEW list from an old one: push <strong>double</strong> each number into <code>out</code>.',
+        starter:'function doubleAll(nums) {\n  let out = [];\n  for (let i = 0; i < nums.length; i++) {\n    // Push nums[i] times 2 into out\n    out.push(__);\n  }\n  return out;\n}',
+        kind:'fn', fnName:'doubleAll', tests:[{input:[[1,2]],expected:[2,4]},{input:[[5]],expected:[10]},{input:[[]],expected:[]}],
+        why:'out.push(nums[i] * 2) drops a doubled copy of each item into the new list — old list stays untouched.' }
     ]
   },
   {
@@ -813,17 +1041,276 @@ totalPoints([2, 4, 6])   // -> 12`,
       { prompt:'Count the wins! Write the whole line that adds 1 to <code>wins</code>: <code>wins = wins + 1;</code>',
         starter:'function countWins(results) {\n  let wins = 0;\n  for (let i = 0; i < results.length; i++) {\n    if (results[i] === "W") {\n      // Add 1 to wins (write the whole line)\n      __\n    }\n  }\n  return wins;\n}',
         kind:'fn', fnName:'countWins', tests:[{input:[['W','L','W']],expected:2},{input:[[]],expected:0},{input:[['L','L']],expected:0},{input:[['W','W','W']],expected:3}],
-        why:'wins = wins + 1; bumps the counter by one every time the if spots a "W".' }
+        why:'wins = wins + 1; bumps the counter by one every time the if spots a "W".' },
+      { prompt:'The "best so far" pattern — a cousin of the accumulator. When a bigger number shows up, write the line that makes it the new <code>best</code>.',
+        starter:'function biggest(nums) {\n  let best = nums[0];\n  for (let i = 1; i < nums.length; i++) {\n    if (nums[i] > best) {\n      // YOUR LINE: nums[i] becomes the new best\n      __\n    }\n  }\n  return best;\n}',
+        kind:'fn', fnName:'biggest', tests:[{input:[[3,7,2]],expected:7},{input:[[5]],expected:5},{input:[[1,9,9,2]],expected:9}],
+        why:'best = nums[i]; crowns the challenger — after the loop, best is whoever survived every comparison.' }
+    ]
+  },
+  {
+    id:'l14', title:'Capstone: The Full Scrimmage',
+    intro:`<p>Final lesson — a full scrimmage using <strong>everything</strong>: functions, loops, ifs, accumulators, arrays, and string methods. These are harder on purpose. If you get stuck, peek back at Lessons 10 and 12.</p>
+    <p>Finish this and you're ready for the <strong>⚽ Training Ground</strong>, where you'll solve real mini-problems with a plan to guide you.</p>`,
+    example:`// The full pattern, all together:
+function drill(list) {
+  let acc = 0;                          // accumulator
+  for (let i = 0; i < list.length; i++) {  // loop the array
+    if (list[i] > 0) {                  // decide
+      acc = acc + list[i];              // accumulate
+    }
+  }
+  return acc;                           // answer out
+}`,
+    exercises:[
+      { prompt:'League points: a <code>"W"</code> is worth 3, a <code>"D"</code> (draw) worth 1. The W case is done — write the whole line for draws.',
+        starter:'function teamPoints(results) {\n  let points = 0;\n  for (let i = 0; i < results.length; i++) {\n    if (results[i] === "W") {\n      points = points + 3;\n    }\n    if (results[i] === "D") {\n      // YOUR LINE: draws are worth 1 point\n      __\n    }\n  }\n  return points;\n}',
+        kind:'fn', fnName:'teamPoints', tests:[{input:[['W','D','L']],expected:4},{input:[['W','W']],expected:6},{input:[[]],expected:0},{input:[['D','D','D']],expected:3}],
+        why:'points = points + 1; mirrors the W line — same accumulator, different prize.' },
+      { prompt:'Fastest mile: return the <strong>smallest</strong> time. Write the whole <code>if</code> yourself: when <code>times[i]</code> is less than <code>best</code>, make it the new best.',
+        starter:'function fastest(times) {\n  let best = times[0];\n  for (let i = 1; i < times.length; i++) {\n    // YOUR CODE: if times[i] < best, then best = times[i]\n    __\n  }\n  return best;\n}',
+        kind:'fn', fnName:'fastest', tests:[{input:[[21,19,25]],expected:19},{input:[[8]],expected:8},{input:[[5,4,3]],expected:3}],
+        why:'if (times[i] < best) { best = times[i]; } — "best so far" with < instead of >, because in racing, smaller is faster.' },
+      { prompt:'Build the cheer! Fill the blank so each name gets upper-cased: <code>cheerSquad(["Ava","Ben"])</code> gives <code>"GO AVA! GO BEN! "</code>.',
+        starter:'function cheerSquad(names) {\n  let cheer = "";\n  for (let i = 0; i < names.length; i++) {\n    // Uppercase the name at position i\n    cheer = cheer + "GO " + __ + "! ";\n  }\n  return cheer;\n}',
+        kind:'fn', fnName:'cheerSquad', tests:[{input:[['Ava','Ben']],expected:'GO AVA! GO BEN! '},{input:[[]],expected:''},{input:[['Zoe']],expected:'GO ZOE! '}],
+        mustMatch:/toUpperCase/, matchMsg:'Use names[i].toUpperCase() — grab the name at position i, then shout it.',
+        why:'names[i].toUpperCase() chains two skills: array lookup, then a string method on what you found.' }
     ]
   }
 ];
 
-const LESSON_GATE = ['l1','l2','l3','l4'];
+// ─── TRAINING GROUND (guided problems bridging lessons → challenges) ───
+// Same checker shapes as lessons ('fn' / 'value'), plus a visible GOAL and numbered PLAN.
+const GUIDED = [
+  {
+    id:'g1', title:'Team Goal Total',
+    goal:'Add up all the goals from a season of games and return the total.',
+    plan:['Start a total at 0 (the accumulator).','Loop through every game in the list.','Add each game\'s goals to the total.','After the loop, return the total.'],
+    starter:'function teamGoals(goals) {\n  let total = 0;\n  for (let i = 0; i < goals.length; i++) {\n    total = total + __;   // GAP: the goals scored in game i\n  }\n  return total;\n}',
+    kind:'fn', fnName:'teamGoals',
+    tests:[{input:[[2,1,3]],expected:6},{input:[[]],expected:0},{input:[[4]],expected:4},{input:[[1,1,1,1]],expected:4}],
+    why:'goals[i] is the number scored in game i — the accumulator adds each game onto the running total.'
+  },
+  {
+    id:'g2', title:'Countdown Announcer',
+    goal:'Build the kickoff countdown text: countdown(3) returns "3...2...1...GO!"',
+    plan:['Start with empty text "".','Loop i from n DOWN to 1 (i-- subtracts).','Each lap, glue i and "..." onto the text.','After the loop, glue "GO!" on and return.'],
+    starter:'function countdown(n) {\n  let text = "";\n  for (let i = n; i > 0; i--) {\n    text = text + __ + "...";   // GAP: the current number\n  }\n  return text + "GO!";\n}',
+    kind:'fn', fnName:'countdown',
+    tests:[{input:[3],expected:'3...2...1...GO!'},{input:[1],expected:'1...GO!'},{input:[2],expected:'2...1...GO!'}],
+    why:'Glue i itself — it changes every lap (3, then 2, then 1), so the text counts down with it.'
+  },
+  {
+    id:'g3', title:'Average Pace',
+    goal:'Given a list of mile times (in minutes), return the average time per mile.',
+    plan:['Add up all the times with an accumulator.','Divide the total by HOW MANY times are in the list.','Return that answer.'],
+    starter:'function averagePace(times) {\n  let total = 0;\n  for (let i = 0; i < times.length; i++) {\n    total = total + __;   // GAP 1: the time at position i\n  }\n  return total / __;      // GAP 2: how many times are in the list?\n}',
+    kind:'fn', fnName:'averagePace',
+    tests:[{input:[[8,7,9]],expected:8},{input:[[6,8]],expected:7},{input:[[10]],expected:10}],
+    why:'Average = total divided by count — times[i] feeds the total, and times.length is the count.'
+  },
+  {
+    id:'g4', title:'Jersey Number Lookup',
+    goal:'Two matching lists: names and numbers. Return the jersey number for a name — or -1 if they are not on the team.',
+    plan:['Loop through the names list.','If names[i] is exactly the name you\'re looking for…','…return numbers[i] — same position, other list!','If the loop finishes with no match, return -1.'],
+    starter:'function jerseyNumber(names, numbers, who) {\n  for (let i = 0; i < names.length; i++) {\n    if (names[i] === __) {    // GAP 1: the name we\'re hunting for\n      return __;              // GAP 2: the number in the SAME position\n    }\n  }\n  return -1;\n}',
+    kind:'fn', fnName:'jerseyNumber',
+    tests:[{input:[['Ava','Ben'],[7,10],'Ben'],expected:10},{input:[['Ava'],[7],'Zoe'],expected:-1},{input:[['Isaiah','Max'],[9,4],'Isaiah'],expected:9}],
+    why:'The lists line up by position: when names[i] matches who, numbers[i] is that player\'s jersey. -1 is the classic "not found" signal.'
+  },
+  {
+    id:'g5', title:'Hat-Trick Counter',
+    goal:'Count how many games had a hat-trick — 3 or more goals.',
+    plan:['Start a counter at 0.','Loop through the goals list.','If goals[i] is 3 or more (>=), add 1 to the counter.','Return the counter.'],
+    starter:'function hatTricks(goals) {\n  let count = 0;\n  for (let i = 0; i < goals.length; i++) {\n    if (goals[i] >= __) {     // GAP 1: hat-trick means at least this many\n      count = count + __;     // GAP 2: one more hat-trick spotted\n    }\n  }\n  return count;\n}',
+    kind:'fn', fnName:'hatTricks',
+    tests:[{input:[[3,1,4]],expected:2},{input:[[0,2]],expected:0},{input:[[3]],expected:1},{input:[[5,3,3]],expected:3}],
+    why:'This is a counting accumulator: the if filters (>= 3), and count + 1 tallies only the games that pass.'
+  },
+  {
+    id:'g6', title:'Find the Top Scorer',
+    goal:'Two matching lists: player names and their goals. Return the NAME of the player with the most goals.',
+    plan:['Assume player 0 is the best so far — remember their name AND their goals.','Loop from position 1.','If goals[i] beats the best goals, update BOTH: bestGoals and bestName.','Return bestName.'],
+    starter:'function topScorer(names, goals) {\n  let bestName = names[0];\n  let bestGoals = goals[0];\n  for (let i = 1; i < names.length; i++) {\n    if (goals[i] > __) {      // GAP 1: compare against the best so far\n      bestGoals = goals[i];\n      bestName = __;          // GAP 2: remember WHOSE goals those are\n    }\n  }\n  return bestName;\n}',
+    kind:'fn', fnName:'topScorer',
+    tests:[{input:[['Ava','Ben','Cruz'],[4,9,2]],expected:'Ben'},{input:[['Solo'],[1]],expected:'Solo'},{input:[['A','B'],[3,3]],expected:'A'}],
+    why:'"Best so far" needs both facts updated together — compare with bestGoals, and store names[i] so you know who owns the record.'
+  },
+  {
+    id:'g7', title:'Pace Rating',
+    goal:'Rate a mile time: under 7 minutes is "fast", under 9 is "solid", anything else is "keep training".',
+    plan:['If minutes < 7, return "fast".','Else if minutes < 9, return "solid".','Else return "keep training".'],
+    starter:'function paceRating(minutes) {\n  if (minutes < 7) {\n    return "fast";\n  } else if (minutes __ 9) {   // GAP 1: the comparison symbol\n    return __;                 // GAP 2: the middle rating (with quotes)\n  } else {\n    return "keep training";\n  }\n}',
+    kind:'fn', fnName:'paceRating',
+    tests:[{input:[6],expected:'fast'},{input:[8],expected:'solid'},{input:[11],expected:'keep training'},{input:[7],expected:'solid'}],
+    why:'An else-if chain checks in order: a 7-minute mile fails < 7, then passes < 9 — so the middle branch answers "solid".'
+  },
+  {
+    id:'g8', title:'Sub the Bench In',
+    goal:'Combine the starters and the bench into ONE squad list (starters first).',
+    plan:['Make an empty list [].','Loop through starters, pushing each one in.','Loop through bench, pushing each one in.','Return the combined list.'],
+    starter:'function fullSquad(starters, bench) {\n  let squad = [];\n  for (let i = 0; i < starters.length; i++) {\n    squad.push(starters[i]);\n  }\n  for (let i = 0; i < bench.length; i++) {\n    // YOUR LINE: push the bench player at position i\n    __\n  }\n  return squad;\n}',
+    kind:'fn', fnName:'fullSquad',
+    tests:[{input:[['Ava'],['Ben','Cruz']],expected:['Ava','Ben','Cruz']},{input:[[],['Dee']],expected:['Dee']},{input:[['A','B'],[]],expected:['A','B']}],
+    why:'squad.push(bench[i]); — the first loop shows the exact move; the second loop is the same move on the other list.'
+  },
+  {
+    id:'g9', title:'Training Miles',
+    goal:'Total the week\'s running miles — but only runs of at least 2 miles count (short jogs don\'t).',
+    plan:['Start total at 0.','Loop through the runs list.','If runs[i] is at least 2, add it to total.','Return total.'],
+    starter:'function trainingMiles(runs) {\n  let total = 0;\n  for (let i = 0; i < runs.length; i++) {\n    // YOUR CODE: if runs[i] is at least 2 (>=), add it to total\n    __\n  }\n  return total;\n}',
+    kind:'fn', fnName:'trainingMiles',
+    tests:[{input:[[3,1,4]],expected:7},{input:[[1,1]],expected:0},{input:[[2]],expected:2},{input:[[5,2,1,3]],expected:10}],
+    why:'if (runs[i] >= 2) { total = total + runs[i]; } — a filter (the if) wrapped around an accumulator (the total).'
+  },
+  {
+    id:'g10', title:'Scoreboard Line',
+    goal:'Turn a list of goals into scoreboard text: scoreLine([1,0,2]) returns "1-0-2" — dashes BETWEEN numbers, none at the end.',
+    plan:['Start with empty text "".','Loop through the goals.','Glue goals[i] onto the text.','If it is NOT the last item (i < goals.length - 1), also glue "-".','Return the text.'],
+    starter:'function scoreLine(goals) {\n  let line = "";\n  for (let i = 0; i < goals.length; i++) {\n    // YOUR CODE: glue goals[i] onto line, and if i < goals.length - 1,\n    // also glue a "-" (that keeps the dash off the end)\n    __\n  }\n  return line;\n}',
+    kind:'fn', fnName:'scoreLine',
+    tests:[{input:[[1,0,2]],expected:'1-0-2'},{input:[[4]],expected:'4'},{input:[[]],expected:''},{input:[[0,0]],expected:'0-0'}],
+    why:'line = line + goals[i]; then if (i < goals.length - 1) line = line + "-"; — separators are a real-world classic: one fewer dash than numbers!'
+  }
+];
 
-// Challenges are locked ONLY for fresh users (zero solved) until lessons 1-4 are done.
-function challengesLocked() {
-  return solved.size === 0 && !LESSON_GATE.every(id => lessonsDone.has(id));
+// ─── Gating ───
+// Fresh path: lessons 1-5 unlock the Training Ground; 4 guided problems unlock Challenges.
+// Anyone with pre-existing progress (legacy saves) keeps everything unlocked forever.
+const TG_GATE = ['l1','l2','l3','l9','l4']; // the first five lessons in path order
+function trainingLocked() {
+  return !legacyUnlock && solved.size === 0 && guidedDone.size === 0 && !TG_GATE.every(id => lessonsDone.has(id));
 }
+function challengesLocked() {
+  return !legacyUnlock && solved.size === 0 && guidedDone.size < 4;
+}
+
+// ─── Friendly error translator ───
+function friendlyError(err) {
+  const m = (err && err.message) ? err.message : String(err);
+  if (/is not defined/i.test(m)) return 'You used a name the computer doesn\'t know yet — check the spelling, or declare it with let.';
+  if (/is not a function/i.test(m)) return 'You tried to run something that isn\'t a function — check the spelling of the method (like .toUpperCase(), capital U and C).';
+  if (/Unexpected token|Unexpected end of input|missing \)|Unexpected identifier|Invalid or unexpected token/i.test(m)) return 'Something\'s unbalanced — count your parentheses ( ) and curly braces { }, and check your quotes come in pairs.';
+  if (/Cannot read propert|undefined is not an object|null is not an object|reading '/i.test(m)) return 'You asked for a piece of something that doesn\'t exist — often an array spot past the end, or a variable that never got a value.';
+  if (/Assignment to constant/i.test(m)) return 'You tried to change a const — use let for variables that need to change.';
+  if (/Maximum call stack/i.test(m)) return 'Your function keeps calling itself forever — make sure there\'s a stopping condition.';
+  return '';
+}
+
+// ─── Hint ladder content (per challenge): strategy → game plan → kickstart ───
+const CHALLENGE_HELP = {
+  fizzbuzz: {
+    strategy:'n % 3 === 0 means "n divides evenly by 3". Check the "divisible by BOTH" case first — a number like 15 also passes the 3-check, so order matters.',
+    plan:['If n % 3 === 0 AND n % 5 === 0, return "FizzBuzz".','Else if n % 3 === 0, return "Fizz".','Else if n % 5 === 0, return "Buzz".','Else return String(n) — the number as text.'],
+    kickstart:'function fizzbuzz(n) {\n  if (n % 3 === 0 && n % 5 === 0) {\n    return "FizzBuzz";\n  }\n  // now check % 3 alone, then % 5 alone,\n  // and finally return String(n)\n}'
+  },
+  palindrome: {
+    strategy:'Lowercase the string, build a reversed copy, and check whether the original and the reversed copy are exactly equal.',
+    plan:['let low = str.toLowerCase();','let flipped = low.split("").reverse().join("");','Return whether low === flipped.'],
+    kickstart:'function isPalindrome(str) {\n  let low = str.toLowerCase();\n  let flipped = low.split("").reverse().join("");\n  // return whether low and flipped are exactly equal\n}'
+  },
+  reverse_words: {
+    strategy:'Split the sentence into an array of words, reverse the array, then join it back together with spaces.',
+    plan:['let words = sentence.split(" ");','words.reverse();','return words.join(" ");'],
+    kickstart:'function reverseWords(sentence) {\n  let words = sentence.split(" ");\n  // reverse the words array, then join with " " and return it\n}'
+  },
+  count_vowels: {
+    strategy:'Lowercase first, then it\'s a counting accumulator (Lesson 10!): loop every character and add 1 whenever the character is a vowel.',
+    plan:['let low = str.toLowerCase();','Start count = 0.','Loop i over every character of low.','If "aeiou".includes(low[i]), add 1 to count.','Return count.'],
+    kickstart:'function countVowels(str) {\n  let low = str.toLowerCase();\n  let count = 0;\n  for (let i = 0; i < low.length; i++) {\n    // if "aeiou".includes(low[i]), add 1 to count\n  }\n  return count;\n}'
+  },
+  sum_digits: {
+    strategy:'Turn the number into a string so you can loop over each digit character — then convert each one back to a number and add it to a total.',
+    plan:['let s = String(n);','Start total = 0.','Loop over s, adding Number(s[i]) to total.','Return total.'],
+    kickstart:'function sumDigits(n) {\n  let s = String(n);\n  let total = 0;\n  for (let i = 0; i < s.length; i++) {\n    // add Number(s[i]) to total\n  }\n  return total;\n}'
+  },
+  fibonacci: {
+    strategy:'Keep the two most recent numbers in variables a and b. Each lap, the next number is a + b — then slide the pair forward one spot.',
+    plan:['Start a = 0 and b = 1.','Loop exactly n times.','Each lap: let next = a + b; then a = b; then b = next.','After the loop, a holds the answer — return a.'],
+    kickstart:'function fibonacci(n) {\n  let a = 0;\n  let b = 1;\n  for (let i = 0; i < n; i++) {\n    // let next = a + b; then shift: a = b; b = next;\n  }\n  return a;\n}'
+  },
+  caesar: {
+    strategy:'Build the result one character at a time. For letters, shift the character code and wrap with % 26; anything that isn\'t a letter passes through unchanged.',
+    plan:['Start result = ""; loop over text.','let code = text.charCodeAt(i);','If code is 97–122 (a–z): new char is String.fromCharCode((code - 97 + shift) % 26 + 97).','If code is 65–90 (A–Z): same idea, but with 65.','Otherwise add the character unchanged.','Return result.'],
+    kickstart:'function caesar(text, shift) {\n  let result = "";\n  for (let i = 0; i < text.length; i++) {\n    let code = text.charCodeAt(i);\n    if (code >= 97 && code <= 122) {\n      result = result + String.fromCharCode((code - 97 + shift) % 26 + 97);\n    }\n    // now handle uppercase (65-90) the same way with 65,\n    // and add any other character unchanged (else ...)\n  }\n  return result;\n}'
+  },
+  rot13: {
+    strategy:'It\'s the Caesar cipher with the shift locked at 13: shift each letter\'s code by 13 and wrap around with % 26.',
+    plan:['Start result = ""; loop over text.','let code = text.charCodeAt(i);','a–z (97–122): (code - 97 + 13) % 26 + 97.','A–Z (65–90): (code - 65 + 13) % 26 + 65.','Other characters stay unchanged.','Return result.'],
+    kickstart:'function rot13(text) {\n  let result = "";\n  for (let i = 0; i < text.length; i++) {\n    let code = text.charCodeAt(i);\n    if (code >= 97 && code <= 122) {\n      result = result + String.fromCharCode((code - 97 + 13) % 26 + 97);\n    }\n    // handle uppercase with 65, everything else unchanged\n  }\n  return result;\n}'
+  },
+  atbash: {
+    strategy:'Mirror each letter instead of shifting: lowercase maps to 97 + 122 - code, uppercase to 65 + 90 - code. No wrap-around needed!',
+    plan:['Start result = ""; loop over text.','let code = text.charCodeAt(i);','a–z: String.fromCharCode(97 + 122 - code).','A–Z: String.fromCharCode(65 + 90 - code).','Other characters stay unchanged; return result.'],
+    kickstart:'function atbash(text) {\n  let result = "";\n  for (let i = 0; i < text.length; i++) {\n    let code = text.charCodeAt(i);\n    if (code >= 97 && code <= 122) {\n      result = result + String.fromCharCode(97 + 122 - code);\n    }\n    // mirror uppercase with 65 + 90 - code,\n    // keep everything else unchanged\n  }\n  return result;\n}'
+  },
+  max_finder: {
+    strategy:'Track the "best so far": assume the first element is the max, then let every other element challenge it — winners take the title.',
+    plan:['let max = arr[0];','Loop i from 1 to the end.','If arr[i] > max, set max = arr[i].','Return max.'],
+    kickstart:'function findMax(arr) {\n  let max = arr[0];\n  for (let i = 1; i < arr.length; i++) {\n    // if arr[i] is bigger than max, it becomes the new max\n  }\n  return max;\n}'
+  },
+  longest_word: {
+    strategy:'Split into words, then run the same "best so far" scan as Find the Maximum — but compare .length, and only replace on strictly longer (>) so ties keep the first word.',
+    plan:['let words = sentence.split(" ");','let best = words[0];','Loop from 1: if words[i].length > best.length, best = words[i].','Return best.'],
+    kickstart:'function longestWord(sentence) {\n  let words = sentence.split(" ");\n  let best = words[0];\n  for (let i = 1; i < words.length; i++) {\n    // replace best only when words[i].length > best.length\n  }\n  return best;\n}'
+  },
+  bubble_sort: {
+    strategy:'Two nested loops: the inner one compares neighbors and swaps when the left is bigger; repeating that pass n times bubbles everything into place.',
+    plan:['Outer loop i over the whole array.','Inner loop j from 0 to result.length - 2.','If result[j] > result[j+1]: swap them using a temp variable.','Return result.'],
+    kickstart:'function bubbleSort(arr) {\n  let result = [...arr];\n  for (let i = 0; i < result.length; i++) {\n    for (let j = 0; j < result.length - 1; j++) {\n      // if result[j] > result[j+1], swap them:\n      // let temp = result[j]; result[j] = result[j+1]; result[j+1] = temp;\n    }\n  }\n  return result;\n}'
+  },
+  binary_search: {
+    strategy:'Keep low and high markers around the part of the array that could still hold the target. Check the middle each time and throw away the half that can\'t contain it.',
+    plan:['low = 0, high = arr.length - 1.','While low <= high:','mid = Math.floor((low + high) / 2).','If arr[mid] === target, return mid.','If arr[mid] < target, low = mid + 1; else high = mid - 1.','After the loop, return -1.'],
+    kickstart:'function binarySearch(arr, target) {\n  let low = 0;\n  let high = arr.length - 1;\n  while (low <= high) {\n    let mid = Math.floor((low + high) / 2);\n    // equal -> return mid\n    // arr[mid] too small -> low = mid + 1\n    // arr[mid] too big  -> high = mid - 1\n  }\n  return -1;\n}'
+  },
+  anagram: {
+    strategy:'Don\'t compare rearrangements — normalize! Lowercase both words, sort each one\'s letters alphabetically, and check if the sorted versions match.',
+    plan:['sortedA = a.toLowerCase().split("").sort().join("");','sortedB = same recipe on b.','Return sortedA === sortedB.'],
+    kickstart:'function isAnagram(a, b) {\n  let sortedA = a.toLowerCase().split("").sort().join("");\n  // build sortedB the same way, then return whether they match\n}'
+  },
+  most_frequent: {
+    strategy:'Use an object as a tally counter: one pass to count every word, then a second pass IN SENTENCE ORDER to find the word with the strictly highest count.',
+    plan:['let words = sentence.split(" ");','let counts = {}; loop: counts[w] = (counts[w] || 0) + 1.','let best = words[0];','Loop words in order: if counts[words[i]] > counts[best], best = words[i].','Return best.'],
+    kickstart:'function mostFrequent(sentence) {\n  let words = sentence.split(" ");\n  let counts = {};\n  for (let i = 0; i < words.length; i++) {\n    counts[words[i]] = (counts[words[i]] || 0) + 1;\n  }\n  let best = words[0];\n  // loop the words IN ORDER; keep the one whose count is\n  // strictly higher than counts[best]\n  return best;\n}'
+  },
+  temp_converter: {
+    strategy:'Convert whatever comes in to Celsius first — then compute F and K from that one number, and round each to 1 decimal place.',
+    plan:['If unit is "C": c = temp. If "F": c = (temp - 32) * 5/9. If "K": c = temp - 273.15.','f = c * 9/5 + 32; k = c + 273.15.','Round each one: parseFloat(x.toFixed(1)).','Return { C: ..., F: ..., K: ... }.'],
+    kickstart:'function convert(temp, unit) {\n  let c;\n  if (unit === "C") c = temp;\n  if (unit === "F") c = (temp - 32) * 5 / 9;\n  if (unit === "K") c = temp - 273.15;\n  // f = c * 9 / 5 + 32;  k = c + 273.15;\n  // round each with parseFloat(x.toFixed(1))\n  // return { C: ..., F: ..., K: ... }\n}'
+  },
+  pace_calc: {
+    strategy:'Work in total SECONDS per mile so rounding is easy — then split into minutes and leftover seconds, and pad the seconds to two digits.',
+    plan:['secPerMile = Math.round(minutes * 60 / miles);','m = Math.floor(secPerMile / 60);','s = secPerMile % 60;','Return m + ":" + String(s).padStart(2, "0").'],
+    kickstart:'function pace(miles, minutes) {\n  let secPerMile = Math.round(minutes * 60 / miles);\n  let m = Math.floor(secPerMile / 60);\n  // s = the leftover seconds (use %)\n  // return m + ":" + String(s).padStart(2, "0")\n}'
+  },
+  password_check: {
+    strategy:'Score the password: count how many of the three rules pass (0–3), then translate the score into a word with if/else.',
+    plan:['Start score = 0.','If pw.length >= 8, add 1.','If /[0-9]/.test(pw), add 1.','If /[A-Z]/.test(pw), add 1.','3 → "strong", 2 → "medium", anything else → "weak".'],
+    kickstart:'function checkPassword(pw) {\n  let score = 0;\n  if (pw.length >= 8) score = score + 1;\n  if (/[0-9]/.test(pw)) score = score + 1;\n  // add the uppercase rule with /[A-Z]/.test(pw)\n  // then: 3 -> "strong", 2 -> "medium", otherwise "weak"\n}'
+  },
+  pixel_art: {
+    strategy:'Walk the string counting repeats of the current character. When the NEXT character is different, write count + character to the result and restart the count.',
+    plan:['Start result = "" and count = 1.','Loop i over pixels.','If pixels[i] === pixels[i + 1], add 1 to count.','Else: result = result + count + pixels[i]; reset count to 1.','Return result.'],
+    kickstart:'function encode(pixels) {\n  let result = "";\n  let count = 1;\n  for (let i = 0; i < pixels.length; i++) {\n    if (pixels[i] === pixels[i + 1]) {\n      count = count + 1;\n    } else {\n      // add count + pixels[i] to result, then reset count to 1\n    }\n  }\n  return result;\n}'
+  },
+  robot_moves: {
+    strategy:'Store the four compass directions as [dx, dy] pairs and track which one you\'re facing with an index — turning just moves the index, stepping adds the pair to x and y.',
+    plan:['dirs = [[0,1],[1,0],[0,-1],[-1,0]] — N, E, S, W in order.','Start x = 0, y = 0, d = 0 (facing North).','Loop over commands:','"R": d = (d + 1) % 4.  "L": d = (d + 3) % 4.','"F": add dirs[d][0] to x and dirs[d][1] to y.','Return [x, y].'],
+    kickstart:'function navigate(commands) {\n  let dirs = [[0,1],[1,0],[0,-1],[-1,0]]; // N, E, S, W\n  let x = 0, y = 0, d = 0;\n  for (let i = 0; i < commands.length; i++) {\n    let c = commands[i];\n    if (c === "R") d = (d + 1) % 4;\n    // "L": d = (d + 3) % 4\n    // "F": x = x + dirs[d][0]; y = y + dirs[d][1];\n  }\n  return [x, y];\n}'
+  },
+  stack_calc: {
+    strategy:'Use an array as a stack: numbers get pushed on; an operator pops the top TWO numbers (careful — the SECOND pop is the left-hand side), computes, and pushes the answer back.',
+    plan:['tokens = expression.split(" "); stack = [];','Loop over tokens.','If it\'s "+", "-", "*" or "/": b = stack.pop(); a = stack.pop(); push a (op) b.','Otherwise push Number(token).','At the end, return stack[0].'],
+    kickstart:'function calc(expression) {\n  let tokens = expression.split(" ");\n  let stack = [];\n  for (let i = 0; i < tokens.length; i++) {\n    let t = tokens[i];\n    if (t === "+" || t === "-" || t === "*" || t === "/") {\n      let b = stack.pop();\n      let a = stack.pop();\n      // compute a (t) b and push the result\n    } else {\n      stack.push(Number(t));\n    }\n  }\n  return stack[0];\n}'
+  },
+  ttt_winner: {
+    strategy:'Store the 8 winning lines as DATA (index triples) and loop over them — for each line, if all three squares match and aren\'t empty, that letter wins.',
+    plan:['lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]].','Loop over lines, pulling out the three indexes a, b, c.','If board[a] !== "" AND board[a] === board[b] AND board[b] === board[c], return board[a].','After the loop, return "none".'],
+    kickstart:'function tttWinner(board) {\n  let lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];\n  for (let i = 0; i < lines.length; i++) {\n    let a = lines[i][0], b = lines[i][1], c = lines[i][2];\n    // if board[a] isn\'t "" and all three squares match, return board[a]\n  }\n  return "none";\n}'
+  }
+};
 
 function escLesson(s) {
   return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -849,6 +1336,24 @@ function buildSidebar() {
     </div>`;
   });
 
+  // Training Ground section (between Learn and Challenges)
+  const tgLocked = trainingLocked();
+  html += `<div class="cat-header">⚽ Training Ground</div>`;
+  if (tgLocked) {
+    html += `<div class="locked-note">🔒 Complete Lessons 1–5 to unlock the Training Ground!</div>`;
+  }
+  GUIDED.forEach((g, idx) => {
+    const done = guidedDone.has(g.id);
+    const isActive = currentGuided && currentGuided.id === g.id;
+    html += `<div class="challenge-item${done?' solved':''}${isActive?' active':''}${tgLocked?' locked':''}"${tgLocked?'':` onclick="loadGuided('${g.id}')"`}>
+      <span class="ci-status">${tgLocked ? '🔒' : (done ? '✓' : (idx+1))}</span>
+      <div class="ci-info">
+        <div class="ci-title">${g.title}</div>
+        <div class="ci-diff guided">GUIDED ${idx+1} · ${g.xp || 8} XP</div>
+      </div>
+    </div>`;
+  });
+
   const locked = challengesLocked();
   CHALLENGES.forEach(ch => {
     if (ch.cat !== lastCat) {
@@ -856,25 +1361,54 @@ function buildSidebar() {
       const icons = {Logic:'🧩', Algorithms:'⚙️', Engineering:'🏗️'};
       html += `<div class="cat-header">${icons[ch.cat]||''} ${ch.cat}</div>`;
       if (locked && ch.cat === 'Logic') {
-        html += `<div class="locked-note">🔒 Complete the first 4 lessons to unlock challenges!</div>`;
+        html += `<div class="locked-note">🔒 Complete ${Math.max(0, 4 - guidedDone.size)} more Training Ground problem${(4 - guidedDone.size) === 1 ? '' : 's'} to unlock challenges!</div>`;
       }
     }
     const isSolved = solved.has(ch.id);
     const isActive = currentChallenge && currentChallenge.id === ch.id;
+    const helped = isSolved && (hintTiers[ch.id] || 0) > 0;
     html += `<div class="challenge-item${isSolved?' solved':''}${isActive?' active':''}${locked?' locked':''}"${locked?'':` onclick="loadChallenge('${ch.id}')"`}>
       <span class="ci-status">${locked ? '🔒' : (isSolved ? '✅' : '○')}</span>
       <div class="ci-info">
-        <div class="ci-title">${ch.title}</div>
+        <div class="ci-title">${ch.title}${helped ? '<span class="helped-mark" title="Solved with a little help — still counts!">💡</span>' : ''}</div>
         <div class="ci-diff ${ch.difficulty}">${ch.difficulty.toUpperCase()} · ${ch.xp} XP</div>
       </div>
     </div>`;
   });
   sb.innerHTML = html;
+  renderNextStep();
   document.getElementById('totalCount').textContent = CHALLENGES.length;
   document.getElementById('solvedCount').textContent = solved.size;
   document.getElementById('streak').textContent = streakCount;
   document.getElementById('streakPill').title = 'Best streak: ' + bestStreak;
   document.getElementById('xp').textContent = xpTotal;
+}
+
+// ─── Next-step guidance (welcome screen banner) ───
+function nextStepInfo() {
+  if (trainingLocked()) {
+    const n = LESSONS.find(l => !lessonsDone.has(l.id));
+    if (n) return { text:'🎓 Next step: Lesson ' + (LESSONS.indexOf(n)+1) + ' — ' + n.title, action:"loadLesson('" + n.id + "')", btn:'Start lesson' };
+  }
+  if (challengesLocked()) {
+    const g = GUIDED.find(g => !guidedDone.has(g.id));
+    if (g) return { text:'⚽ Next step: Training Ground — ' + g.title + ' (' + guidedDone.size + '/4 to unlock challenges)', action:"loadGuided('" + g.id + "')", btn:'Train' };
+  }
+  const n = LESSONS.find(l => !lessonsDone.has(l.id));
+  if (n) return { text:'🎓 Next step: Lesson ' + (LESSONS.indexOf(n)+1) + ' — ' + n.title, action:"loadLesson('" + n.id + "')", btn:'Start lesson' };
+  const g = GUIDED.find(g => !guidedDone.has(g.id));
+  if (g) return { text:'⚽ Next step: Training Ground — ' + g.title, action:"loadGuided('" + g.id + "')", btn:'Train' };
+  const c = CHALLENGES.find(c => !solved.has(c.id));
+  if (c) return { text:'⚡ Next step: ' + c.title + ' (' + c.difficulty + ' challenge)', action:"loadChallenge('" + c.id + "')", btn:'Take it on' };
+  return { text:'🏆 Everything complete — you are a legend!', action:'', btn:'' };
+}
+function renderNextStep() {
+  const el = document.getElementById('nextStepBanner');
+  if (!el) return; // welcome screen not visible
+  const ns = nextStepInfo();
+  el.style.display = 'flex';
+  el.innerHTML = '<span>' + ns.text + '</span>' +
+    (ns.action ? '<button class="run-btn" style="margin:0;" onclick="' + ns.action + '">' + ns.btn + ' →</button>' : '');
 }
 
 // ─── Load challenge ───
@@ -884,6 +1418,7 @@ function loadChallenge(id) {
   if (!ch) return;
   currentChallenge = ch;
   currentLesson = null;
+  currentGuided = null;
   buildSidebar();
 
   const content = document.getElementById('content');
@@ -893,8 +1428,11 @@ function loadChallenge(id) {
       <div class="concept">📘 Concept: ${ch.concept}</div>
       ${ch.desc}
       <div class="example-box">${ch.example}</div>
-      <button class="hint-toggle" onclick="toggleHint()">💡 Show Hint</button>
-      <div class="hint-box" id="hintBox">💡 ${ch.hint}</div>
+      <div class="help-panel">
+        <div class="hp-head">🆘 Stuck? Get help</div>
+        <div class="hp-sub">Three levels of help. Strategy is free · Game plan −25% XP · Kickstart −50% XP (using help still counts — finished beats perfect!)</div>
+        <div id="helpPanelBody"></div>
+      </div>
     </div>
     <div class="editor-area">
       <div class="editor-tabs">
@@ -934,11 +1472,74 @@ function loadChallenge(id) {
       editor.selectionStart = editor.selectionEnd = start + 2;
     }
   });
+
+  renderHelpPanel();
 }
 
-function toggleHint() {
-  const box = document.getElementById('hintBox');
-  box.style.display = box.style.display === 'block' ? 'none' : 'block';
+// ─── Hint ladder ───
+// XP multiplier: no help / tier 1 = full, tier 2 = 75%, tier 3 = 50%. Floor: 25% of base. Round up.
+function challengeAward(ch) {
+  const t = hintTiers[ch.id] || 0;
+  const mult = t >= 3 ? 0.5 : (t === 2 ? 0.75 : 1);
+  return Math.max(Math.ceil(ch.xp * 0.25), Math.ceil(ch.xp * mult));
+}
+
+function renderHelpPanel() {
+  const ch = currentChallenge;
+  const body = document.getElementById('helpPanelBody');
+  if (!ch || !body) return;
+  const help = CHALLENGE_HELP[ch.id];
+  if (!help) { body.innerHTML = ''; return; }
+  const revealed = hintTiers[ch.id] || 0;
+  const tiers = [
+    { n:1, icon:'🧭', name:'Strategy', cost:'free', body:'<div class="ht-body">' + help.strategy + '</div>' },
+    { n:2, icon:'📋', name:'Game plan', cost:'−25% XP', body:'<div class="ht-body"><ol>' + help.plan.map(s => '<li>' + s + '</li>').join('') + '</ol></div>' },
+    { n:3, icon:'🚀', name:'Kickstart', cost:'−50% XP',
+      body:'<div class="ht-body"><pre>' + escLesson(help.kickstart) + '</pre>' +
+           '<button class="ht-btn" onclick="insertKickstart()">⤵ Put this in my editor</button></div>' }
+  ];
+  let html = '';
+  tiers.forEach(t => {
+    html += '<div class="help-tier">';
+    if (t.n <= revealed) {
+      html += '<div class="ht-label">' + t.icon + ' ' + t.name + '</div>' + t.body;
+    } else if (t.n === revealed + 1) {
+      html += '<button class="ht-btn" onclick="revealHelp(' + t.n + ')">' + t.icon + ' Show ' + t.name.toLowerCase() + ' (' + t.cost + ')</button>';
+    } else {
+      html += '<div class="ht-body" style="opacity:0.5;">' + t.icon + ' ' + t.name + ' — unlocks after the level above</div>';
+    }
+    html += '</div>';
+  });
+  body.innerHTML = html;
+}
+
+function revealHelp(tier) {
+  const ch = currentChallenge;
+  if (!ch) return;
+  const revealed = hintTiers[ch.id] || 0;
+  if (tier !== revealed + 1) return; // must open tiers in order
+  const alreadySolved = solved.has(ch.id);
+  if (tier >= 2 && !alreadySolved) {
+    const preview = Math.max(Math.ceil(ch.xp * 0.25), Math.ceil(ch.xp * (tier >= 3 ? 0.5 : 0.75)));
+    const ok = confirm('Opening the ' + (tier === 2 ? 'game plan' : 'kickstart') + ' means this challenge pays ' + preview + ' XP instead of ' + ch.xp + '. Learning > points, so go for it if you\'re stuck! Open it?');
+    if (!ok) return;
+  }
+  hintTiers[ch.id] = tier;
+  recordActivity(1); // asking for help is real effort too
+  saveState();
+  renderHelpPanel();
+}
+
+function insertKickstart() {
+  const ch = currentChallenge;
+  if (!ch || !CHALLENGE_HELP[ch.id]) return;
+  const editor = document.getElementById('codeEditor');
+  if (!editor) return;
+  if (!confirm('Replace the code in your editor with the kickstart? Your current code will be overwritten.')) return;
+  editor.value = CHALLENGE_HELP[ch.id].kickstart;
+  drafts[ch.id] = editor.value;
+  saveState();
+  editor.focus();
 }
 
 function resetCode() {
@@ -951,12 +1552,118 @@ function resetCode() {
   }
 }
 
+// ─── Training Ground: view, check, complete ───
+function loadGuided(id) {
+  if (trainingLocked()) return;
+  const g = GUIDED.find(x => x.id === id);
+  if (!g) return;
+  currentGuided = g;
+  currentChallenge = null;
+  currentLesson = null;
+  buildSidebar();
+  renderGuidedView();
+}
+
+function renderGuidedView() {
+  const g = currentGuided;
+  if (!g) return;
+  const idx = GUIDED.indexOf(g);
+  const content = document.getElementById('content');
+  content.innerHTML = `
+    <div class="problem-area">
+      <h2>⚽ Training ${idx+1}: ${g.title} <span class="badge easy">guided · ${g.xp || 8} XP</span></h2>
+      <div class="concept">📘 ${guidedDone.has(g.id) ? 'Completed — replay any time!' : 'Read the goal, follow the plan, fill the gaps ( __ ). Planning first is what the pros do!'}</div>
+      <div class="goal-box"><b>🎯 Goal:</b> ${g.goal}</div>
+      <div class="plan-box"><div class="plan-title">📋 Game plan</div><ol>${g.plan.map(s => '<li>' + s + '</li>').join('')}</ol></div>
+    </div>
+    <div class="editor-area">
+      <div class="editor-tabs">
+        <div class="editor-tab active">training.js</div>
+        <button class="reset-btn" onclick="resetGuidedCode()">↺ Reset</button>
+        <button class="run-btn" onclick="checkGuided()">▶ Check My Code</button>
+      </div>
+      <div class="editor-wrapper">
+        <textarea class="code-editor" id="codeEditor" spellcheck="false"></textarea>
+      </div>
+      <div class="success-banner" id="successBanner"></div>
+      <div class="output-panel" id="outputPanel">
+        <div class="output-label">Result</div>
+        <div class="output-line info">Complete the gaps, then click "Check My Code"</div>
+      </div>
+    </div>`;
+  const editor = document.getElementById('codeEditor');
+  editor.value = g.starter;
+  editor.addEventListener('keydown', e => {
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      const start = editor.selectionStart, end = editor.selectionEnd;
+      editor.value = editor.value.substring(0, start) + '  ' + editor.value.substring(end);
+      editor.selectionStart = editor.selectionEnd = start + 2;
+    }
+  });
+}
+
+function resetGuidedCode() {
+  const g = currentGuided;
+  if (!g) return;
+  document.getElementById('codeEditor').value = g.starter;
+  document.getElementById('outputPanel').innerHTML =
+    '<div class="output-label">Result</div><div class="output-line info">Code reset. Complete the gaps, then click "Check My Code"</div>';
+  document.getElementById('successBanner').classList.remove('show');
+}
+
+function checkGuided() {
+  const g = currentGuided;
+  if (!g) return;
+  const code = document.getElementById('codeEditor').value;
+  const output = document.getElementById('outputPanel');
+  const res = evaluateLessonExercise(g, code); // guided problems use the same checker shapes as lessons
+
+  if (!res.pass) {
+    output.innerHTML = '<div class="output-label">Result</div>' +
+      '<div class="output-line fail">✗ ' + res.message + '</div>' +
+      (res.why ? '<div class="output-line info">💡 Why: ' + res.why + '</div>' : '');
+    return;
+  }
+
+  recordActivity(4); // guided problem passed — same effort weight as a lesson exercise
+  output.innerHTML = '<div class="output-label">Result</div><div class="output-line pass">' + res.message + '</div>';
+  completeGuided(g);
+}
+
+function completeGuided(g) {
+  const firstTime = !guidedDone.has(g.id);
+  const wasChallengesLocked = challengesLocked();
+  if (firstTime) {
+    guidedDone.add(g.id);
+    xpTotal += (g.xp || 8);
+  }
+  buildSidebar();
+  saveState();
+
+  const banner = document.getElementById('successBanner');
+  const allDone = guidedDone.size === GUIDED.length;
+  const unlockedNow = wasChallengesLocked && !challengesLocked();
+  if (allDone) {
+    banner.innerHTML = `<h3>⚽ Training Ground complete! 🏆</h3>
+      <p>Ten real problems, planned and coded by YOU. You've got the accumulator pattern, "best so far", lookups, and filters — the exact moves the challenges use.</p>
+      <p style="margin-top:10px;"><button class="run-btn" style="margin:0 auto;" onclick="loadChallenge('fizzbuzz')">⚡ Take on your first challenge: FizzBuzz</button></p>`;
+  } else {
+    const next = GUIDED.find(x => !guidedDone.has(x.id));
+    banner.innerHTML = `<h3>🎉 Training complete!</h3>
+      <p>${firstTime ? '+' + (g.xp || 8) + ' XP earned! ' : ''}${unlockedNow ? '🔓 Challenges are now unlocked! Keep training, or jump into an easy challenge. ' : ''}${next ? 'Next up: ' + next.title + '.' : ''}</p>
+      ${next ? `<p style="margin-top:10px;"><button class="run-btn" style="margin:0 auto;" onclick="loadGuided('${next.id}')">➡ Next training problem</button></p>` : ''}`;
+  }
+  banner.classList.add('show');
+}
+
 // ─── Lessons: view, check, complete ───
 function loadLesson(id) {
   const ls = LESSONS.find(l => l.id === id);
   if (!ls) return;
   currentLesson = ls;
   currentChallenge = null;
+  currentGuided = null;
   lessonExIndex = 0;
   buildSidebar();
   renderLessonView();
@@ -1062,7 +1769,8 @@ function evaluateLessonExercise(ex, code) {
       return {pass:true, message:'✓ All ' + ex.tests.length + ' checks passed — your code works!'};
     }
   } catch (err) {
-    return {pass:false, message:'Error: ' + err.message + '.', why:ex.why};
+    const fr = friendlyError(err);
+    return {pass:false, message:(fr ? fr + ' (raw error: ' + err.message + ')' : 'Error: ' + err.message + '.'), why:ex.why};
   }
   return {pass:false, message:'Unknown exercise type.'};
 }
@@ -1098,7 +1806,7 @@ function checkLessonExercise() {
 
 function completeLesson(ls) {
   const firstTime = !lessonsDone.has(ls.id);
-  const wasLocked = challengesLocked();
+  const wasTrainingLocked = trainingLocked();
   if (firstTime) {
     lessonsDone.add(ls.id);
     xpTotal += 5;
@@ -1107,17 +1815,17 @@ function completeLesson(ls) {
   saveState();
 
   const banner = document.getElementById('successBanner');
-  if (ls.id === 'l8') {
+  if (ls.id === 'l14') {
     banner.innerHTML = `<h3>You know JavaScript basics! 🎉</h3>
-      <p>You just learned real <strong>JavaScript</strong> — the language that powers websites and browser games. (Not the same as Java — different language, similar name!)</p>
-      <p>You're ready for the arena: start with the green <strong>EASY</strong> challenges. They use exactly what you learned — functions in, answers out.</p>
-      <p style="margin-top:10px;"><button class="run-btn" style="margin:0 auto;" onclick="loadChallenge('fizzbuzz')">⚡ Try your first challenge</button></p>`;
+      <p>Fourteen lessons of real <strong>JavaScript</strong> — the language that powers websites and browser games. (Not the same as Java — different language, similar name!)</p>
+      <p>Next stop: the <strong>⚽ Training Ground</strong> — real mini-problems with a game plan laid out for you. Finish 4 of them and the challenge arena opens up.</p>
+      <p style="margin-top:10px;"><button class="run-btn" style="margin:0 auto;" onclick="loadGuided('g1')">⚽ Head to the Training Ground</button></p>`;
   } else {
     const nIdx = LESSONS.indexOf(ls) + 1;
     const next = LESSONS[nIdx];
-    const unlockedNow = wasLocked && !challengesLocked();
+    const unlockedNow = wasTrainingLocked && !trainingLocked();
     banner.innerHTML = `<h3>🎉 Lesson complete!</h3>
-      <p>${firstTime ? '+5 XP earned! ' : ''}${unlockedNow ? '🔓 Challenges are now unlocked! Keep going with the lessons, or jump into an easy challenge. ' : ''}${next ? 'Next up: Lesson ' + (nIdx+1) + ' — ' + next.title + '.' : ''}</p>
+      <p>${firstTime ? '+5 XP earned! ' : ''}${unlockedNow ? '🔓 The ⚽ Training Ground is now unlocked! Keep going with the lessons, or try a guided problem. ' : ''}${next ? 'Next up: Lesson ' + (nIdx+1) + ' — ' + next.title + '.' : ''}</p>
       ${next ? `<p style="margin-top:10px;"><button class="run-btn" style="margin:0 auto;" onclick="loadLesson('${next.id}')">➡ Next lesson</button></p>` : ''}`;
   }
   banner.classList.add('show');
@@ -1153,21 +1861,33 @@ function runTests() {
       return;
     }
 
+    let sawUndefined = false;
+    let firstRuntimeFriendly = '';
     ch.tests.forEach((test, i) => {
       try {
         const result = fn(...JSON.parse(JSON.stringify(test.input)));
         const expected = test.expected;
         const pass = JSON.stringify(result) === JSON.stringify(expected);
         if (!pass) allPass = false;
+        if (!pass && result === undefined) sawUndefined = true;
         const inputStr = test.input.map(a => JSON.stringify(a)).join(', ');
         html += `<div class="output-line ${pass?'pass':'fail'}">${pass?'✓':'✗'} Test ${i+1}: (${inputStr}) → ${JSON.stringify(result)} ${pass ? '' : `(expected ${JSON.stringify(expected)})`}</div>`;
       } catch(err) {
         allPass = false;
+        if (!firstRuntimeFriendly) firstRuntimeFriendly = friendlyError(err);
         html += `<div class="output-line fail">✗ Test ${i+1}: Runtime error — ${err.message}</div>`;
       }
     });
+    if (firstRuntimeFriendly) {
+      html += `<div class="output-line friendly-error">💬 In plain English: ${firstRuntimeFriendly}</div>`;
+    }
+    if (sawUndefined) {
+      html += `<div class="output-line friendly-error">💬 In plain English: your function ran but never hit a <b>return</b> statement for some inputs — every path through the code needs a return.</div>`;
+    }
   } catch(err) {
     allPass = false;
+    const fr = friendlyError(err);
+    if (fr) html += `<div class="output-line friendly-error">💬 In plain English: ${fr}</div>`;
     html += `<div class="output-line fail">✗ Syntax error: ${err.message}</div>`;
   }
 
@@ -1182,11 +1902,17 @@ function runTests() {
     html += `<div class="output-line pass" style="margin-top:8px;font-weight:600;">🎉 All ${ch.tests.length} tests passed!</div>`;
     failCounts[ch.id] = 0;
     if (!solved.has(ch.id)) {
+      const award = challengeAward(ch); // hint tiers 2/3 reduce XP (floor 25%, rounded up)
+      const tierUsed = hintTiers[ch.id] || 0;
       solved.add(ch.id);
       streakCount++;
       if (streakCount > bestStreak) bestStreak = streakCount;
-      xpTotal += ch.xp;
+      xpTotal += award;
       recordActivity(6); // challenge solved (first time)
+      banner.innerHTML = `<h3>🎉 All Tests Passed!</h3>
+        <p>+${award} XP earned!${tierUsed >= 2 ? ' (base ' + ch.xp + ' XP, adjusted for the help you used — solving it still counts 💪)' : ''} Great job understanding ${ch.concept}.</p>`;
+    } else {
+      banner.innerHTML = `<h3>🎉 All Tests Passed!</h3><p>Already solved — nice refresher on ${ch.concept}!</p>`;
     }
     banner.classList.add('show');
   } else {
