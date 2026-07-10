@@ -298,7 +298,12 @@ function renderCards(){
     }
   });
 }
-FAM=famLoad();ingest();renderCards();renderFamily();
+function refreshAll(){FAM=famLoad();ingest();renderCards();renderFamily()}
+refreshAll();
+/* recompute whenever the hub comes back into view (returning from an app, waking the phone, switching tabs) */
+document.addEventListener('visibilitychange',function(){if(!document.hidden)refreshAll()});
+window.addEventListener('focus',refreshAll);
+window.addEventListener('pageshow',function(){refreshAll()});
 </script>
 </body>
 </html>
